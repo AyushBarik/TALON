@@ -93,13 +93,17 @@
 \usepackage{tikz}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{tcolorbox}
 \usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc, shapes.geometric, shapes.callouts}
 
 \newtheorem{proposition}{Proposition}
+\tcolorboxenvironment{proposition}{colback=black!3, colframe=black!35, boxrule=0.4pt, arc=1.5pt,
+  left=4pt, right=4pt, top=3pt, bottom=3pt, before skip=6pt, after skip=6pt}
 \newtheorem{lemma}{Lemma}
 \newcommand{\name}{TALON\xspace}
 \newcommand{\one}{\mathbf{1}}
 \DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
 % TikZ colours used by the overview figure (fig/overview.tex)
 \definecolor{orxblue}{HTML}{0072B2}

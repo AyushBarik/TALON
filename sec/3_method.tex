@@ -4,7 +4,7 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{\textbf{\name overview.} The Token Allocator (\cref{sec:allocation}) allocates one token budget across the
+  \caption{\textbf{\name overview.} The Token Allocator (\cref{sec:allocation}) spends one token budget across the
   frames and transcript events of a video, and the pruner and the VLM execute the plan. In a conversation, multi-turn
   allocation (\cref{sec:multiturn}) reuses the cached tokens and prefills only the ones a new question still needs.
   Lighter bars are text items; the plan is illustrative.}
@@ -15,280 +15,237 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-\name moves existing VideoRAG systems from frame-level to token-level retrieval. A long video is sampled at one frame
-per second into frames $f_1,\dots,f_N$ and comes with a time-stamped speech transcript. A retriever scores each frame
-against the query $q$; we use SigLIP~2~\cite{siglip2}, standardize the scores over the video to $z_i$, and normalize
-them into a distribution
-\begin{equation}
-  C_i=\frac{\exp(z_i/T_I)}{\sum_{j=1}^{N}\exp(z_j/T_I)} ,
-  \label{eq:prior}
-\end{equation}
-which we read as the probability that frame $i$ holds the evidence for $q$. Conventional
-VideoRAG~\cite{luo2024videorag} keeps the $K$ most relevant frames, each encoded with a fixed number of $p$ tokens,
-which is the 0--1 integer program
+Video RAG answers a query $q$ about a long video by passing the frames most relevant to $q$ to a frozen VLM. Let
+$f_1,\dots,f_N$ be the frames and $C_i$ the retrieval relevance of frame $i$, normalized over the video so that $C_i$
+is the probability that frame $i$ holds the evidence for $q$. Conventional video RAG~\cite{luo2024videorag} keeps the
+$K$ most relevant frames, each at a fixed cost of $p$ tokens:
 \begin{equation}
   \max_{\mathbf x\in\{0,1\}^N}\ \sum_{i=1}^{N}C_i\,x_i\qquad\text{s.t.}\quad\sum_{i=1}^{N}x_i\le K .
   \label{eq:topk}
 \end{equation}
-Problem~\eqref{eq:topk} maximizes the probability that the evidence enters the prompt. However, it hard-codes two
-assumptions that modern VLMs no longer satisfy: a frame is either absent or shown at its full cost $p$, and its value
-does not depend on how many tokens it receives. In practice, VLMs accept frames at any token count, and token
-pruning~\cite{yang2024visionzip} often preserves the content of a frame in a few dozen tokens. Hence, the budget that
-matters is the number of tokens in the prompt rather than the number of frames.
+Problem~\eqref{eq:topk} maximizes the probability that the evidence enters the prompt, but it treats a frame as either
+absent or shown in full. Modern VLMs, however, accept a frame at any token count, and token
+pruning~\cite{yang2024visionzip} often preserves the content of a frame in a small fraction of its tokens. The budget
+of a prompt is therefore a number of tokens, and a frame-level decision wastes it.
 
-Our goal is to lift~\eqref{eq:topk} to the token level without changing the retriever or the VLM. Rather than keeping
-the $K$ most relevant frames at a fixed cost, \name treats the budget $B$ as a pool of tokens and decides how many
-tokens each frame and transcript event receives. This raises two questions. First, how should the budget of one
-question be split, when the value of a frame saturates with its token count and neighbouring frames often repeat the
-same content? The \emph{Token Allocator} (\cref{sec:allocation}) answers it with a diversity-aware objective that
-iterative water-filling solves in under a second. Second, how can a conversation of several questions reuse the tokens
-already in the KV cache, when each question needs different evidence? \emph{Multi-turn allocation}
-(\cref{sec:multiturn}) answers it with attention-guided relevance and a pruner whose total prefill is provably bounded.
-As shown in \cref{fig:overview}, \name operates between an existing retriever and a frozen VLM: the retriever scores
-the frames and transcript events, the Token Allocator turns these scores into a token plan under $B$, and a frozen
-pruner executes the plan before the VLM answers from one chronological storyboard of the selected evidence.
+\paragraph{Design Challenges.}
+Lifting~\eqref{eq:topk} to the token level raises two key questions: (i) how many tokens should each frame and
+transcript event receive under one budget, when the value of a frame saturates with its token count and neighbouring
+frames repeat each other; and (ii) how can a conversation reuse the tokens already in the KV cache, when each question
+needs different evidence? We answer the first with a diversity-aware token allocation objective and a solver that is
+exact in every round (\cref{sec:allocation}), and the second by extending the objective across turns with a pruner
+whose prefill is provably bounded (\cref{sec:multiturn}). \cref{fig:overview} shows the resulting pipeline.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Token Allocation}
 \label{sec:allocation}
 
-An effective token allocation must (i) spend each token where it buys the most evidence, (ii) avoid spending tokens on
-frames that repeat what the prompt already shows, and (iii) remain cheap enough to run for every request. However,
-existing allocation rules meet these needs only in part. Top-$K$ retrieval gives every selected frame the same fixed
-cost, proportional allocation~\cite{luo2025quota} ignores that the value of a frame saturates, rank
-tiers~\cite{zhang2025qframe} ignore the magnitude of relevance altogether, and none of them accounts for redundancy
-among the frames it selects.
-
-\paragraph{Modeling Token Value with a Measured Quality Curve.}
-Let $b_i$ be the number of tokens given to frame $i$, with $b_i=0$ if it is not shown. A shown frame is pruned to
-$b_i\in\mathcal B=\{b_{\min},\dots,b_{\max}\}$ tokens, where $b_{\max}$ is its native token count. \name models the
-value of a frame as $C_i\,R(b_i)$, where the \emph{token--quality curve}
+To lift~\eqref{eq:topk} to the token level, the allocation must value an item by two things: whether it holds the
+evidence, and whether the VLM can read the evidence at the token count it receives. Let $b_i$ be the tokens of frame
+$i$ and $u_j$ those of transcript event $j$, with zero meaning that the item is not shown, and let $D_j$ be the
+retrieval relevance of event $j$. \name allocates a budget $B$ by solving
 \begin{equation}
-  R(b)=\frac{b^{k}}{b^{k}+\tau^{k}}
-  \label{eq:curve}
-\end{equation}
-is the probability that the VLM reads the evidence when the evidence frame is shown with $b$ tokens. Here, $\tau$ is
-the token count at which a frame delivers half of its value, and $k$ sets how sharply the curve rises. Rather than
-assume this curve, \name measures it once per VLM: on a calibration split, it shows frames at fixed token counts and
-fits $P(\text{gold}\mid b)=f_0+A\,R(b)$ to the probability that the VLM assigns to the correct answer. The relevance
-objective
-\begin{equation}
-  \max_{\mathbf b}\ \sum_{i=1}^{N}C_iR(b_i)\quad\text{s.t.}\ \ \sum_{i=1}^{N}b_i\le B,\quad b_i\in\{0\}\cup\mathcal B,
+  \max_{\mathbf b,\mathbf u}\ \sum_{i}C_iR_I(b_i)+\beta\sum_{j}D_jR_T(u_j)
+  \quad\text{s.t.}\ \ \sum_{i}b_i+\sum_{j}u_j\le B ,
   \label{eq:relevance}
 \end{equation}
-is then the probability that the evidence is both in the prompt and readable. Maximizing it under a budget is the
-classical problem of optimal search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the
-target and tokens as search effort. Top-$K$ retrieval is the special case $b_i\in\{0,p\}$ and $B=Kp$.
+where $R_I(b)$ is the probability that the VLM reads the evidence of a frame shown with $b$ tokens, $R_T(u)$ is the
+same for a transcript event shown with $u$ tokens, and $\beta$ sets the weight of text. The objective is thus the
+probability that the evidence is both in the prompt and readable. Maximizing it is the classical problem of optimal
+search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the evidence and tokens as the
+search effort. Top-$K$ retrieval~\eqref{eq:topk} is the special case without text, $b_i\in\{0,p\}$, and $B=Kp$.
 
-\paragraph{Diversity-Aware Objective.}
-Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the fitted curve has $k<1$, its
-slope is unbounded at zero tokens, so the continuous optimum gives tokens to every frame with $C_i>0$
-(Lemma~\ref{lem:spread} in the supplementary material). Indeed, at a budget of 9.6k tokens on LVBench, the optimum
-of~\eqref{eq:relevance} spreads the budget over 370 frames per question (\cref{sec:exp-ablation}). Most of these frames
-add little. Neighbouring frames at one frame per second often show the same content, yet $R$ is measured one frame at a
-time and credits each copy in full. Moreover, every additional frame is a potential distractor: adding 56
-non-evidence frames to the evidence frames lowers $P(\text{gold})$ from 0.573 to between 0.495 and 0.554. \name
-therefore penalizes pairs of shown frames that repeat each other, and the Token Allocator solves
+\paragraph{Measuring Token Value.}
+The objective is only as good as $R_I$ and $R_T$. A linear value would reward every token equally and ignore that a
+frame saturates, whereas a step at a fixed count would reproduce the all-or-nothing cost of~\eqref{eq:topk}.
+\name instead measures both curves once per VLM. On a calibration split, it shows evidence items at fixed token counts
+and fits
 \begin{equation}
-  \max_{\mathbf b}\ \sum_{i=1}^{N}C_iR(b_i)\;-\;\eta\sum_{i\neq i'}s_{ii'}\,R(b_i)\,R(b_{i'})
-  \quad\text{s.t.}\ \ \sum_{i=1}^{N}b_i\le B ,
-  \label{eq:p1}
+  R_I(b)=\frac{b^{k}}{b^{k}+\tau^{k}}
+  \label{eq:curve}
 \end{equation}
-where $s_{ii'}=\max\big(0,\cos(f_i,f_{i'})\big)$ is the similarity of the SigLIP~2 embeddings of frames $i$ and $i'$,
-and $\eta$ sets the strength of the penalty. The penalty grows with the token counts of both frames, so two similar
-frames can both be shown only at a cost, whereas frames with different content are not penalized. As a result, a frame
-that repeats the shown frames is worth little, and redundancy itself limits how many frames the plan shows; no
-separate price per frame is needed. We set $\eta$ once per VLM (\cref{sec:exp-setup}).
+to the probability that the VLM assigns to the correct answer, where $\tau$ is the token count at which a frame delivers
+half of its value and $k$ sets how sharply the value rises. $R_T$ takes the same form with its own half-value count and
+is fitted jointly with $R_I$, so that both curves are expressed in the same units of answer probability. Transcript
+events are shortened by a prompt compressor that keeps the original words~\cite{llmlingua2}, so that a short event and
+a full one remain the same text at different lengths.
+
+\paragraph{Incorporating Frame Diversity.}
+Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the measured curve has $k<1$, its
+slope is unbounded at zero tokens, so the optimum gives tokens to every frame with $C_i>0$. Most of these frames add
+little: consecutive frames often show the same content, yet $R_I$ is measured one frame at a time and credits every copy
+in full. Each additional frame is also a potential distractor for the VLM. To discount repeated content, we need a
+similarity that captures whether two frames show the same thing. Pixel differences are poorly suited, since camera
+motion changes pixels without changing content. Temporal distance is also insufficient, since a scene can return much
+later in the video. We, therefore, use the cosine $s_{ii'}=\max\big(0,\cos(f_i,f_{i'})\big)$ of the image embeddings
+that the retriever already computes, and solve
+\begin{equation}
+\begin{aligned}
+  \max_{\mathbf b,\mathbf u}\ \ &\sum_{i}C_iR_I(b_i)+\beta\sum_{j}D_jR_T(u_j)\\[-2pt]
+  &-\eta\sum_{i\neq i'}s_{ii'}\,R_I(b_i)\,R_I(b_{i'})\quad\text{s.t.}\ \sum_{i}b_i+\sum_{j}u_j\le B ,
+\end{aligned}
+\label{eq:p1}
+\end{equation}
+where $\eta$ sets the strength of the penalty. The penalty is large only when two shown frames are both similar and
+well funded, so the plan prefers frames with different content. Redundancy thereby also limits how many frames are
+shown, without a separate price per frame. A larger $\eta$ yields fewer, more distinct frames, while $\eta=0$ recovers
+\eqref{eq:relevance}.
 
 \paragraph{Iterative Water-Filling.}
-The pairwise penalty makes~\eqref{eq:p1} non-separable, so it no longer decomposes into independent per-frame choices.
-\name exploits the fact that, with the other frames fixed, \eqref{eq:p1} is linear in $R(b_i)$, with the coefficient
+The penalty couples every pair of frames, so~\eqref{eq:p1} is a quadratic knapsack problem with no separable
+solution. However, with the other frames fixed, \eqref{eq:p1} is linear in $R_I(b_i)$, with the coefficient
 \begin{equation}
-  \tilde C_i=C_i-2\eta\sum_{i'\neq i}s_{ii'}\,R(b_{i'}) .
+  \tilde C_i=C_i-2\eta\sum_{i'\neq i}s_{ii'}\,R_I(b_{i'}) ,
   \label{eq:effective}
 \end{equation}
-We call $\tilde C_i$ the \emph{effective relevance} of frame $i$: its relevance minus how much the shown frames that
-resemble it already cover. With $\tilde C$ fixed, the problem is separable again, and \name solves it exactly by
-pricing each token at $\mu\ge0$, so that every frame chooses its own token count:
+the relevance of frame $i$ minus how much the shown frames that resemble it already cover. For fixed $\tilde C$, the
+problem separates across items, and pricing each token at $\mu\ge0$ lets every item choose its own token count:
 \begin{equation}
-  b_i^*(\mu)=\argmax_{b\in\{0\}\cup\mathcal B}\ w_iR(b)-\mu b,\qquad w_i=\max(0,\tilde C_i) .
+\begin{aligned}
+  b_i^*(\mu)&=\argmax_{b}\ \tilde C_i^{+}R_I(b)-\mu b,\\
+  u_j^*(\mu)&=\argmax_{u}\ \beta D_jR_T(u)-\mu u ,
+\end{aligned}
   \label{eq:percost}
 \end{equation}
-Since the total $\sum_ib_i^*(\mu)$ is non-increasing in $\mu$, a bisection on $\mu$ finds the price at which the plan
-fits $B$, in $O(N|\mathcal B|)$ per step.
+with $\tilde C_i^{+}=\max(0,\tilde C_i)$. Since the total tokens of the plan are non-increasing in $\mu$, a bisection
+on $\mu$ finds the price at which the plan meets $B$.
 
 \begin{proposition}[Everett~\cite{everett1963}]
 \label{thm:everett}
-For any weights $w_i\ge0$ and any $\mu\ge0$, $\mathbf b^*(\mu)$ is a global maximizer of $\sum_iw_iR(b_i)$ subject to
-$\sum_ib_i\le B'$, with $B'=\sum_ib_i^*(\mu)$.
+For any weights $w_i\ge0$, any non-decreasing value curves $R_i$, and any $\mu\ge0$, let
+$b_i^*(\mu)=\argmax_{b}\,w_iR_i(b)-\mu b$ and $B'=\sum_ib_i^*(\mu)$. Then
+\begin{equation}
+  \mathbf b^*(\mu)\in\argmax_{\mathbf b}\Big\{\sum_i w_iR_i(b_i)\ :\ \sum_ib_i\le B'\Big\} .
+\end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{thm:everett} (proof in \cref{app:proofs}) yields two implications. First, it requires
-neither convexity nor continuity, so each round is exact despite the discrete token grid. Second, every shown frame
-that is not at a bound satisfies
-\begin{equation}
-  w_i\,R'(b_i)=\mu ,
-  \label{eq:waterfill}
-\end{equation}
-so all shown frames earn the same marginal value per token, and a frame whose effective relevance falls to zero
-receives no tokens. \name then recomputes the effective relevances from the new plan and repeats, averaging $R$ with
-the values of the previous round to avoid oscillation between similar frames, and keeps the best plan
-under~\eqref{eq:p1} across rounds (\cref{alg:iwf}). Problem~\eqref{eq:p1} is a quadratic knapsack problem, so the
-result is a local optimum rather than a certified global one. Each round costs one bisection and one product with the
-similarity matrix, and twenty rounds take under a second per question.
+\noindent Proposition~\ref{thm:everett} (proof in the appendix) yields two implications. First, it requires neither
+convexity nor continuity, so each round is exact on the discrete token grid. Second, every funded item that is not at a
+bound satisfies $\tilde C_i^{+}R_I'(b_i)=\beta D_jR_T'(u_j)=\mu$: all funded items earn the same marginal value per
+token, tokens flow to whichever modality buys more evidence, and a frame whose effective relevance reaches zero is
+dropped. \name then recomputes~\eqref{eq:effective} from the new plan and solves~\eqref{eq:percost} again, averaging
+$R_I$ with the previous round to damp oscillation between similar frames, and keeps the best plan under~\eqref{eq:p1}
+(\cref{alg:iwf}). Each round costs one bisection and one product with the similarity matrix. Finally, the selected
+frames and events are merged in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
   \caption{Iterative water-filling for~\eqref{eq:p1}.}
   \label{alg:iwf}
   \small
   \begin{algorithmic}[1]
-    \Require relevance $C$, similarity $s$, budget $B$, token grid $\mathcal B$, strength $\eta$, rounds $T$
-    \State $\mathbf b\gets\textsc{PriceSolve}(C,B)$ \Comment{optimum of~\eqref{eq:relevance}}
-    \State $\mathbf r\gets R(\mathbf b)$;\quad $\mathbf b^\star\gets\mathbf b$
+    \Require relevance $C,D$, similarity $s$, budget $B$, strength $\eta$, rounds $T$
+    \State $(\mathbf b,\mathbf u)\gets\textsc{PriceSolve}(C,D,B)$ \Comment{optimum of~\eqref{eq:relevance}}
+    \State $\mathbf r\gets R_I(\mathbf b)$;\quad $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$
     \For{$t=1,\dots,T$}
-      \State $w_i\gets\max\big(0,\;C_i-2\eta\sum_{i'\neq i}s_{ii'}r_{i'}\big)$ for all $i$ \Comment{\cref{eq:effective}}
-      \State $\mathbf b\gets\textsc{PriceSolve}(w,B)$ \Comment{exact by Prop.~\ref{thm:everett}}
-      \If{$J(\mathbf b)>J(\mathbf b^\star)$} $\mathbf b^\star\gets\mathbf b$ \EndIf \Comment{$J$: objective~\eqref{eq:p1}}
-      \State $\mathbf r\gets\tfrac12\big(\mathbf r+R(\mathbf b)\big)$
+      \State $\tilde C_i\gets\max\big(0,\;C_i-2\eta\sum_{i'\neq i}s_{ii'}r_{i'}\big)$ for all $i$ \Comment{\cref{eq:effective}}
+      \State $(\mathbf b,\mathbf u)\gets\textsc{PriceSolve}(\tilde C,D,B)$ \Comment{exact by Prop.~\ref{thm:everett}}
+      \If{$J(\mathbf b,\mathbf u)>J(\mathbf b^\star,\mathbf u^\star)$} $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$ \EndIf
+      \State $\mathbf r\gets\tfrac12\big(\mathbf r+R_I(\mathbf b)\big)$
     \EndFor
-    \State \Return $\mathbf b^\star$
+    \State \Return $(\mathbf b^\star,\mathbf u^\star)$ \Comment{$J$: objective of~\eqref{eq:p1}}
   \end{algorithmic}
   \vspace{2pt}
-  \textsc{PriceSolve}$(w,B)$: bisection on $\mu$ until $\sum_ib_i^*(\mu)\le B$, with $b_i^*(\mu)$ from~\eqref{eq:percost}.
+  \textsc{PriceSolve}: bisection on $\mu$ in~\eqref{eq:percost} until the plan meets $B$.
 \end{algorithm}
 
 \paragraph{Optimality over Prior Allocation Rules.}
-Every prior rule, from top-$K$ retrieval to proportional and rank-tiered allocation, yields a feasible point
-of~\eqref{eq:relevance}. By Proposition~\ref{thm:everett}, the first step of \cref{alg:iwf} is the exact optimum
-of~\eqref{eq:relevance}, so it scores at least as high as any of these rules at equal spend. Moreover, since
-\cref{alg:iwf} keeps the best plan, it never returns a plan that scores lower under~\eqref{eq:p1} than this optimum.
-The gap to prior rules is not an artifact of discretization:
+Prior allocation rules are feasible points of~\eqref{eq:relevance}: top-$K$ retrieval shows the $K$ most relevant
+frames in full, proportional allocation~\cite{luo2025quota} gives frame $i$ the tokens $C_iB$, and rank
+tiers~\cite{zhang2025qframe} assign fixed counts by rank. By Proposition~\ref{thm:everett}, the first round of
+\cref{alg:iwf} solves~\eqref{eq:relevance} exactly, so it scores at least as high as each of these rules at equal spend,
+and \cref{alg:iwf} never returns a plan that scores lower under~\eqref{eq:p1}. The gap to proportional allocation,
+moreover, is structural rather than an artifact of the token grid:
 
 \begin{proposition}
 \label{prop:proportional}
-Let $\eta=0$, let the $C_i$ take at least two distinct values, and let every $C_iB$ lie strictly inside
-$\mathcal B$. The proportional plan $b_i=C_iB$ satisfies~\eqref{eq:waterfill} with $w=C$ for all such $C$ if and only
-if $R(b)=a\log b+c$.
+Let $\eta=0$, consider frames only, let the $C_i$ take at least two distinct values, and let every $C_iB$ lie strictly
+inside the token range. The proportional plan $b_i=C_iB$ satisfies the optimality condition of~\eqref{eq:relevance}
+for all such $C$ if and only if the value curve is logarithmic:
+\begin{equation}
+  C_i\,R_I'(C_iB)=\mu\ \ \forall i \quad\Longleftrightarrow\quad R_I(b)=a\log b+c .
+\end{equation}
 \end{proposition}
 
-\noindent Since the logarithm is unbounded whereas the measured curve~\eqref{eq:curve} saturates, proportional
-allocation over-funds the most relevant frames beyond saturation and starves the tail. At $B=8{,}192$, for example, a
-frame with $C_i=0.3$ would receive 2{,}458 tokens, several times its native count.
-
-\paragraph{Extending to Transcript Text.}
-Much of what a video communicates, however, is never visible. Speech carries names, numbers, and explanations that no
-frame shows at any resolution, and as text it is cheap: a transcript sentence costs tens of tokens, whereas a
-full-resolution frame costs hundreds. \name therefore allocates one budget across both modalities. To keep the two
-complementary, text items carry only speech, without visual captions. \name groups the transcript into
-\emph{events}, contiguous segments of at most 20\,s found by agglomerative clustering of neighbouring SigLIP~2 frame
-embeddings, and each event $t_j$ can be shown at four lengths: pruned to 4, 8, or 16 tokens with
-LLMLingua-2~\cite{llmlingua2}, which keeps the original words, or in full. The relevance $D_j$ of an event is a
-softmax, at temperature $T_T$, of standardized BGE~\cite{bge} similarities to $q$, and the text curve
-$R_T(u)=\rho\,u^{k}/(u^{k}+\tau_T^{k})$ is fitted jointly with the frame curve, now written $R_I$, where
-$\rho=A_T/A_I$ expresses both curves in the same units of $P(\text{gold})$. Writing $\Omega(\mathbf b)$ for the
-penalty in~\eqref{eq:p1}, the Token Allocator solves
-\begin{equation}
-\begin{aligned}
-  \max_{\mathbf b,\mathbf u}\ \ &\sum_iC_iR_I(b_i)-\eta\,\Omega(\mathbf b)+\beta\sum_jD_jR_T(u_j)\\[-2pt]
-  &\text{s.t.}\ \textstyle\sum_ib_i+\sum_ju_j\le B ,
-\end{aligned}
-\label{eq:p2}
-\end{equation}
-where $\beta$ sets the weight of text. Text items enter linearly, so one price $\mu$ governs both modalities, and each
-round of \cref{alg:iwf} remains exact. At the optimum of a round, $w_iR_I'(b_i)=\beta D_jR_T'(u_j)=\mu$, so tokens flow
-to whichever modality buys more evidence: a question about what was said draws tokens to the transcript, whereas a
-question about the colour of an object draws them to frames. Finally, the selected frames and events are merged in
-time order, each preceded by its timestamp, into one chronological storyboard.
+\noindent Proposition~\ref{prop:proportional} (proof in the appendix) yields two implications. First, proportional
+allocation is optimal only for a value curve that never saturates. Second, since the measured curve~\eqref{eq:curve}
+saturates, proportional allocation over-funds the most relevant frames past saturation and starves the frames behind
+them, which~\eqref{eq:relevance} funds instead.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Allocation across Multi-Turn Conversations}
 \label{sec:multiturn}
 
-In practice, users ask several questions $q_1,\dots,q_T$ about the same video, and the serving engine keeps the KV
-cache of the conversation between turns. Frame-level retrieval fits this setting naturally: a later question only
-appends the frames it adds, and prefix caching reuses everything before them. Token-level allocation, however, breaks
-this reuse, since solving~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the
-context. This loss is substantial because consecutive questions share much of their evidence: when each turn of
-MT-Video-Bench is allocated on its own, half of the turns find at least 65\% of their tokens already allocated by an
-earlier turn (533 turns from 111 dialogues). An effective multi-turn design must therefore (i) reuse the tokens already
-in the cache, (ii) adapt relevance to each new question, and (iii) keep the prefill of every turn bounded.
-Re-prefilling the plan of each turn meets (ii) but not (i) or (iii), whereas freezing the first plan meets (i) but not
-(ii).
+In practice, a user asks several questions $q_1,\dots,q_T$ about one video, and the serving engine keeps the KV cache
+of the conversation between turns. Frame-level RAG fits this setting naturally: a later question only appends the
+frames it adds, and prefix caching reuses everything before them. Token allocation, however, breaks this reuse, since
+solving~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though
+consecutive questions share much of their evidence. An effective multi-turn allocation must therefore (i) reuse the
+cached tokens, (ii) adapt relevance to each question, and (iii) bound the prefill of the conversation. Re-allocating
+every turn from scratch meets (ii) but neither (i) nor (iii), whereas freezing the first plan meets (i) but not (ii).
 
 \paragraph{Cache-Aware Objective with Attention-Guided Relevance.}
-Within a turn, we drop the turn index: $b_i$ is the number of tokens of frame $i$ that the current question $q_t$ uses,
-and $h_i$ is the number already in the cache, with $h_i=0$ before the first turn. \name solves the same program for
-each question, and only the relevance changes:
+Let $h_i$ be the tokens of frame $i$ already in the cache, with $h_i=0$ before the first turn. Each turn
+solves~\eqref{eq:p1} with a turn-specific relevance $C_i^{(t)}$ and prefills only what the cache lacks:
 \begin{equation}
-  \max_{\mathbf b}\ \sum_{i}C_i^{(t)}R(b_i)-\eta\,\Omega(\mathbf b)
-  \quad\text{s.t.}\ \ \sum_{i}b_i\le B .
-  \label{eq:mt}
-\end{equation}
-The cache does not change what a turn chooses, only what it costs. Turn $t$ prefills
-\begin{equation}
-  p_i=\max(0,\ b_i-h_i)
+  p_i=\max(0,\ b_i-h_i) .
   \label{eq:cost}
 \end{equation}
-tokens of frame $i$, which is zero whenever the cache already holds what $q_t$ needs. This follows the convention of
-KV-cache compression and retrieval, where the budget bounds the tokens that the model attends to and prefill is a
-separate cost that cache reuse saves~\cite{commitkv2026,rekv2025}.
-
-Once part of the video is cached, however, retrieval scores alone are a weak guide: SigLIP scores each frame against
-$q_t$ in isolation, whereas the VLM has already read the cached frames. \name therefore leverages the attention of the
-VLM to refine the relevance of cached frames. Before the new tokens of a turn are added, \name prefills $q_t$ on top of
-the cache, a prefill that the turn requires anyway, and reads the attention from its tokens to the cached visual tokens
-in a few selected heads, reusing the keys already in the cache as in in-context KV-cache retrieval~\cite{rekv2025}.
-Only the attention of the current question is used, since attention under one question is a poor guide to what a later
-question will need~\cite{cvma2026}. Let $a_i$ be the share of this attention per cached token that frame $i$
-receives, normalized over the cached frames, and let $s_i$ be the SigLIP relevance~\eqref{eq:prior} of frame $i$ to
-$q_t$. \name combines the two signals inside the cache and keeps SigLIP outside it:
+The cache thus changes what a turn costs, not what it chooses, following KV-cache retrieval and compression, where the
+budget bounds the tokens the model attends to and prefill is a separate cost~\cite{rekv2025,commitkv2026}. Relevance,
+however, should change once frames are cached: the retriever scores each frame against $q_t$ in isolation, whereas the
+VLM has already read the cached frames. Before adding new tokens, \name prefills $q_t$ on top of the cache, which the
+turn requires anyway, and reads the attention from its tokens to the cached visual tokens in a few heads, reusing the
+cached keys as in-context KV-cache retrieval does~\cite{rekv2025}. Only the attention of the current question is used,
+since attention under one question misranks what a later question needs~\cite{cvma2026}. With $a_i$ the share of this
+attention per cached token of frame $i$, \name sets
 \begin{equation}
-  C_i^{(t)}=\begin{cases} s_i, & h_i=0,\\[2pt] \kappa\,s_i^{\,1-\gamma}\,a_i^{\,\gamma}, & h_i>0,\end{cases}
+  C_i^{(t)}=\begin{cases} C_i, & h_i=0,\\[2pt] \kappa\,C_i^{\,1-\gamma}\,a_i^{\,\gamma}, & h_i>0,\end{cases}
   \label{eq:fusion}
 \end{equation}
-where $\gamma\in[0,1]$ sets how much we trust attention, and $\kappa$ keeps the total relevance of the cached frames
-equal to their SigLIP total.
+where $\gamma\in[0,1]$ sets the trust in attention and $\kappa$ keeps the total relevance of the cached frames equal to
+their retrieval total.
 
 \begin{proposition}
 \label{prop:fusion}
-On the cached frames, let $\bar s$ be $s$ normalized to sum to one. Among all distributions $r$ on the cached frames,
-the minimizer of $(1-\gamma)\,\mathrm{KL}(r\,\|\,\bar s)+\gamma\,\mathrm{KL}(r\,\|\,a)$ is
-$r_i\propto s_i^{\,1-\gamma}a_i^{\,\gamma}$.
+Let $\bar C$ be the retrieval relevance restricted to the cached frames and normalized to sum to one. Among all
+distributions $r$ on the cached frames,
+\begin{equation}
+  \argmin_{r}\ (1-\gamma)\,\mathrm{KL}(r\,\|\,\bar C)+\gamma\,\mathrm{KL}(r\,\|\,a)\ \propto\ C_i^{\,1-\gamma}a_i^{\,\gamma} .
+\end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:fusion} (proof in \cref{app:proofs}) yields two implications. First, the cached part
-of~\eqref{eq:fusion} is the distribution closest to both signals, with $\gamma=0$ recovering SigLIP and $\gamma=1$
-ranking the cached frames by attention alone. Second, since $\kappa$ preserves their total, attention re-ranks the
-cached frames but cannot raise their total relevance, so a question about a new part of the video still sends its
-budget there.
+\noindent Proposition~\ref{prop:fusion} (proof in the appendix) yields two implications. First, the cached part
+of~\eqref{eq:fusion} is the distribution closest to both signals, from retrieval alone at $\gamma=0$ to attention alone
+at $\gamma=1$. Second, because $\kappa$ fixes their total, attention re-ranks the cached frames but cannot pull budget
+away from uncached ones, so a question about a new part of the video still sends its tokens there.
 
 \paragraph{Bounded Prefill via Rank-Only Pruning and Append-Only Layout.}
-Prefilling only the missing tokens requires two properties of the pruner and the prompt. First, the tokens that a frame
-keeps at a smaller allocation must be a subset of those it keeps at a larger one. VisionZip~\cite{yang2024visionzip},
-however, violates this requirement: it keeps the dominant tokens of a frame, ranked by the attention they receive in
-the vision encoder, and merges the rest into contextual tokens whose content changes with the allocation. \name
-therefore drops the contextual tokens and ranks the dominant tokens of each frame once, independently of the question,
-so that the pruner is \emph{rank-only}: a frame at $b$ tokens holds its top $b$ tokens. Each turn then prefills exactly
-the new ranks of each frame, the $p_i$ tokens of~\eqref{eq:cost}, and updates the cache as
+Prefilling only the missing tokens requires two properties. First, the tokens that a frame keeps at a smaller
+allocation must be a subset of those it keeps at a larger one. VisionZip~\cite{yang2024visionzip} violates this
+property: it merges the tokens it drops into contextual tokens whose content changes with the allocation. \name
+therefore discards the contextual tokens and ranks the dominant tokens of each frame once, independently of the
+question, so that a frame at $b$ tokens holds its top $b$ tokens. A turn then prefills exactly the new ranks of each
+frame, the $p_i$ tokens of~\eqref{eq:cost}, and updates the cache as
 \begin{equation}
-  h_i\leftarrow\max(h_i,\ b_i),
+  h_i\leftarrow\max(h_i,\ b_i) .
   \label{eq:incr}
 \end{equation}
-whereas a frame that needs fewer tokens than it holds prefills nothing and keeps its cached tokens.
 
 \begin{proposition}
 \label{prop:bound}
 Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $i$ at turn $t$. Over a conversation of $T$
-turns, $\sum_{t=1}^{T}p_i^{(t)}=\max_t b_i^{(t)}\le b_{\max}$, and the total visual prefill is at most
-$\min\big(TB,\ \sum_i b_{\max,i}\big)$.
+turns,
+\begin{equation}
+\begin{aligned}
+  \sum_{t=1}^{T}p_i^{(t)}&=\max_t\,b_i^{(t)}\le b_{\max,i},\\
+  \sum_i\sum_{t=1}^{T}p_i^{(t)}&\le\min\Big(TB,\ \sum_i b_{\max,i}\Big).
+\end{aligned}
+\end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:bound} (proof in \cref{app:proofs}) bounds the cost of a frame by its largest
-allocation, however long the conversation runs. In contrast, re-prefilling every turn costs $\sum_t\sum_ib_i^{(t)}$,
-up to $TB$, which grows with every turn.
-
-Second, the new tokens must not invalidate the cache. Inserting the new tokens of a frame inside its block would
-invalidate the cache of every later token. \name instead appends them after the conversation, in rank order, wrapped in
-vision start and end tokens. Since every 1\,fps frame has a reserved slot in the multimodal rotary position layout of
-the VLM, an appended token keeps the time and patch position it has in its frame; only its place in the causal order
-changes.
+\noindent Proposition~\ref{prop:bound} (proof in the appendix) bounds the prefill of every frame by its largest
+allocation, however long the conversation runs, whereas re-allocating from scratch costs $\sum_t\sum_ib_i^{(t)}$, which
+grows with every turn. Second, the new tokens must not invalidate the cache. Inserting them inside the block of their
+frame would invalidate every later token, so \name appends them after the conversation in rank order, between vision
+start and end tokens. Because the multimodal rotary positions of the VLM reserve a slot for every frame, an appended
+token keeps the temporal and spatial position it has in its frame; only its place in the causal order changes.
