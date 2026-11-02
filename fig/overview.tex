@@ -1,0 +1,119 @@
+% Overview figure (figure*, drawn at \textwidth = 17.46 cm). Minimal: tinted stage bands, white cards, thin gray arrows;
+% labels are nouns or math only. Items = frames f_i and text t_j (subtitle events) on one time axis (16 frames, 4 text items).
+% All distributions over items are PMFs (bars). Frames: solid bars; transcript events: light bars + purple marker.
+% Bar heights: the token plan from figs/gen_overview_pmfs.py (illustrative, not measured). Test-time re-allocation removed
+% 2026-10-31: no entropy check, no Bayesian update, no posterior plan. R_I, R_T: fitted curves.
+% Frames: Video-MME video bepwr1-CNRU (illustration only).
+\definecolor{ink}{HTML}{2E3440}
+\definecolor{arrowgray}{HTML}{6B7280}
+\definecolor{bandA}{HTML}{EEF1F6}\definecolor{bandB}{HTML}{EDF3ED}\definecolor{bandC}{HTML}{F6F1E7}
+\definecolor{accA}{HTML}{5E81AC}
+\definecolor{prior}{HTML}{4C72B0}\definecolor{post}{HTML}{DD8452}\definecolor{lik}{HTML}{6B7280}\definecolor{txt}{HTML}{B5589A}
+\newcommand{\snowflake}[2]{%
+  \begin{scope}[shift={#1}, line width=0.55pt, draw=orxsky!85!black, line cap=round]
+    \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:#2);
+      \draw (\a:0.55*#2) -- ++(\a+45:0.32*#2); \draw (\a:0.55*#2) -- ++(\a-45:0.32*#2);}
+  \end{scope}}
+% \pmf{x0,y0}{width}{height}{colour}{v1/t1,...,v20/t20}: 20 items on one time axis; t = 1 marks a transcript event
+\newcommand{\pmf}[5]{%
+  \begin{scope}[shift={(#1)}]
+    \foreach \v/\t [count=\i] in {#5} {
+      \ifnum\t=1 \fill[#4!45] ({(\i-0.5)*#2/20-0.3*#2/20},0) rectangle ++({0.6*#2/20},{\v*#3});
+      \else      \fill[#4]    ({(\i-0.5)*#2/20-0.3*#2/20},0) rectangle ++({0.6*#2/20},{\v*#3}); \fi}
+    \draw[black!45, line width=0.4pt] (0,0) -- (#2,0);
+  \end{scope}}
+\newcommand{\txtchip}[1]{% small transcript chip: two text lines
+  \fill[txt!14, rounded corners=1pt] #1 rectangle ++(0.6,0.3);
+  \draw[txt!70, line width=0.5pt] ($#1+(0.08,0.2)$) -- ++(0.44,0); \draw[txt!70, line width=0.5pt] ($#1+(0.08,0.1)$) -- ++(0.3,0);}
+
+\begin{tikzpicture}[font=\rmfamily\footnotesize, text=ink, line width=0.6pt,
+  card/.style={fill=white, draw=black!14, line width=0.5pt, rounded corners=6pt, align=center, inner sep=4pt},
+  arr/.style={{Circle[length=2.4pt]}-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
+  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!55, line width=0.5pt},
+  axl/.style={font=\rmfamily\footnotesize, text=black!70}]
+
+
+% ---------------- bands ----------------
+\fill[rounded corners=8pt, bandA] (0,0) rectangle (4.3,5.6);
+\fill[rounded corners=8pt, bandB] (4.5,0) rectangle (11.15,5.6);
+\fill[rounded corners=8pt, bandC] (11.35,0) rectangle (17.4,5.6);
+
+% ---------------- input: query, video + subtitles, cache ----------------
+\node[card, inner sep=3.5pt] (q) at (2.15,5.15) {Query $q$};
+\node[card, minimum width=3.7cm, minimum height=2.4cm] (cache) at (2.15,3.35) {};
+\node[font=\rmfamily\small] at (2.15,4.27) {Cache};
+\foreach \k/\x in {1/0.78, 2/1.48, 3/2.18} {\node[inner sep=0pt] at (\x,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame\k.jpg}};}
+\node at (2.82,3.8) {$\cdots$};
+\node[inner sep=0pt] at (3.5,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame6.jpg}};
+\node at (2.15,3.37) {$f_1\ \ \cdots\ \ f_N$};
+\foreach \x in {0.47,1.17,1.87} {\txtchip{(\x,2.72)}}
+\node at (2.82,2.87) {$\cdots$};
+\txtchip{(3.19,2.72)}
+\node at (2.15,2.45) {$t_1\ \ \cdots\ \ t_M$};
+% film strip with a subtitle strip beneath it
+\fill[black!88, rounded corners=1pt] (0.25,0.95) rectangle (4.05,1.73);
+\foreach \x in {0.31,0.51,...,3.95} {\fill[white] (\x,1.6) rectangle ++(0.1,0.07); \fill[white] (\x,1.01) rectangle ++(0.1,0.07);}
+\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.62+(\k-1)*0.74},1.34) {\includegraphics[width=0.7cm]{fig/frames/frame\k.jpg}};}
+\fill[txt!14, rounded corners=1pt] (0.25,0.62) rectangle (4.05,0.86);
+\foreach \x/\l in {0.4/0.7, 1.25/0.55, 2.0/0.8, 3.0/0.6} {\draw[txt!70, line width=0.5pt] (\x,0.74) -- ++(\l,0);}
+\node[font=\rmfamily\footnotesize, text=black!70] at (2.15,0.32) {Video and subtitles};
+\draw[arr] (2.15,1.77) -- (cache.south);
+
+% ---------------- token allocator (frames and text, one budget) ----------------
+\node[card, fill=accA!7, draw=accA!45, minimum width=6.35cm, minimum height=4.45cm] (sch) at (7.825,2.55) {};
+\node[font=\rmfamily\small\bfseries] at (7.825,4.5) {Token Allocator};
+\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b,\mathbf u}\sum_i C_iR_I(b_i)+\beta\sum_j D_jR_T(u_j)-\eta\,\Omega(\mathbf b)$};
+\node[font=\scriptsize] at (7.825,3.66) {$\text{s.t.}\ \ \sum_i b_i+\sum_j u_j\le B$};
+% quality curves (x = log2(1 + b), so b = 0 sits at the origin): frames R_I with the same frame at more tokens,
+% text R_T with an illustrative sentence in full and pruned to its kept words (red)
+\begin{scope}[shift={(5.4,1.1)}]
+  \draw[ax] (0,0) -- (2.3,0); \draw[ax] (0,0) -- (0,2.2);
+  \node[axl, rotate=90, anchor=south] at (-0.04,1.0) {P(gold)};
+  \node[axl, anchor=north] at (1.1,-0.03) {tokens};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.505*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[black!70, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.42*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\rmfamily\footnotesize, text=txt, anchor=west] at (2.17,1.52) {$R_T$};
+  \node[font=\rmfamily\footnotesize, text=black!70, anchor=west] at (2.17,1.26) {$R_I$};
+  \foreach \b/\im/\dy in {4.6/carV/0.1, 24/carS/0.2} {
+    \pgfmathsetmacro{\tx}{0.27*log2(1+\b)} \pgfmathsetmacro{\ry}{1.42*(\b^0.841)/((\b^0.841)+7.73)}
+    \fill[black!70] (\tx,\ry) circle (0.05);
+    \node[inner sep=0pt, draw=black!40, line width=0.3pt, anchor=north west] at ({\tx+0.06},{\ry-\dy}) {\includegraphics[width=0.55cm]{fig/frames/\im.png}};}
+  \pgfmathsetmacro{\tx}{0.27*log2(195)} \pgfmathsetmacro{\ry}{1.42*(194^0.841)/((194^0.841)+7.73)}
+  \fill[black!70] (\tx,\ry) circle (0.05);
+  \node[inner sep=0pt, draw=black!40, line width=0.3pt, anchor=north east] at ({\tx-0.02},{\ry-0.24}) {\includegraphics[width=0.55cm]{fig/frames/carC.png}};
+  \pgfmathsetmacro{\xa}{0.27*log2(6)}  \pgfmathsetmacro{\ya}{1.505*(5^0.841)/((5^0.841)+3.44)}
+  \pgfmathsetmacro{\xb}{0.27*log2(15)} \pgfmathsetmacro{\yb}{1.505*(14^0.841)/((14^0.841)+3.44)}
+  \fill[txt] (\xa,\ya) circle (0.05); \fill[txt] (\xb,\yb) circle (0.05);
+  \node[draw=txt!40, fill=white, rounded corners=1pt, inner sep=1.5pt, font=\rmfamily\tiny, anchor=south] (tA) at (0.66,1.27)
+    {\textcolor{red!80!black}{eat spaghetti 2\,AM}};
+  \node[draw=txt!40, fill=white, rounded corners=1pt, inner sep=1.5pt, font=\rmfamily\tiny, align=left, anchor=south] (tB) at (1.72,1.64)
+    {I think I'm gonna go \textcolor{red!80!black}{eat}\\[-1.5pt] \textcolor{red!80!black}{spaghetti} at \textcolor{red!80!black}{2\,AM}.};
+  \draw[txt!60, densely dotted, line width=0.5pt] (tA.south) -- (\xa,{\ya+0.05});
+  \draw[txt!60, densely dotted, line width=0.5pt] (tB.south west) -- (\xb,{\yb+0.05});
+\end{scope}
+% token plan over items in time order (frames solid, transcript events light)
+\begin{scope}[shift={(8.55,1.1)}]
+  \draw[ax] (0,0) -- (2.25,0); \draw[ax] (0,0) -- (0,2.2);
+  \node[axl, rotate=90, anchor=south] at (-0.04,1.0) {tokens};
+  \node[axl, anchor=north] at (1.1,-0.05) {items};
+  \foreach \u/\t [count=\i] in {0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+                                0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0} {
+    \ifnum\t=1 \fill[prior!45] ({(\i-0.5)*0.107-0.03},0) rectangle ++(0.06,{2.4*\u});
+    \else      \fill[prior]    ({(\i-0.5)*0.107-0.03},0) rectangle ++(0.06,{2.4*\u}); \fi}
+\end{scope}
+
+% ---------------- inference ----------------
+\node[card, minimum width=2.4cm, minimum height=0.8cm] (pr) at (12.75,2.8) {Token Pruner\hspace{0.2cm}};
+\snowflake{(13.7,2.8)}{0.1}
+\node[card, minimum width=1.7cm, minimum height=0.8cm] (vlm) at (15.3,2.8) {VLM\hspace{0.15cm}};
+\snowflake{(15.9,2.8)}{0.1}
+\node[card, minimum width=0.6cm, minimum height=0.7cm, font=\rmfamily\small] (ans) at (17.07,2.8) {$\hat y$};
+
+% ---------------- arrows ----------------
+\draw[arr] (cache.east) -- (cache.east -| sch.west);
+\draw[arr] (sch.east |- pr.west) -- (pr.west);
+\draw[arr] (pr.east) -- (vlm.west);
+\draw[arr] (vlm.east) -- (ans.west);
+\draw[arr] (q.east) -- (q.east -| vlm.north) -- (vlm.north);
+\draw[arr] (q.east -| sch.north) -- (sch.north);
+\end{tikzpicture}
