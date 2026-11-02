@@ -11,28 +11,27 @@ what to index and retrieve, and pass every retrieved item to the VLM at its full
 tokens each retrieved item receives, and can be placed after any of these retrievers.
 
 \paragraph{Keyframe selection.}
-Most video LLMs sample frames uniformly and therefore often miss content that is relevant to the query. Query-aware
-methods select frames by their relevance to the query~\cite{yu2024framevoyager}, by relevance and temporal
-coverage~\cite{tang2025aks,peng2026qca}, by greedy marginal utility~\cite{shi2026markey}, or with the attention of a
-small VLM used as a selector~\cite{wang2026dafs}. Frame-Voyager~\cite{yu2024framevoyager} learns to query informative
-combinations of frames, and AKS~\cite{tang2025aks} optimizes relevance and coverage jointly. All of these methods,
-however, return a subset of frames, each at the same token cost. \name instead treats the token count of each frame as
-a decision variable.
+Most VLMs sample frames uniformly and therefore often miss the content that a query needs. Query-aware methods instead
+select frames by jointly optimizing their relevance and temporal coverage~\cite{tang2025aks,peng2026qca}, by greedy
+marginal utility~\cite{shi2026markey}, by learning to query informative combinations of
+frames~\cite{yu2024framevoyager}, or with the attention of a small VLM used as a selector~\cite{wang2026dafs}. All of
+these methods, however, return a subset of frames, each at the same token cost. \name instead treats the token count
+of each frame as a decision variable.
 
 \paragraph{Adaptive token allocation.}
 A few methods vary the encoding of the selected frames. QuoTA~\cite{luo2025quota} assigns visual tokens before the
-frames interact with the text, in proportion to the relevance of each frame to the query.
-Q-Frame~\cite{zhang2025qframe} selects frames by query relevance and processes them at multiple resolutions according
-to their rank. These rules, however, are hand-designed. \name instead derives its allocation from a measured
-token--quality curve and solves it exactly, and Proposition~\ref{prop:proportional} shows that proportional allocation
-is optimal only for a logarithmic curve, which the measured curve is not.
+language model, in proportion to the relevance of each frame to the query. Q-Frame~\cite{zhang2025qframe} selects
+frames by query relevance and processes them at multiple resolutions according to their rank. These rules, however,
+are hand-designed. \name instead derives its allocation from a measured token--quality curve, and
+Proposition~\ref{prop:proportional} shows that proportional allocation is optimal only for a logarithmic curve, which
+the measured curve is not.
 
 \paragraph{Visual token pruning.}
 Visual tokens far outnumber text tokens in a VLM prompt. FastV~\cite{chen2024fastv} prunes visual tokens after the
 second decoder layer by their attention, and VisionZip~\cite{yang2024visionzip} keeps the dominant tokens that receive
 the most attention in the vision encoder and merges the rest into contextual tokens before the language model. These
-methods compress the tokens within a frame at a fixed ratio. \name is complementary: it decides how many tokens each
-frame receives, and uses the dominant tokens of VisionZip as its pruner.
+methods compress the tokens within a frame at a fixed ratio. \name is complementary to them, since it decides how
+many tokens each frame receives and uses the dominant tokens of VisionZip as its pruner.
 
 \paragraph{KV-cache reuse across turns.}
 Serving systems reuse the KV cache of a conversation to avoid prefilling its history again. ReKV~\cite{rekv2025}
