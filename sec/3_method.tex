@@ -138,13 +138,14 @@ under~\eqref{eq:p1}, and each round costs one water-filling and one product with
 merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
-\caption{Iterative Water-Filling Token Allocation. Updates indexed by $i$ are applied to every item $i\in[n]$.}
+\caption{Iterative Water-Filling Token Allocation}
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require items $i\in[n]$ (frames and transcript events), relevances $C_i$, value curves $R_i(b)$ for $b\in\{0,\dots,b_{\max}\}$
-\Require similarities $s_{ij}$, token budget $B$, redundancy weight $\eta$, rounds $L$, price tolerance $\epsilon$
-\Ensure allocation $\mathbf{b}=(b_1,\dots,b_n)$ with $\sum_i b_i\le B$
+\Require relevances $C_i$, value curves $R_i(b)$ for $b\le b_{\max}$
+\Require similarities $s_{ij}$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
+\Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
+\Statex Each update with index $i$ applies to every item $i\in[n]$.
 \State $r_i\gets 0$ \Comment{coverage of item $i$}
 \For{$\ell=1,\dots,L$}
   \State $\tilde C_i\gets\max\!\big(0,\;C_i-\eta\textstyle\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{residual relevance}
