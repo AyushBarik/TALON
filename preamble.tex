@@ -92,7 +92,10 @@
 \usepackage{amsthm}
 \usepackage{tikz}
 \usepackage{algorithm}
-\usepackage{algpseudocode}
+\usepackage[noend]{algpseudocode}   % no "end for"/"end if" lines (DDPM / CLRS style)
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+\algrenewcommand\algorithmicindent{1em}
 \usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc, shapes.geometric, shapes.callouts}
 
 % Propositions: plain run-in heads without a frame and without LaTeX list machinery. A tcolorbox frame made each
