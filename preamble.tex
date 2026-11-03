@@ -93,12 +93,16 @@
 \usepackage{tikz}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
-\usepackage{tcolorbox}
 \usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc, shapes.geometric, shapes.callouts}
 
-\newtheorem{proposition}{Proposition}
-\tcolorboxenvironment{proposition}{colback=black!3, colframe=black!35, boxrule=0.4pt, arc=1.5pt,
-  left=4pt, right=4pt, top=3pt, bottom=3pt, before skip=6pt, after skip=6pt}
+% Propositions: plain run-in heads without a frame and without LaTeX list machinery. A tcolorbox frame made each
+% proposition an unbreakable block, which the kit's \flushbottom turned into large white gaps. A list-based
+% theorem (amsthm or \newtheorem) can lose its head into the page corner under the review-mode line numbering.
+\newcounter{proposition}
+\NewDocumentEnvironment{proposition}{o}
+  {\par\addvspace{\topsep}\refstepcounter{proposition}\noindent
+   \textbf{Proposition~\theproposition}\IfValueT{#1}{ (#1)}\textbf{.}\ \itshape\ignorespaces}
+  {\par\addvspace{\topsep}}
 \newtheorem{lemma}{Lemma}
 \newcommand{\name}{TALON\xspace}
 \newcommand{\one}{\mathbf{1}}

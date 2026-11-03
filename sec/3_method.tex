@@ -46,9 +46,11 @@ the evidence, and whether the VLM can read that evidence at the token count it r
 $i$ and $u_j$ those of transcript event $j$, with zero meaning that the item is not shown, and let $D_j$ be the
 retrieval relevance of event $j$. \name allocates a budget $B$ by solving
 \begin{equation}
-  \max_{\mathbf b,\mathbf u}\ \sum_{i}C_iR_I(b_i)+\beta\sum_{j}D_jR_T(u_j)
-  \quad\text{s.t.}\ \ \sum_{i}b_i+\sum_{j}u_j\le B ,
-  \label{eq:relevance}
+\begin{aligned}
+  \max_{\mathbf b,\mathbf u}\ \ &\sum_{i}C_iR_I(b_i)+\beta\sum_{j}D_jR_T(u_j)\\[-2pt]
+  \text{s.t.}\ \ &\sum_{i}b_i+\sum_{j}u_j\le B ,
+\end{aligned}
+\label{eq:relevance}
 \end{equation}
 where $R_I(b)$ is the probability that the VLM reads the evidence of a frame shown with $b$ tokens, $R_T(u)$ is the
 same for a transcript event shown with $u$ tokens, and $\beta$ sets the weight of text. The objective is thus the
@@ -83,7 +85,8 @@ that the retriever already computes, and solve
 \begin{equation}
 \begin{aligned}
   \max_{\mathbf b,\mathbf u}\ \ &\sum_{i}C_iR_I(b_i)+\beta\sum_{j}D_jR_T(u_j)\\[-2pt]
-  &-\eta\sum_{i\neq i'}s_{ii'}\,R_I(b_i)\,R_I(b_{i'})\quad\text{s.t.}\ \sum_{i}b_i+\sum_{j}u_j\le B ,
+  &-\eta\sum_{i\neq i'}s_{ii'}\,R_I(b_i)\,R_I(b_{i'})\\[-2pt]
+  \text{s.t.}\ \ &\sum_{i}b_i+\sum_{j}u_j\le B ,
 \end{aligned}
 \label{eq:p1}
 \end{equation}
@@ -216,7 +219,10 @@ their retrieval total.
 Let $\bar C$ be the retrieval relevance restricted to the cached frames and normalized to sum to one. Among all
 distributions $r$ on the cached frames,
 \begin{equation}
-  \argmin_{r}\ (1-\gamma)\,\mathrm{KL}(r\,\|\,\bar C)+\gamma\,\mathrm{KL}(r\,\|\,a)\ \propto\ C_i^{\,1-\gamma}a_i^{\,\gamma} .
+\begin{aligned}
+  &\argmin_{r}\ (1-\gamma)\,\mathrm{KL}(r\,\|\,\bar C)+\gamma\,\mathrm{KL}(r\,\|\,a)\\[-2pt]
+  &\qquad\propto\ C_i^{\,1-\gamma}a_i^{\,\gamma} .
+\end{aligned}
 \end{equation}
 \end{proposition}
 
