@@ -138,32 +138,31 @@ under~\eqref{eq:p1}, and each round costs one water-filling and one product with
 merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
-\caption{Iterative Water-Filling Token Allocation}
+\caption{Iterative Water-Filling Token Allocation. Updates indexed by $i$ are applied to every item $i\in[n]$.}
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require Items $i=1,\dots,n$ (frames and transcript events)
-\Require Relevances $C_i$, value curves $R_i(b)$ for $0\le b\le b_{\max}$
-\Require Similarities $s_{ij}$, budget $B$, penalty $\eta$
-\Require Rounds $L$, price tolerance $\epsilon$
-\Ensure Token allocation $b_1,\dots,b_n$
-\Statex Every update below is applied to each item $i$.
-\State $r_i\gets0$ \Comment{how well $i$ is read}
+\Require items $i\in[n]$ (frames and transcript events), relevances $C_i$, value curves $R_i(b)$ for $b\in\{0,\dots,b_{\max}\}$
+\Require similarities $s_{ij}$, token budget $B$, redundancy weight $\eta$, rounds $L$, price tolerance $\epsilon$
+\Ensure allocation $\mathbf{b}=(b_1,\dots,b_n)$ with $\sum_i b_i\le B$
+\State $r_i\gets 0$ \Comment{coverage of item $i$}
 \For{$\ell=1,\dots,L$}
-    \State $\tilde C_i\gets\max\!\big(0,\,C_i-\eta\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{uncovered relevance}
-    \State $[\mu_{\min},\mu_{\max}]\gets[0,\max_i\tilde C_i]$ \Comment{token price range}
-    \State $b^{(\ell)}_i\gets0$ \Comment{nothing is bought at $\mu_{\max}$}
-    \While{$\mu_{\max}-\mu_{\min}>\epsilon$} \Comment{water-filling}
-        \State $\mu\gets(\mu_{\min}+\mu_{\max})/2$
-        \State $b_i\gets\argmax_b\,\tilde C_iR_i(b)-\mu b$ \Comment{buy at price $\mu$}
-        \If{$\sum_ib_i>B$} $\mu_{\min}\gets\mu$ \Comment{over budget: raise}
-        \Else\ $\mu_{\max}\gets\mu$,\ $b^{(\ell)}_i\gets b_i$ \Comment{fits: keep, lower}
-        \EndIf
-    \EndWhile
-    \State $r_i\gets R_i(b^{(\ell)}_i)$ if $\ell=1$, else $\frac12\big(r_i+R_i(b^{(\ell)}_i)\big)$
+  \State $\tilde C_i\gets\max\!\big(0,\;C_i-\eta\textstyle\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{residual relevance}
+  \State $\mu_{\mathrm{lo}}\gets 0,\;\mu_{\mathrm{hi}}\gets\max_i\tilde C_i$ \Comment{price bracket}
+  \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\mu_{\mathrm{hi}}$}
+  \While{$\mu_{\mathrm{hi}}-\mu_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
+    \State $\mu\gets(\mu_{\mathrm{lo}}+\mu_{\mathrm{hi}})/2$
+    \State $b_i\gets\argmax_{b}\;\tilde C_i R_i(b)-\mu b$ \Comment{best response}
+    \If{$\sum_i b_i>B$}
+      \State $\mu_{\mathrm{lo}}\gets\mu$ \Comment{over budget}
+    \Else
+      \State $\mu_{\mathrm{hi}}\gets\mu$,\; $b_i^{(\ell)}\gets b_i$ \Comment{feasible}
+    \EndIf
+  \EndWhile
+  \State $r_i\gets R_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(r_i+R_i(b_i^{(\ell)})\big)$
 \EndFor
-\State \Return the $b^{(\ell)}$ with the largest
-\Statex \hspace{\algorithmicindent}$\sum_iC_iR_i(b_i)-\eta\sum_{i<j}s_{ij}R_i(b_i)R_j(b_j)$
+\State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i C_iR_i(b_i)-\eta\sum_{i<j}s_{ij}R_i(b_i)R_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
