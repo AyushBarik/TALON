@@ -135,28 +135,29 @@ frames would otherwise trade their tokens back and forth between rounds. \name r
 under~\eqref{eq:p1}, and each round costs one water-filling and one product with the similarity matrix. Finally, \name
 merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
-\begin{algorithm*}[t]
+\begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
 \Require Item relevances $C_i$, value curves $R_i(b)$, similarities $s_{ij}$, budget $B$, penalty $\eta$
 \Ensure Token allocation $b_1,\dots,b_n$
-\State Initialize coverage $r_i\gets0$ for all $i$
+\State Initialize coverage $r_i\gets0$ $\forall i$
 \For{$L$ rounds}
-    \State $\tilde C_i\gets\max\!\big(0,\,C_i-2\eta\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{Discount relevance by covered neighbors}
-    \State Initialize token price bounds $[\mu_{\min},\mu_{\max}]\gets[0,\max_i\tilde C_i]$
-    \While{price interval $[\mu_{\min},\mu_{\max}]$ not converged} \Comment{Water-filling via binary search}
+    \State $\tilde C_i\gets\max\!\big(0,\,C_i-2\eta\sum_{j\neq i}s_{ij}r_j\big)$ $\forall i$ \Comment{discount}
+    \State $[\mu_{\min},\mu_{\max}]\gets[0,\max_i\tilde C_i]$ \Comment{token price bounds}
+    \While{$\mu_{\max}-\mu_{\min}>\epsilon$} \Comment{water-filling}
         \State $\mu\gets(\mu_{\min}+\mu_{\max})/2$
-        \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu b\big)$ for all $i$ \Comment{Each item buys tokens at price $\mu$}
-        \State \textbf{if} $\sum_ib_i>B$ \textbf{then} $\mu_{\min}\gets\mu$ \textbf{else} $\mu_{\max}\gets\mu$ \Comment{Raise or lower price to fit budget}
+        \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu b\big)$ $\forall i$ \Comment{buy at price $\mu$}
+        \State \textbf{if} $\sum_ib_i>B$ \textbf{then} $\mu_{\min}\gets\mu$ \textbf{else} $\mu_{\max}\gets\mu$
     \EndWhile
-    \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu_{\max}b\big)$ for all $i$ \Comment{Allocation at the last price that fits}
-    \State $r_i\gets\tfrac12\big(r_i+R_i(b_i)\big)$ for all $i$ \Comment{Update running coverage ($r_i\gets R_i(b_i)$ in round 1)}
+    \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu_{\max}b\big)$ $\forall i$ \Comment{fits $B$}
+    \State $r_i\gets R_i(b_i)$ in round 1, else $\frac12\big(r_i+R_i(b_i)\big)$ $\forall i$
 \EndFor
-\State \Return best allocation $\{b_i\}$ seen across rounds under $\sum_iC_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}R_i(b_i)R_j(b_j)$
+\State \Return best allocation seen across rounds under
+\Statex \hspace{\algorithmicindent}$\sum_iC_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}R_i(b_i)R_j(b_j)$
 \end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior allocation rules are feasible points of~\eqref{eq:relevance}: top-$K$ retrieval shows the $K$ most relevant
