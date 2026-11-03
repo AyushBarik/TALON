@@ -115,9 +115,10 @@ problem separates across items, and pricing each token at $\mu\ge0$ lets every i
 with $\tilde C_i^{+}=\max(0,\tilde C_i)$, where $b$ and $u$ range over the grid $\mathcal G$ of token counts that the
 pruner supports, including zero. Each item thus finds its own token count by enumerating $\mathcal G$, and the price
 $\mu$ plays the role of the water level. Since the total tokens of the plan are non-increasing in $\mu$, a bisection on
-$\mu$ finds the price at which the plan meets $B$. At $\mu=0$, every item takes the largest count it can use, whereas
-above $\bar\mu=\max(\max_i\tilde C_i,\beta\max_jD_j)/g_{\min}$, with $g_{\min}$ the smallest nonzero count in
-$\mathcal G$, no item is funded, since $R_I$ and $R_T$ never exceed one.
+$\mu$ finds the price at which the plan meets $B$; we refer to this procedure as water-filling. The bisection starts
+from the interval $[0,\bar\mu]$: at $\mu=0$, every item takes the largest count it can use, whereas above
+$\bar\mu=\max(\max_i\tilde C_i,\beta\max_jD_j)/g_{\min}$, with $g_{\min}$ the smallest nonzero count in $\mathcal G$,
+no item is funded, since $R_I$ and $R_T$ never exceed one.
 
 \begin{proposition}[Everett~\cite{everett1963}]
 \label{thm:everett}
@@ -134,11 +135,11 @@ that is not at a bound satisfies $\tilde C_i^{+}R_I'(b_i)=\beta D_jR_T'(u_j)=\mu
 marginal value per token, so tokens flow to whichever modality yields more evidence, and a frame whose effective
 relevance reaches zero receives no tokens.
 
-\name then alternates between the two steps (\cref{alg:iwf}). The first round starts from an empty plan, so that
-$\tilde C=C$ and the round solves~\eqref{eq:relevance}. Each later round recomputes~\eqref{eq:effective} from the
-current plan and runs the bisection again, averaging $R_I$ with the previous round to damp oscillation between similar
-frames, and \name keeps the plan that scores highest under~\eqref{eq:p1}. Each round costs one bisection and one product with the
-similarity matrix. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp,
+\name then alternates between the two steps (\cref{alg:iwf}). It first water-fills~\eqref{eq:relevance}, which is the
+case $\tilde C=C$. Each later round recomputes~\eqref{eq:effective} from $\mathbf r$, a running average of $R_I$ over
+the previous plans, and water-fills again. The average damps oscillation, since two similar frames would otherwise
+trade their tokens back and forth between rounds. \name returns the plan that scores highest under~\eqref{eq:p1}, and
+each round costs one water-filling and one product with the similarity matrix. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp,
 into one storyboard for the VLM.
 
 \begin{algorithm}[t]
@@ -146,23 +147,15 @@ into one storyboard for the VLM.
   \label{alg:iwf}
   \small
   \begin{algorithmic}[1]
-    \Require relevance $C, D$; similarity $s$; budget $B$; grid $\mathcal G$
-    \Ensure plan $(\mathbf b^\star,\mathbf u^\star)$; $J$ is the objective of~\eqref{eq:p1}
-    \State $\mathbf r\gets\mathbf 0$
-    \For{$t=0,1,\dots,T$}
-      \State $\tilde C_i\gets\big(C_i-2\eta\sum_{i'\neq i}s_{ii'}r_{i'}\big)^{+}$ for all $i$
-      \State $\mu_{\mathrm{lo}}\gets0$,\ \ $\mu_{\mathrm{hi}}\gets\bar\mu$
-      \Repeat
-        \State $\mu\gets(\mu_{\mathrm{lo}}+\mu_{\mathrm{hi}})/2$
-        \State $b_i\gets\argmax_{b\in\mathcal G}\,\tilde C_iR_I(b)-\mu b$ for all $i$\label{line:fund-b}
-        \State $u_j\gets\argmax_{u\in\mathcal G}\,\beta D_jR_T(u)-\mu u$ for all $j$\label{line:fund-u}
-        \State \textbf{if} $\sum_ib_i+\sum_ju_j>B$ \textbf{then} $\mu_{\mathrm{lo}}\gets\mu$ \textbf{else} $\mu_{\mathrm{hi}}\gets\mu$
-      \Until{$\mu_{\mathrm{hi}}-\mu_{\mathrm{lo}}<\epsilon$}
-      \State $(\mathbf b,\mathbf u)\gets$ lines~\ref{line:fund-b}--\ref{line:fund-u} at $\mu=\mu_{\mathrm{hi}}$
-      \State \textbf{if} $t=0$ or $J(\mathbf b,\mathbf u)>J(\mathbf b^\star,\mathbf u^\star)$ \textbf{then} $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$
-      \State $\mathbf r\gets R_I(\mathbf b)$ if $t=0$, else $\mathbf r\gets\tfrac12\big(\mathbf r+R_I(\mathbf b)\big)$
+    \Require relevance $C, D$; similarity $s$; budget $B$
+    \State $(\mathbf b,\mathbf u)\gets$ water-fill~\eqref{eq:relevance}
+    \State $\mathbf r\gets R_I(\mathbf b)$
+    \For{$t=1,\dots,T$}
+      \State $\tilde C_i\gets C_i-2\eta\sum_{i'\neq i}s_{ii'}\,r_{i'}$ for all $i$
+      \State $(\mathbf b,\mathbf u)\gets$ water-fill~\eqref{eq:relevance} with $\tilde C^{+}$ in place of $C$
+      \State $\mathbf r\gets\frac12\big(\mathbf r+R_I(\mathbf b)\big)$
     \EndFor
-    \State \textbf{return} $(\mathbf b^\star,\mathbf u^\star)$
+    \State \textbf{return} the plan that scores highest under~\eqref{eq:p1}
   \end{algorithmic}
 \end{algorithm}
 
