@@ -110,8 +110,8 @@ items, and pricing each token at $\mu\ge0$ lets every item choose its own token 
 \end{equation}
 where $b$ ranges over the token counts that the pruner supports, including zero. Since the total tokens of the plan
 are non-increasing in $\mu$, a bisection on $\mu$ finds the price at which the plan meets $B$. It searches between
-$\mu=0$, where every item takes the largest count it can use, and $\max_i\tilde C_i/b_{\min}$, with $b_{\min}$ the
-smallest nonzero count, where no item is funded because $R_i$ never exceeds one. We refer to this procedure as
+$\mu=0$, where every item takes the largest count it can use, and $\max_i\tilde C_i$, where no item is funded,
+because $R_i$ never exceeds one and every shown item costs at least one token. We refer to this procedure as
 water-filling, with $\mu$ as the water level.
 
 \begin{proposition}[Everett~\cite{everett1963}]
@@ -136,27 +136,32 @@ under~\eqref{eq:p1}, and each round costs one water-filling and one product with
 merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
-  \caption{Iterative water-filling for~\eqref{eq:p1}.}
+  \caption{Iterative water-filling token allocation.}
   \label{alg:iwf}
   \small
   \begin{algorithmic}[1]
-    \Require relevance $C$; similarity $s$; budget $B$
-    \Ensure token plan $\mathbf b$
-    \State $\mathbf r\gets\mathbf 0$ \Comment{coverage of each item}
-    \For{$\ell=0,1,\dots,L$}
-      \State $\tilde C_i\gets\max\big(0,\,C_i-2\eta\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{\eqref{eq:effective}}
-      \State $\mu_{\mathrm{lo}}\gets0$,\ \ $\mu_{\mathrm{hi}}\gets\max_i\tilde C_i/b_{\min}$ \Comment{price range}
-      \While{$\mu_{\mathrm{hi}}-\mu_{\mathrm{lo}}>\epsilon$} \Comment{water-filling}
+    \Require $C_i$: relevance of item $i$ (frame or transcript event)
+    \Require $R_i(b)$: value of item $i$ shown with $b$ tokens
+    \Require $s_{ij}$: similarity of items $i$ and $j$
+    \Require $B$: token budget;\ \ $\eta$: redundancy penalty
+    \Require $L$: number of rounds;\ \ $\epsilon$: price tolerance
+    \Ensure $b_i$: tokens of each item $i$
+    \State $r_i\gets0$ for all $i$ \Comment{coverage of each item}
+    \For{$\ell=0,1,\dots,L$} \Comment{rounds}
+      \State $\tilde C_i\gets\max\big(0,\,C_i-2\eta\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{uncovered}
+      \State $\mu_{\mathrm{lo}}\gets0$,\ \ $\mu_{\mathrm{hi}}\gets\max_i\tilde C_i$ \Comment{range of the token price}
+      \While{$\mu_{\mathrm{hi}}-\mu_{\mathrm{lo}}>\epsilon$} \Comment{bisection on the price}
         \State $\mu\gets(\mu_{\mathrm{lo}}+\mu_{\mathrm{hi}})/2$
-        \State $b_i\gets\argmax_b\,\tilde C_iR_i(b)-\mu b$ \Comment{\eqref{eq:percost}}
-        \If{$\sum_ib_i>B$} $\mu_{\mathrm{lo}}\gets\mu$ \Comment{too many tokens}
-        \Else\ $\mu_{\mathrm{hi}}\gets\mu$ \Comment{within budget}
+        \State $b_i\gets\argmax_b\,\tilde C_iR_i(b)-\mu b$ \Comment{each item buys tokens}
+        \If{$\sum_ib_i>B$} $\mu_{\mathrm{lo}}\gets\mu$ \Comment{over budget: raise price}
+        \Else\ $\mu_{\mathrm{hi}}\gets\mu$ \Comment{within budget: lower price}
         \EndIf
       \EndWhile
       \State $b^{(\ell)}_i\gets\argmax_b\,\tilde C_iR_i(b)-\mu_{\mathrm{hi}}b$ \Comment{plan of round $\ell$}
-      \State $r_i\gets R_i(b^{(\ell)}_i)$ if $\ell=0$, else $\tfrac12\big(r_i+R_i(b^{(\ell)}_i)\big)$
+      \State $r_i\gets R_i(b^{(\ell)}_i)$ if $\ell=0$, else $\tfrac12\big(r_i+R_i(b^{(\ell)}_i)\big)$ \Comment{average}
     \EndFor
-    \State \textbf{return} the $\mathbf b^{(\ell)}$ that scores highest under~\eqref{eq:p1}
+    \State \textbf{return} the plan $b^{(\ell)}$ with the largest
+    \Statex \hspace{\algorithmicindent}$\sum_iC_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}R_i(b_i)R_j(b_j)$
   \end{algorithmic}
 \end{algorithm}
 
