@@ -112,8 +112,12 @@ problem separates across items, and pricing each token at $\mu\ge0$ lets every i
 \end{aligned}
   \label{eq:percost}
 \end{equation}
-with $\tilde C_i^{+}=\max(0,\tilde C_i)$. Since the total tokens of the plan are non-increasing in $\mu$, a bisection
-on $\mu$ finds the price at which the plan meets $B$.
+with $\tilde C_i^{+}=\max(0,\tilde C_i)$, where $b$ and $u$ range over the grid $\mathcal G$ of token counts that the
+pruner supports, including zero. Each item thus finds its own token count by enumerating $\mathcal G$, and the price
+$\mu$ plays the role of the water level. Since the total tokens of the plan are non-increasing in $\mu$, a bisection on
+$\mu$ finds the price at which the plan meets $B$. At $\mu=0$, every item takes the largest count it can use, whereas
+above $\max(\max_i\tilde C_i,\beta\max_jD_j)/g_{\min}$, with $g_{\min}$ the smallest nonzero count in $\mathcal G$, no
+item is funded, since $R_I$ and $R_T$ never exceed one.
 
 \begin{proposition}[Everett~\cite{everett1963}]
 \label{thm:everett}
@@ -130,9 +134,10 @@ that is not at a bound satisfies $\tilde C_i^{+}R_I'(b_i)=\beta D_jR_T'(u_j)=\mu
 marginal value per token, so tokens flow to whichever modality yields more evidence, and a frame whose effective
 relevance reaches zero receives no tokens.
 
-\name then alternates between the two steps (\cref{alg:iwf}). It recomputes~\eqref{eq:effective} from the new plan and
-solves~\eqref{eq:percost} again, averaging $R_I$ with the previous round to damp oscillation between similar frames,
-and keeps the plan that scores highest under~\eqref{eq:p1}. Each round costs one bisection and one product with the
+\name then alternates between the two steps (\cref{alg:iwf}). The first round starts from an empty plan, so that
+$\tilde C=C$ and the round solves~\eqref{eq:relevance}. Each later round recomputes~\eqref{eq:effective} from the
+current plan and runs the bisection again, averaging $R_I$ with the previous round to damp oscillation between similar
+frames, and \name keeps the plan that scores highest under~\eqref{eq:p1}. Each round costs one bisection and one product with the
 similarity matrix. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp,
 into one storyboard for the VLM.
 
@@ -141,19 +146,31 @@ into one storyboard for the VLM.
   \label{alg:iwf}
   \small
   \begin{algorithmic}[1]
-    \Require relevance $C,D$, similarity $s$, budget $B$, strength $\eta$, rounds $T$
-    \State $(\mathbf b,\mathbf u)\gets\textsc{PriceSolve}(C,D,B)$ \Comment{optimum of~\eqref{eq:relevance}}
-    \State $\mathbf r\gets R_I(\mathbf b)$;\quad $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$
-    \For{$t=1,\dots,T$}
-      \State $\tilde C_i\gets\max\big(0,\;C_i-2\eta\sum_{i'\neq i}s_{ii'}r_{i'}\big)$ for all $i$ \Comment{\cref{eq:effective}}
-      \State $(\mathbf b,\mathbf u)\gets\textsc{PriceSolve}(\tilde C,D,B)$ \Comment{exact by Prop.~\ref{thm:everett}}
-      \If{$J(\mathbf b,\mathbf u)>J(\mathbf b^\star,\mathbf u^\star)$} $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$ \EndIf
-      \State $\mathbf r\gets\tfrac12\big(\mathbf r+R_I(\mathbf b)\big)$
+    \Require relevance $C,D$; similarity $s$; budget $B$; strength $\eta$; token grid $\mathcal G\ni0$ with smallest
+      nonzero count $g_{\min}$; rounds $T$; bisection steps $L$
+    \Ensure plan $(\mathbf b^\star,\mathbf u^\star)$; $J$ denotes the objective of~\eqref{eq:p1}
+    \State $\mathbf r\gets\mathbf 0$;\quad $J^\star\gets-\infty$
+    \For{$t=0,1,\dots,T$}
+      \State $\tilde C_i\gets\max\big(0,\,C_i-2\eta\sum_{i'\neq i}s_{ii'}r_{i'}\big)\ \forall i$ \Comment{\cref{eq:effective}}
+      \State $\mu_{\mathrm{lo}}\gets0$;\quad $\mu_{\mathrm{hi}}\gets\max\big(\max_i\tilde C_i,\ \beta\max_jD_j\big)/g_{\min}$
+      \State $(\mathbf b,\mathbf u)\gets(\mathbf 0,\mathbf 0)$ \Comment{plan at price $\mu_{\mathrm{hi}}$}
+      \For{$\ell=1,\dots,L$} \Comment{bisection on the token price}
+        \State $\mu\gets(\mu_{\mathrm{lo}}+\mu_{\mathrm{hi}})/2$
+        \State $\hat b_i\gets\argmax_{b\in\mathcal G}\ \tilde C_iR_I(b)-\mu b\ \ \forall i$ \Comment{\cref{eq:percost}}
+        \State $\hat u_j\gets\argmax_{u\in\mathcal G}\ \beta D_jR_T(u)-\mu u\ \ \forall j$
+        \If{$\sum_i\hat b_i+\sum_j\hat u_j>B$}
+          \State $\mu_{\mathrm{lo}}\gets\mu$ \Comment{over budget: raise the price}
+        \Else
+          \State $\mu_{\mathrm{hi}}\gets\mu$;\quad $(\mathbf b,\mathbf u)\gets(\hat{\mathbf b},\hat{\mathbf u})$
+        \EndIf
+      \EndFor
+      \If{$J(\mathbf b,\mathbf u)>J^\star$}
+        \State $(\mathbf b^\star,\mathbf u^\star)\gets(\mathbf b,\mathbf u)$;\quad $J^\star\gets J(\mathbf b,\mathbf u)$
+      \EndIf
+      \State $\mathbf r\gets R_I(\mathbf b)$ if $t=0$, else $\mathbf r\gets\tfrac12\big(\mathbf r+R_I(\mathbf b)\big)$
     \EndFor
-    \State \Return $(\mathbf b^\star,\mathbf u^\star)$ \Comment{$J$: objective of~\eqref{eq:p1}}
+    \State \Return $(\mathbf b^\star,\mathbf u^\star)$
   \end{algorithmic}
-  \vspace{2pt}
-  \textsc{PriceSolve}: bisection on $\mu$ in~\eqref{eq:percost} until the plan meets $B$.
 \end{algorithm}
 
 \paragraph{Optimality over Prior Allocation Rules.}
