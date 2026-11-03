@@ -62,8 +62,8 @@
 % ---------------- token allocator (frames and text, one budget) ----------------
 \node[card, fill=accA!7, draw=accA!45, minimum width=6.35cm, minimum height=4.45cm] (sch) at (7.825,2.55) {};
 \node[font=\rmfamily\small\bfseries] at (7.825,4.5) {Token Allocator};
-\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b,\mathbf u}\sum_i C_iR_I(b_i)+\beta\sum_j D_jR_T(u_j)-\eta\,\Omega(\mathbf b)$};
-\node[font=\scriptsize] at (7.825,3.66) {$\text{s.t.}\ \ \sum_i b_i+\sum_j u_j\le B$};
+\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b}\sum_i C_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}R_i(b_i)R_j(b_j)$};
+\node[font=\scriptsize] at (7.825,3.66) {$\text{s.t.}\ \ \sum_i b_i\le B$};
 % quality curves (x = log2(1 + b), so b = 0 sits at the origin): frames R_I with the same frame at more tokens,
 % text R_T with an illustrative sentence in full and pruned to its kept words (red)
 \begin{scope}[shift={(5.4,1.1)}]
