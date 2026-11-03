@@ -84,9 +84,11 @@ image embeddings that the retriever already computes, with $s_{ij}=0$ whenever $
 solve
 \begin{equation}
 \begin{aligned}
-  \max_{\mathbf b}\ \ &\sum_{i}C_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,R_i(b_i)\,R_j(b_j)\\[-2pt]
+  \max_{\mathbf b}\ \ &\sum_{i}C_iR_i(b_i)-\eta\sum_{i<j}s_{ij}\,R_i(b_i)\,R_j(b_j)\\[-2pt]
   \text{s.t.}\ \ &\sum_{i}b_i\le B ,
 \end{aligned}
+% Penalty over unordered pairs i<j. The code (cover_allocate.py) sums ordered pairs with weight beta,
+% so this eta = 2*beta of the code.
 \label{eq:p1}
 \end{equation}
 where $\eta$ sets the strength of the penalty. The penalty is large only when two shown frames are both similar and
@@ -98,7 +100,7 @@ price per frame. A larger $\eta$ yields fewer, more distinct frames, while $\eta
 The penalty couples every pair of frames, so~\eqref{eq:p1} is a quadratic knapsack problem with no separable
 solution. However, with the other items fixed, \eqref{eq:p1} is linear in $R_i(b_i)$. Its coefficient, clipped at zero,
 \begin{equation}
-  \tilde C_i=\max\Big(0,\ C_i-2\eta\sum_{j\neq i}s_{ij}\,R_j(b_j)\Big) ,
+  \tilde C_i=\max\Big(0,\ C_i-\eta\sum_{j\neq i}s_{ij}\,R_j(b_j)\Big) ,
   \label{eq:effective}
 \end{equation}
 is the relevance of item $i$ that similar items in the plan do not yet cover. The clipping changes nothing, since an
@@ -140,22 +142,28 @@ merges the selected frames and events in time order, each preceded by its timest
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require Item relevances $C_i$, value curves $R_i(b)$, similarities $s_{ij}$, budget $B$, penalty $\eta$
+\Require Items $i=1,\dots,n$ (frames and transcript events)
+\Require Relevances $C_i$, value curves $R_i(b)$ for $0\le b\le b_{\max}$
+\Require Similarities $s_{ij}$, budget $B$, penalty $\eta$
+\Require Rounds $L$, price tolerance $\epsilon$
 \Ensure Token allocation $b_1,\dots,b_n$
-\State Initialize coverage $r_i\gets0$ $\forall i$
-\For{$L$ rounds}
-    \State $\tilde C_i\gets\max\!\big(0,\,C_i-2\eta\sum_{j\neq i}s_{ij}r_j\big)$ $\forall i$ \Comment{discount}
-    \State $[\mu_{\min},\mu_{\max}]\gets[0,\max_i\tilde C_i]$ \Comment{token price bounds}
+\Statex Every update below is applied to each item $i$.
+\State $r_i\gets0$ \Comment{how well $i$ is read}
+\For{$\ell=1,\dots,L$}
+    \State $\tilde C_i\gets\max\!\big(0,\,C_i-\eta\sum_{j\neq i}s_{ij}r_j\big)$ \Comment{uncovered relevance}
+    \State $[\mu_{\min},\mu_{\max}]\gets[0,\max_i\tilde C_i]$ \Comment{token price range}
+    \State $b^{(\ell)}_i\gets0$ \Comment{nothing is bought at $\mu_{\max}$}
     \While{$\mu_{\max}-\mu_{\min}>\epsilon$} \Comment{water-filling}
         \State $\mu\gets(\mu_{\min}+\mu_{\max})/2$
-        \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu b\big)$ $\forall i$ \Comment{buy at price $\mu$}
-        \State \textbf{if} $\sum_ib_i>B$ \textbf{then} $\mu_{\min}\gets\mu$ \textbf{else} $\mu_{\max}\gets\mu$
+        \State $b_i\gets\argmax_b\,\tilde C_iR_i(b)-\mu b$ \Comment{buy at price $\mu$}
+        \If{$\sum_ib_i>B$} $\mu_{\min}\gets\mu$ \Comment{over budget: raise}
+        \Else\ $\mu_{\max}\gets\mu$,\ $b^{(\ell)}_i\gets b_i$ \Comment{fits: keep, lower}
+        \EndIf
     \EndWhile
-    \State $b_i\gets\argmax_b\big(\tilde C_iR_i(b)-\mu_{\max}b\big)$ $\forall i$ \Comment{fits $B$}
-    \State $r_i\gets R_i(b_i)$ in round 1, else $\frac12\big(r_i+R_i(b_i)\big)$ $\forall i$
+    \State $r_i\gets R_i(b^{(\ell)}_i)$ if $\ell=1$, else $\frac12\big(r_i+R_i(b^{(\ell)}_i)\big)$
 \EndFor
-\State \Return best allocation seen across rounds under
-\Statex \hspace{\algorithmicindent}$\sum_iC_iR_i(b_i)-\eta\sum_{i\neq j}s_{ij}R_i(b_i)R_j(b_j)$
+\State \Return the $b^{(\ell)}$ with the largest
+\Statex \hspace{\algorithmicindent}$\sum_iC_iR_i(b_i)-\eta\sum_{i<j}s_{ij}R_i(b_i)R_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
