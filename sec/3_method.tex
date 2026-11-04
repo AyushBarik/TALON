@@ -15,14 +15,14 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Naive RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a frozen VLM~\cite{}. Let $f_1, \dots, f_N$ be uniformly sampled frames from $V$, and let $C_i$ denote the retrieval relevance of frame $i$ with respect to $q$, normalized across the video so that $C_i$ represents the probability that frame $i$ contains the evidence for $q$. Naive RAG can thus be naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a frozen VLM~\cite{}. Let $f_1, \dots, f_N$ be uniformly sampled frames from $V$, and let $C_i$ denote the retrieval relevance of frame $i$ with respect to $q$, normalized across the video so that $C_i$ approximates the probability that frame $i$ contains the evidence for $q$. Frame-level RAG can thus naturally be modeled as an integer linear program:
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} C_i x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
   \label{eq:topk}
 \end{equation}
-(((However, this formulation makes multiple faulty/synonym assumptions: (i) 
 
-\paragraph{Design Challenges.}
+Lifting this optimization objective 
+
 Lifting~\eqref{eq:topk} to the token level raises two key questions. (i) How many tokens should each frame and
 transcript event receive under one budget, given that the value of a frame saturates with its token count and that
 neighboring frames often repeat each other? (ii) How can a conversation reuse the tokens already in the KV cache when
