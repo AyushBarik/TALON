@@ -12,145 +12,86 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the semantic similarity of $f_i$ with respect to $q$ (e.g., CLIP score~\cite{}), normalized across all frames, so that $r(\cdot\mid q)$ approximates the probability that each frame holds the evidence for $q$. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
   \label{eq:topk}
 \end{equation}
-where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$. We lift this frame-level objective to a multimodal token-level objective, which carefully defines \textit{how} tokens should be scored, and prove that our solution is theoretically more optimal for this objective compared to naive adaptive token allocation baselines (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{}, a standard feature of serving pipelines. We therefore reformulate our optimization objective to reuse the KV cache across turns. This improves both efficiency and accuracy, and we prove that the cumulative prefill cost stays bounded over long conversations due to our token pruner design (\cref{sec:multiturn}).
+where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$, and
+\begin{equation}
+  r(f_i\mid q)=\operatorname{softmax}_i\big(\cos(f_i,q)\big)
+  \label{eq:rel}
+\end{equation}
+% Code: z-scored cosines with a softmax temperature; state in implementation details.
+is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective, which carefully defines \textit{how} tokens should be scored, and prove that our solution is theoretically more optimal for this objective compared to naive adaptive token allocation baselines (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{}, a standard feature of serving pipelines. We therefore reformulate our optimization objective to reuse the KV cache across turns. This improves both efficiency and accuracy, and we prove that the cumulative prefill cost stays bounded over long conversations due to our token pruner design (\cref{sec:multiturn}).
 
 
 % ---------------------------------------------------------------------------------------------------------------------
-\subsection{Token Allocation}
+\subsection{Token Scheduler}
 \label{sec:allocation}
 
-Moving to token level RAG replaces the binary decision $x_i$ by $b_i$, where $b_i$ represents the number of tokens allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. Doing so, however, poses two key challenges. First, the objective must state what a frame is worth at every token count. Second, near-duplicate frames that repeat the content of others may be selected, so the relevance of a frame must account for already selected frames (inaccurate? as its account for frames weighted by the tokens allocated to them?). \name addresses the first challenge with a token value function calibrated offline (you can calibrated offline and continously calibrated across examples, then now R can be "updated" which you can define in a simple way), and the second by conditioning relevance on the allocation. We formulate both for frames alone and then extend the formulation to the transcript of the video. (not well written)
+Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by the number of tokens $b_i$ allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. This formulation, however, raises two key questions: (i) how much is a frame worth at a given token count, and (ii) how should the relevance of a frame change once similar frames already receive tokens? \name answers both in its Token Scheduler, which computes the token allocation: the first with a token value function that is fitted offline and updated online, and the second by conditioning relevance on the current allocation. We formulate both for frames and then extend them to the transcript of the video.
+
+\paragraph{Pruning Frames and Transcripts to a Token Count.}
+Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Since the ranking does not depend on the query, a frame shown with fewer tokens keeps a subset of the tokens it keeps with more. Transcript events are pruned in the same way: a token-level prompt compressor~\cite{llmlingua2} scores every token of an event, and \name keeps the top-scored tokens, so that a shortened event remains a subset of the original words rather than a paraphrase.
 
 \paragraph{Measuring Token Value.}
-Intuitively, the token count of a frame acts as its effective resolution. With few tokens, the VLM perceives only the coarse structure of the frame, such as the scene layout and large objects; with more tokens, it also perceives fine detail, such as small objects and on-screen text. How this added detail translates into downstream accuracy, however, is not known in advance, yet it decides how many tokens a frame deserves. We capture it with a \textit{token value function} $v(b)$, the probability (prefer not to say probability as reviewers may get angry) that the VLM reads the evidence of a frame shown with $b$ tokens, and lift~\eqref{eq:topk} to (did not mention how we got v, e.g. we took N video query pairs blah blah)
+Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves. \name therefore learns a \textit{token value} function by logistic regression on the log token count,
+% NOTE: current code fits v offline to the VLM's confidence in the correct answer (pgold), not 0/1 accuracy, and has no online update yet.
+\begin{equation}
+  v(b)=\sigma\big(\theta_1\log b+\theta_0\big) ,
+  \label{eq:curve}
+\end{equation}
+fitting $\theta$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\todo{Fig.~Y}), and updating it online from feedback on answered queries (e.g., accuracy, user feedback). Weighting the value of each frame by its relevance gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
 \end{equation}
-The objective is thus the probability that the evidence is both in the prompt and readable (dont say probability as its not really literal probability). Maximizing it is the (maybe put "Fig. Y" somewhere thsi is the figure for this offline curve ill add later)
-classical problem of optimal search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the
-evidence and tokens as the search effort. Top-$K$ retrieval~\eqref{eq:topk} is the special case $b_i\in\{0,b_{\max}\}$
-and $B=Kb_{\max}$, where $b_{\max}$ is the token count of a full frame.
-
-The objective is only as good as its value function. A linear $v$ would reward every token equally and ignore that a
-frame saturates, whereas a step at a fixed count would reproduce the all-or-nothing cost of~\eqref{eq:topk}. \name
-instead measures $v$ once per VLM, offline. Across a set of calibration videos and queries, it uniformly varies the
-number of tokens per frame and fits
-\begin{equation} (hmm i change my mind should mention value function FIRST then the objective function)
-  v(b)=\frac{b^{\alpha}}{b^{\alpha}+\tau^{\alpha}}
-  \label{eq:curve}
-\end{equation}
-to the probability that the VLM assigns to the correct answer, where $\tau$ is the token count at which a frame reaches
-half of its value and $\alpha$ sets how sharply the value rises. (do not say per VLM, just stick to it. We measure V offline, then later sort of and it is updated online and we can sort of define that. Yeah, and kind of fix up the writing, make it write better. No need to say top K retrieval is a special case.
-
-It's kind of obvious. Also never, never say this. Top K retrieval bracket one. That's not how you refer to things.
-
-You say equation. Equation one, equation two. You don't just say brackets one. Hope people know what that means. No one knows what that means.
-
-Maximizing two alone. No, you don't say maximizing equation 2. What is 2? Is it an equation? Is it a function? What is it? Never say stuff like this.
-
-Also, no need to say top K retrieval. No need to mention classical problem of optimal search again stick to the topic measuring token value right we're giving intuition and we're essentially wanting to say okay well that's the intuition uh we need this and we measure this by this offline curve.
-
-Okay, and this is the function. It's updated online. Make and you're putting this into objective function. Objective function looks like this. So there, I explained what v is.
-
-I showed you the equation for v offline as well as online and then I showed you what the objective function is. And done, that's literally it. There's nothing else. Yeah. Very straightforward. Right? No need to mention all this optimal search. What is the relevance to that?
-
-There is no relevance as a prior over the location of no, there is no prior, there is no location. Stop adopting this Bayesian framework. There is nothing Bayesian about. There is no prior.
-
-There is no probabilities here like it's we use probability once like uh try to avoid that term because that's very inaccurate like the reviewer will be angry at you so again so see how I explain very logically follows very logically so that's the measuring token value)
 
 \paragraph{Incorporating Frame Diversity.}
-Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the measured curve has $\alpha<1$,
-its slope is unbounded at zero tokens, so the optimum gives tokens to every frame with nonzero relevance. Most of these
-frames add little, since consecutive frames often show the same content, yet $v$ is measured one frame at a time and
-credits every copy in full. Each additional frame is also a potential distractor for the VLM. The root cause is that
-$r(f_i\mid q)$ depends on the query alone, whereas a frame tells the VLM little once a similar frame is already shown in
-detail. We, therefore, condition the relevance of a frame on the allocation as well:
+The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which $v$ credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity to every other frame, weighted by the value of that frame:
+% Code (cover_allocate.py) uses max(0, cos); this eta equals the code's beta.
 \begin{equation}
-  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\neq i}s_{ij}\,v(b_j) ,
+  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\neq i}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
-where $s_{ij}$ measures whether $f_i$ and $f_j$ show the same content and $\eta$ sets how strongly the coverage by
-similar frames discounts relevance. Pixel differences are poorly suited for $s_{ij}$, since camera motion changes pixels
-without changing content. Temporal distance is also insufficient, since a scene can return much later in the video. We,
-therefore, use the cosine $s_{ij}=\max\big(0,\cos(f_i,f_j)\big)$ of the image embeddings that the retriever already
-computes. With the conditioned relevance, \name solves
+where $\eta$ sets the strength of the discount. A frame that duplicates a well-funded frame thus loses most of its relevance, while one that duplicates an unfunded frame keeps it. \name then solves
 \begin{equation}
-  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
-% Ordered pairs (j != i) as in cover_allocate.py, so this eta equals the code's beta.
+  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
   \label{eq:p1}
 \end{equation}
-The objective keeps the form of~\eqref{eq:relevance}, and only the relevance changes. A frame thus loses relevance only
-when similar frames are shown with many tokens, so the plan prefers frames with different content. Moreover, a frame
-whose conditioned relevance falls to zero receives no tokens at all, so redundancy limits how many frames are shown
-without a separate price per frame. A larger $\eta$ yields fewer, more distinct frames, while $\eta=0$
-recovers~\eqref{eq:relevance}.
+where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recovers the objective above.
 
 \paragraph{Extending to Transcripts.}
-Many questions hinge on what is said rather than shown, so \name also allocates tokens to the transcript of the video.
-The extension adds terms of the same form rather than a new mechanism. Let $u_1,\dots,u_M$ be the transcript events,
-and index frames and events jointly as items $i\in[N+M]$, with $b_i$ the tokens of item $i$. We abbreviate the query
-relevance of item $i$ as $r_i$, which is $r(f_i\mid q)$ for a frame and $\beta\,r(u_m\mid q)$ for an event $u_m$, the
-relevance of its text to $q$ scaled by a weight $\beta$. Likewise, $v_i$ is the value function of the type of item $i$:
-$v_{\text{frame}}$, given by~\eqref{eq:curve}, or $v_{\text{text}}$, which takes the same form with its own half-value
-count and is fitted jointly with $v_{\text{frame}}$, so that both curves are expressed in the same units of answer
-probability. To shorten an event, \name uses a prompt compressor that keeps the original words~\cite{llmlingua2}, so
-that a shortened event is a subset of the full one rather than a paraphrase. Finally, $s_{ij}=0$ whenever $i$ or $j$ is
-an event, so the relevance of an event is not conditioned on the plan. Expanding~\eqref{eq:cond}, the objective
-of~\eqref{eq:p1} over all items becomes
+Many questions hinge on what is said rather than shown, so \name also allocates tokens to the transcript of the video. Let $u_1,\dots,u_M$ be its transcript events, each a timestamped speech segment, with relevance $r(u_m\mid q)$ computed as for frames using a text encoder (e.g., BGE~\cite{bge}), and let $w_m$ be the tokens kept from $u_m$. Transcript events then enter the objective in the same way as frames:
 \begin{equation}
-  J(\mathbf b)=\sum_{i}r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j) .
+\begin{aligned}
+  \max_{\mathbf b,\mathbf w}\ &\sum_{i}r(f_i\mid q,\mathbf b)\,v_{\text{frame}}(b_i)\\[-2pt]
+  &\quad+\beta\sum_{m}r(u_m\mid q)\,v_{\text{text}}(w_m)\\[-2pt]
+  \text{s.t.}\ \ &\sum_{i}b_i+\sum_{m}w_m\le B ,
+\end{aligned}
   \label{eq:joint}
 \end{equation}
+where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
 \paragraph{Iterative Water-Filling.}
-The conditioned relevance couples every pair of frames, so maximizing~\eqref{eq:joint} under the budget is a quadratic
-knapsack problem with no separable solution. However, with the other items fixed, $J$ is linear in $v_i(b_i)$. Its
-coefficient, clipped at zero,
+Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are coupled: the optimal token count of a frame depends on the token counts of the frames similar to it. Once the token values of the other frames are fixed, however, the problem separates across items and admits an exact solution. The Token Scheduler therefore alternates between fixing the relevances and allocating the tokens~\cite{frank1956,jaggi2013}, as summarized in \cref{alg:iwf}.
+
+\textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
 \begin{equation}
-  \tilde r_i=\max\Big(0,\ r_i-2\eta\sum_{j\neq i}s_{ij}\,v_j(b_j)\Big) ,
+  \tilde r_i=r_i-2\eta\sum_{j\neq i}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
 \end{equation}
-is the residual relevance of item $i$. The factor of two arises because $v_i(b_i)$ enters $J$ twice: it scales the
-conditioned relevance of item $i$, and it lowers the conditioned relevance of every item similar to $i$. An item is
-therefore charged both for the coverage it receives from similar items and for the coverage it provides to them. The
-clipping changes nothing, since an item with a negative coefficient receives no tokens either way. For fixed $\tilde r$,
-the problem separates across items, and pricing each token at $\lambda\ge0$ lets every item choose its own token count:
+where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
+
+\textit{Allocating the tokens.} With fixed relevances, the items no longer depend on each other, and the Token Scheduler allocates the budget exactly by water-filling~\cite{boyd2004}, which is commonly used for resource allocation in networking. Water-filling sets a single price $\lambda$ per token, and each item receives tokens until the value of an additional token falls below this price:
 \begin{equation}
   b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
   \label{eq:percost}
 \end{equation}
-where $b$ ranges over the token counts that the pruner supports, including zero. Since the total tokens of the plan
-are non-increasing in $\lambda$, a bisection on $\lambda$ finds the price at which the plan meets $B$. It searches
-between $\lambda=0$, where every item takes the largest count it can use, and $\max_i\tilde r_i$, where no item is
-funded, because $v_i$ never exceeds one and every shown item costs at least one token. We refer to this procedure as
-water-filling, with $\lambda$ as the water level.
+where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the price at which the allocation spends $B$. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the fixed relevances even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
 
-\begin{proposition}[Everett~\cite{everett1963}]
-\label{thm:everett}
-For any $\lambda\ge0$, let $B'=\sum_ib_i^*(\lambda)$. Then
-\begin{equation}
-  \mathbf b^*(\lambda)\in\argmax_{\mathbf b}\Big\{\sum_i\tilde r_iv_i(b_i)\ :\ \sum_ib_i\le B'\Big\} .
-\end{equation}
-\end{proposition}
-
-\noindent Proposition~\ref{thm:everett} (proof in the supplementary material) yields two implications. First, it
-requires neither convexity nor continuity, so each round is exact on the discrete token grid. Second, every funded item
-that is not at a bound satisfies $\tilde r_iv_i'(b_i)=\lambda$. All funded items, frames and transcript events alike, thus
-earn the same marginal value per token, so tokens flow to whichever item yields more evidence, and an item whose
-effective relevance reaches zero receives no tokens.
-
-\name then alternates between the two steps (\cref{alg:iwf}). The first round starts from $\bar v_i=0$, so
-that $\tilde r=r$ and the round maximizes~\eqref{eq:joint} with $\eta=0$. Each later round recomputes~\eqref{eq:effective} with
-$v_j(b_j)$ replaced by $\bar v_j$, a running average of $v_j(b_j)$ over the previous plans, and water-fills again. The average damps oscillation, since two similar
-frames would otherwise trade their tokens back and forth between rounds. \name returns the plan that scores highest
-under~\eqref{eq:joint}, and each round costs one water-filling and one product with the similarity matrix. Finally, \name
-merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward it, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
@@ -161,9 +102,9 @@ merges the selected frames and events in time order, each preceded by its timest
 \Require similarities $s_{ij}$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
 \Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
-\State $\bar v_i\gets 0$ \Comment{coverage of item $i$}
+\State $\bar v_i\gets 0$ \Comment{current values}
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\neq i}s_{ij}\bar v_j\big)$ \Comment{residual relevance}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\neq i}s_{ij}\bar v_j\big)$ \Comment{gradient}
   \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
@@ -183,109 +124,66 @@ merges the selected frames and events in time order, each preceded by its timest
 \end{algorithm}
 
 \paragraph{Optimality over Prior Allocation Rules.}
-Prior allocation rules are feasible points of~\eqref{eq:relevance}: top-$K$ retrieval shows the $K$ most relevant
-frames in full, proportional allocation~\cite{luo2025quota} gives frame $i$ the tokens $r_iB$, and rank
-tiers~\cite{zhang2025qframe} assign fixed counts by rank. By Proposition~\ref{thm:everett}, on frames the first round of
-\cref{alg:iwf} solves~\eqref{eq:relevance} exactly and therefore scores at least as high as each of these rules at
-equal spend. Because \cref{alg:iwf} keeps the best plan it visits, its output never scores lower under~\eqref{eq:joint}
-than this first round. The gap to proportional allocation, moreover, is structural rather than an artifact of the
-token grid:
+Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance} exactly, and thus achieves the highest objective among all allocations with the same token spend, including both rules. Moreover, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is strictly suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
 
 \begin{proposition}
 \label{prop:proportional}
-Let $\eta=0$, consider frames only, let the $r_i$ take at least two distinct values, and let every $r_iB$ lie strictly
-inside the token range. The proportional plan $b_i=r_iB$ satisfies the optimality condition of~\eqref{eq:relevance}
-for all such $r$ if and only if the value curve is logarithmic:
-\begin{equation}
-  r_i\,v_{\text{frame}}'(r_iB)=\lambda\ \ \forall i \quad\Longleftrightarrow\quad v_{\text{frame}}\ \text{is affine in}\ \log b .
-\end{equation}
+% Mild assumptions, stated in the supplementary proof: N >= 3 frames, theta_1 > 0, real-valued token counts,
+% and 0 < r_i B < b_max for all i (no frame at zero or full tokens).
+Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then, under mild assumptions, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
 \end{proposition}
 
-\noindent Proposition~\ref{prop:proportional} (proof in the supplementary material) yields two implications. First,
-proportional allocation is optimal only for a value curve that never saturates. Second, since the measured
-curve~\eqref{eq:curve} saturates, proportional allocation over-funds the most relevant frames past saturation and
-starves the frames behind them, which~\eqref{eq:relevance} funds instead.
+\noindent Intuitively, proportional allocation is optimal only for a logarithmic value function, which never saturates. Since the learned token value saturates, QuoTA keeps adding tokens to the most relevant frames after their value has saturated, at the expense of less relevant frames that would still benefit from them.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Allocation across Multi-Turn Conversations}
 \label{sec:multiturn}
 
-In practice, a user asks several questions $q_1,\dots,q_T$ about one video, and the serving engine keeps the KV cache
-of the conversation between turns. Frame-level RAG fits this setting naturally: a later question only appends the
-frames it adds, and prefix caching reuses everything before them. Token allocation, however, breaks this reuse, since
-solving~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though
-consecutive questions share much of their evidence. An effective multi-turn allocation must therefore (i) reuse the
-cached tokens, (ii) adapt relevance to each question, and (iii) bound the prefill of the conversation. Re-allocating
-every turn from scratch meets (ii) but neither (i) nor (iii), whereas freezing the first plan meets (i) but not (ii).
+In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the serving engine keeps the KV cache of the conversation between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse. Solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. An effective multi-turn allocation must therefore (i) reuse the cached tokens, (ii) adapt relevance to each question, and (iii) bound the prefill of the conversation. Re-allocating every turn from scratch meets (ii) but neither (i) nor (iii), whereas freezing the first allocation meets (i) but not (ii). \name meets all three, as described below.
 
-\paragraph{Cache-Aware Objective with Attention-Guided Relevance.}
-Let $c_i$ be the tokens of frame $i$ already in the cache, with $c_i=0$ before the first turn. Each turn $t$
-solves~\eqref{eq:p1} with a turn-specific relevance $r_i^{(t)}$ and prefills only what the cache lacks:
+\paragraph{Reusing Cached Tokens.}
+Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Each turn $t$ solves Eq.~\eqref{eq:joint} with a turn-specific relevance $r_i^{(t)}$ and prefills only the tokens that the cache lacks,
 \begin{equation}
   p_i=\max(0,\ b_i-c_i) .
   \label{eq:cost}
 \end{equation}
-The cache thus changes what a turn costs but not what it chooses. This choice follows KV-cache retrieval and
-compression methods, in which the budget bounds the tokens that the model attends to and prefill is a separate
-cost~\cite{rekv2025,commitkv2026}. Relevance, however, should change once frames are cached, since the retriever scores
-each frame against $q_t$ in isolation, whereas the VLM has already read the cached frames. Before adding new tokens,
-\name prefills $q_t$ on top of the cache, which the turn requires anyway, and reads the attention from its tokens to
-the cached visual tokens in a few heads, reusing the cached keys as in-context KV-cache retrieval
-does~\cite{rekv2025}. Only the attention of the current question is used, since attention under one question misranks
-what a later question needs~\cite{cvma2026}. With $a_i$ the share of this attention per cached token of frame $i$,
-\name keeps $r_i^{(t)}=r_i$ for frames that are not cached and sets
-\begin{equation}
-  r_i^{(t)}\propto r_i^{\,1-\gamma}\,a_i^{\,\gamma}\qquad\text{for cached frames } (c_i>0),
-  \label{eq:fusion}
-\end{equation}
-where $\gamma\in[0,1]$ sets the trust in attention, and the proportionality constant keeps the total relevance of the
-cached frames equal to their retrieval total.
-
-\begin{proposition}
-\label{prop:fusion}
-Let $\hat r$ be the retrieval relevance restricted to the cached frames and normalized to sum to one. Among all
-distributions $\pi$ on the cached frames,
-\begin{equation}
-\begin{aligned}
-  &\argmin_{\pi}\ (1-\gamma)\,\mathrm{KL}(\pi\,\|\,\hat r)+\gamma\,\mathrm{KL}(\pi\,\|\,a)\\[-2pt]
-  &\qquad\propto\ r_i^{\,1-\gamma}a_i^{\,\gamma} .
-\end{aligned}
-\end{equation}
-\end{proposition}
-
-\noindent Proposition~\ref{prop:fusion} (proof in the supplementary material) yields two implications. First,
-\eqref{eq:fusion} gives the distribution closest to both signals, from retrieval alone at $\gamma=0$ to
-attention alone at $\gamma=1$. Second, because the normalization fixes their total, attention re-ranks the cached frames but
-cannot pull budget away from uncached ones, so a question about a new part of the video still sends its tokens there.
-
-\paragraph{Bounded Prefill via Rank-Only Pruning and Append-Only Layout.}
-Prefilling only the missing tokens requires two properties. First, the tokens that a frame keeps at a smaller
-allocation must be a subset of those it keeps at a larger one. VisionZip~\cite{yang2024visionzip} violates this
-property, since it merges the tokens it drops into contextual tokens whose content changes with the allocation. \name
-therefore discards the contextual tokens and ranks the dominant tokens of each frame once, independently of the
-question, so that a frame at $b$ tokens holds its top $b$ tokens. A turn then prefills exactly the new ranks of each
-frame, the $p_i$ tokens of~\eqref{eq:cost}, and updates the cache as
+The cache thus changes what a turn costs but not what it allocates, following KV-cache retrieval and compression methods, in which the budget bounds the tokens that the model attends to and prefill is a separate cost~\cite{rekv2025,commitkv2026}. Prefilling only $p_i$ tokens requires two properties. First, the tokens that a frame keeps at a smaller allocation must be a subset of those it keeps at a larger one. The pruner of \cref{sec:allocation} guarantees this, since it ranks the tokens of each frame once, independently of the query; merging the dropped tokens into contextual tokens, as VisionZip~\cite{yang2024visionzip} does, would violate it, since their content changes with the allocation. A turn therefore prefills exactly the next $p_i$ ranks of each frame and updates the cache as
 \begin{equation}
   c_i\leftarrow\max(c_i,\ b_i) .
   \label{eq:incr}
 \end{equation}
+Second, the new tokens must not invalidate the cache. Inserting them inside the block of their frame would invalidate every later token, so \name instead appends them after the conversation in rank order, between vision start and end tokens. Since the multimodal rotary position embedding of the VLM~\cite{bai2025qwen25vl} assigns positions by time and space rather than by sequence order, an appended token keeps the position it has in its frame; only its place in the causal order changes.
+
+\paragraph{Attention-Guided Relevance.}
+The relevance of a frame, however, should change once the frame is cached. The retriever scores each frame against $q_t$ in isolation, whereas the VLM has already read the cached frames and can judge which of them matter for the new question. Before adding new tokens, \name prefills $q_t$ on top of the cache, which the turn requires anyway, and reads the attention from its tokens to the cached visual tokens in a few heads, reusing the cached keys as in-context KV-cache retrieval does~\cite{rekv2025}. Only the attention of the current question is used, since attention under one question misranks what a later question needs~\cite{cvma2026}. Let $a_i$ be the share of this attention per cached token of frame $f_i$. \name keeps $r_i^{(t)}=r(f_i\mid q_t)$ for frames that are not cached, and sets
+\begin{equation}
+  r_i^{(t)}\propto r(f_i\mid q_t)^{1-\gamma}\,a_i^{\gamma}
+  \label{eq:fusion}
+\end{equation}
+for cached frames ($c_i>0$), where $\gamma\in[0,1]$ sets the trust in attention, and the proportionality constant keeps the total relevance of the cached frames equal to their retrieval total. This choice is principled:
+
+\begin{proposition}
+\label{prop:fusion}
+Let $\hat r$ and $\hat a$ be the retrieval relevance and the attention restricted to the cached frames, each normalized to sum to one. Then, among all distributions $\pi$ over the cached frames,
+\begin{equation}
+\begin{aligned}
+  &\argmin_{\pi}\ (1-\gamma)\,\mathrm{KL}(\pi\,\|\,\hat r)+\gamma\,\mathrm{KL}(\pi\,\|\,\hat a)\\[-2pt]
+  &\qquad\propto\ \hat r^{\,1-\gamma}\hat a^{\,\gamma} .
+\end{aligned}
+\end{equation}
+\end{proposition}
+
+\noindent Proposition~\ref{prop:fusion} shows that Eq.~\eqref{eq:fusion} is the distribution closest to both signals, ranging from retrieval alone at $\gamma=0$ to attention alone at $\gamma=1$. Moreover, because the normalization fixes the total relevance of the cached frames, attention re-ranks them but cannot draw budget away from uncached frames, so a question about a new part of the video still directs its tokens there. A detailed proof is provided in the supplementary material.
+
+\paragraph{Bounded Prefill.}
+Together, nested token ranks and the cache update in Eq.~\eqref{eq:incr} bound the prefill of the entire conversation:
 
 \begin{proposition}
 \label{prop:bound}
-Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $i$ at turn $t$. Over a conversation of $T$
-turns,
+Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $f_i$ at turn $t$. Then, for a conversation of any length $T$,
 \begin{equation}
   \sum_{t=1}^{T}p_i^{(t)}=\max_t\,b_i^{(t)}\le b_{\max} .
 \end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:bound} (proof in the supplementary material) bounds the prefill of every frame by its
-largest allocation, however long the conversation runs, so the whole conversation prefills at most the full tokens of
-the frames it ever shows. Re-allocating from scratch, in contrast, costs $\sum_t\sum_ib_i^{(t)}$, which grows with
-every turn.
-
-The second property is that the new tokens must not invalidate the cache. Inserting them inside the block of their
-frame would invalidate every later token, so \name instead appends them after the conversation in rank order, between
-vision start and end tokens. Because the multimodal rotary position embedding of the VLM reserves a position for every
-frame, an appended token keeps the temporal and spatial position it has in its frame. Only its place in the causal
-order changes.
+\noindent Proposition~\ref{prop:bound} bounds the total prefill of every frame by its largest allocation, independently of the number of turns, so the whole conversation prefills at most the full tokens of the frames it ever shows. Re-allocating from scratch, in contrast, prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. A detailed proof is provided in the supplementary material.
