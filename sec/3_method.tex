@@ -16,22 +16,13 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a frozen VLM~\cite{}. Let $f_1, \dots, f_N$ be uniformly sampled frames from $V$, and let $r_i$ denote the retrieval relevance of frame $i$ with respect to $q$, normalized across the video so that $r_i$ approximates the probability that frame $i$ contains the evidence for $q$. Frame-level RAG can thus naturally be modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i$ denote the semantic similarity of $f_i$ with respect to $q$ (e.g., CLIP score~\cite{}), normalized across all frames. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
   \label{eq:topk}
 \end{equation}
-where $x_i=1$ if frame $i$ is passed to the VLM and $x_i=0$ otherwise.
+where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$. We lift this frame-level objective to a multimodal token-level objective, which carefully defines \textit{how} tokens should be scored, and prove that our solution is theoretically more optimal for this objective compared to naive adaptive token allocation baselines (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{}, a standard feature of serving pipelines. We therefore reformulate our optimization objective to reuse the KV cache across turns. This improves both efficiency and accuracy, and we prove that the cumulative prefill cost stays bounded over long conversations due to our token pruner design (\cref{sec:multiturn}).
 
-Lifting this optimization objective 
-
-Lifting~\eqref{eq:topk} to the token level raises two key questions. (i) How many tokens should each frame and
-transcript event receive under one budget, given that the value of a frame saturates with its token count and that
-neighboring frames often repeat each other? (ii) How can a conversation reuse the tokens already in the KV cache when
-each question needs different evidence? We answer the first with a diversity-aware token allocation objective and a
-solver that is exact in every round (\cref{sec:allocation}). We answer the second by extending the objective across
-turns with a pruner whose prefill is provably bounded (\cref{sec:multiturn}). \cref{fig:overview} shows the resulting
-pipeline.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Token Allocation}
