@@ -1,16 +1,3 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-This paper introduces \name, a framework that moves video RAG from frames to tokens. \name values each frame by its
-relevance weighted by a measured token--quality curve, discounts frames that repeat content already shown, and
-allocates one budget across frames and transcript text with an iterative water-filling solver whose every round is
-exact. It extends the same objective to multi-turn conversations, where a rank-only pruner and an append-only layout
-bound the prefill of every frame by its largest allocation. On LVBench, \name improves accuracy over top-$K$ frame
-retrieval at every matched budget, and on MT-Video-Bench it reduces the visual prefill of conversations by
-2.2$\times$ at a comparable score.
-
-\paragraph{Limitations.}
-Our evaluation uses one VLM, a few hundred questions, and a substitute judge for MT-Video-Bench, and several
-differences are not significant at this sample size. The attention-guided relevance across turns is proposed but not
-yet evaluated. Moreover, the competition between frames and text for the budget still needs tests at low budgets,
-where the transcript no longer fits in full.

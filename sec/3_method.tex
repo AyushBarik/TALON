@@ -4,11 +4,7 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{\textbf{\name overview.} A retriever scores every frame and transcript event against the query ($r_i$). The
-  Token Allocator (\cref{sec:allocation}) combines these relevances with the measured value curves and spends one
-  token budget across all items by water-filling. The frozen pruner keeps the top-ranked tokens of each frame (greyed
-  patches are dropped), and in a conversation (\cref{sec:multiturn}) only the new tokens $p_i$ are appended to the KV
-  cache before the frozen VLM answers. Lighter bars are transcript events; all bars are illustrative.}
+  \caption{\textbf{\name overview.} \ayush{overview description. make the figure ore beautiful.}}
   \label{fig:overview}
 \end{figure*}
 
@@ -145,7 +141,7 @@ merges the selected frames and events in time order, each preceded by its timest
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require relevances $r_i$, value curves $v_i(b)$ for $b\le b_{\max}$
+\Require relevances $r_i$, value curves $v_i(b)$ for $b\le b_{\max}$ \ayush{too many symbols? fix later}
 \Require similarities $s_{ij}$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
 \Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
