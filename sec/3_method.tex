@@ -12,9 +12,9 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a budget of $K$ frames, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
 \begin{equation}
-  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
+  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
 \end{equation}
 where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$, and
@@ -23,7 +23,7 @@ where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$, and
   \label{eq:rel}
 \end{equation}
 % Code: z-scored cosines with a softmax temperature; state in implementation details.
-is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective, which carefully defines \textit{how} tokens should be scored, and prove that our solution is theoretically more optimal for this objective compared to naive adaptive token allocation baselines (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{}, a standard feature of serving pipelines. We therefore reformulate our optimization objective to reuse the KV cache across turns. This improves both efficiency and accuracy, and we prove that the cumulative prefill cost stays bounded over long conversations due to our token pruner design (\cref{sec:multiturn}).
+is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that defines \textit{how} tokens should be valued, and prove that our solution strictly outperforms prior token allocation rules on it (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{kwon2023vllm,zheng2024sglang}, a standard feature of LLM inference. We therefore carry the allocation across turns, reusing the KV cache and updating relevance with the attention of the VLM. This improves both efficiency and accuracy, and we prove that the cumulative prefill stays bounded however long the conversation lasts, owing to the design of our token pruner (\cref{sec:multiturn}).
 
 
 % ---------------------------------------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ The objective above, however, scores every frame in isolation. Consecutive frame
   r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\neq i}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
-where $\eta$ sets the strength of the discount. A frame that duplicates a well-funded frame thus loses most of its relevance, while one that duplicates an unfunded frame keeps it. \name then solves
+where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
   \label{eq:p1}
@@ -91,14 +91,14 @@ where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. T
 \end{equation}
 where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the price at which the allocation spends $B$. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the fixed relevances even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
 
-\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward it, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require relevances $r_i$, value curves $v_i(b)$ for $b\le b_{\max}$ \ayush{too many symbols? fix later}
+\Require relevances $r_i$, token values $v_i(b)$ for $b\le b_{\max}$ \ayush{too many symbols? fix later}
 \Require similarities $s_{ij}$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
 \Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
@@ -150,7 +150,7 @@ Once a frame is cached, the VLM has already read it, and its attention to the fr
 for cached frames, and keeps $r_i^{(t)}=r(f_i\mid q_t)$ for the others. Here, $\gamma\in[0,1]$ sets the trust in attention, from retrieval alone at $\gamma=0$ to attention alone at $\gamma=1$. The cached frames are then rescaled to keep their total relevance, so attention only re-ranks the frames the VLM has already seen and cannot take relevance from frames it has not seen.
 
 \paragraph{Allocating and Prefilling.}
-\name then solves Eq.~\eqref{eq:joint} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because RoPE~\cite{bai2025qwen25vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus still bounds the tokens that the VLM attends to, while only the prefill shrinks.
+\name then solves Eq.~\eqref{eq:joint} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the RoPE of the VLM~\cite{bai2025qwen25vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus still bounds the tokens that the VLM attends to, while only the prefill shrinks.
 
 \paragraph{Bounded Prefill.}
 \name designs its pruner to rank the tokens of each frame once, independently of the query, so that every turn only extends the nested token sequence of a frame, and each rank is prefilled at most once. The prefill of a conversation is therefore bounded, however many turns it lasts:
