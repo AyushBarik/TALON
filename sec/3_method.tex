@@ -136,7 +136,7 @@ Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then
 \noindent Intuitively, proportional allocation is optimal only for a logarithmic value function, which never saturates. Since the learned token value saturates, QuoTA keeps adding tokens to the most relevant frames after their value has saturated, at the expense of less relevant frames that would still benefit from them.
 
 % ---------------------------------------------------------------------------------------------------------------------
-\subsection{Allocation across Multi-Turn Conversations}
+\subsection{Scheduling across Multi-Turn Conversations}
 \label{sec:multiturn}
 
 In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the KV cache of the conversation is kept between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence (\todo{Fig.~Q}). \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:joint} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
