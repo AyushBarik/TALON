@@ -103,7 +103,7 @@
 % hole into a large white gap.) The head is list-free: a list-based theorem (amsthm or \newtheorem) can lose its head
 % into the page corner under the review-mode line numbering.
 \usepackage[breakable,skins]{tcolorbox}
-\tcbset{propbox/.style={breakable, enhanced, colback=black!3, colframe=black!55, boxrule=0.5pt, arc=1.5pt,
+\tcbset{propbox/.style={unbreakable, enhanced, colback=black!3, colframe=black!55, boxrule=0.5pt, arc=1.5pt,
   left=4pt, right=4pt, top=3pt, bottom=3pt, before skip=6pt, after skip=6pt}}
 \newcounter{proposition}
 \NewDocumentEnvironment{proposition}{o}
