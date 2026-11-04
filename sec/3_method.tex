@@ -139,44 +139,26 @@ Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then
 \subsection{Allocation across Multi-Turn Conversations}
 \label{sec:multiturn}
 
-In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the serving engine keeps the KV cache of the conversation between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse. Solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. An effective multi-turn allocation must therefore (i) reuse the cached tokens, (ii) adapt relevance to each question, and (iii) bound the prefill of the conversation. Re-allocating every turn from scratch meets (ii) but neither (i) nor (iii), whereas freezing the first allocation meets (i) but not (ii). \name meets all three, as described below.
+In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the serving engine keeps the KV cache of the conversation between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. This setting raises two key questions: (i) how can a turn reuse the tokens already in the cache, and (ii) how should relevance change once the VLM has read the cached frames? \name answers the first by prefilling only the tokens that the cache lacks, and the second by combining the retrieval relevance with the attention of the VLM.
 
 \paragraph{Reusing Cached Tokens.}
-Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Each turn $t$ solves Eq.~\eqref{eq:joint} with a turn-specific relevance $r_i^{(t)}$ and prefills only the tokens that the cache lacks,
+Re-allocating every turn from scratch would prefill every frame again, even when its tokens are already in the cache. \name instead keeps the cached tokens and prefills only the missing ones. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Each turn $t$ solves Eq.~\eqref{eq:joint} with a turn-specific relevance $r_i^{(t)}$ and prefills
 \begin{equation}
-  p_i=\max(0,\ b_i-c_i) .
+  p_i=\max(0,\ b_i-c_i)
   \label{eq:cost}
 \end{equation}
-The cache thus changes what a turn costs but not what it allocates, following KV-cache retrieval and compression methods, in which the budget bounds the tokens that the model attends to and prefill is a separate cost~\cite{rekv2025,commitkv2026}. Prefilling only $p_i$ tokens requires two properties. First, the tokens that a frame keeps at a smaller allocation must be a subset of those it keeps at a larger one. The pruner of \cref{sec:allocation} guarantees this, since it ranks the tokens of each frame once, independently of the query; merging the dropped tokens into contextual tokens, as VisionZip~\cite{yang2024visionzip} does, would violate it, since their content changes with the allocation. A turn therefore prefills exactly the next $p_i$ ranks of each frame and updates the cache as
-\begin{equation}
-  c_i\leftarrow\max(c_i,\ b_i) .
-  \label{eq:incr}
-\end{equation}
-Second, the new tokens must not invalidate the cache. Inserting them inside the block of their frame would invalidate every later token, so \name instead appends them after the conversation in rank order, between vision start and end tokens. Since the multimodal rotary position embedding of the VLM~\cite{bai2025qwen25vl} assigns positions by time and space rather than by sequence order, an appended token keeps the position it has in its frame; only its place in the causal order changes.
+tokens of frame $f_i$. The budget thus bounds the tokens that the VLM attends to, while prefill is a separate cost, as in KV-cache retrieval and compression methods~\cite{rekv2025,commitkv2026}. Prefilling only the missing tokens requires two properties. First, the tokens that a frame keeps at a smaller allocation must be a subset of those it keeps at a larger one. The pruner of \cref{sec:allocation} guarantees this, since it ranks the tokens of each frame once, independently of the query; merging the dropped tokens into contextual tokens, as VisionZip~\cite{yang2024visionzip} does, would violate it, since their content changes with the allocation. A turn therefore prefills the next $p_i$ ranks of each frame and updates the cache as $c_i\leftarrow\max(c_i,b_i)$. Second, the new tokens must not invalidate the cache. Inserting them inside the block of their frame would invalidate every later token, so \name appends them after the conversation in rank order, between vision start and end tokens. Since the multimodal rotary position embedding of the VLM~\cite{bai2025qwen25vl} assigns positions by time and space rather than by sequence order, an appended token keeps the position it has in its frame; only its place in the causal order changes.
 
 \paragraph{Attention-Guided Relevance.}
-The relevance of a frame, however, should change once the frame is cached. The retriever scores each frame against $q_t$ in isolation, whereas the VLM has already read the cached frames and can judge which of them matter for the new question. Before adding new tokens, \name prefills $q_t$ on top of the cache, which the turn requires anyway, and reads the attention from its tokens to the cached visual tokens in a few heads, reusing the cached keys as in-context KV-cache retrieval does~\cite{rekv2025}. Only the attention of the current question is used, since attention under one question misranks what a later question needs~\cite{cvma2026}. Let $a_i$ be the share of this attention per cached token of frame $f_i$. \name keeps $r_i^{(t)}=r(f_i\mid q_t)$ for frames that are not cached, and sets
+Intuitively, once a frame is cached, the VLM has already read it and can judge which cached frames matter for the new question better than the retriever, which scores each frame against $q_t$ in isolation. \name therefore reads this judgment from the attention of the VLM. Before adding new tokens, it prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads, reusing the cached keys as in-context KV-cache retrieval does~\cite{rekv2025}. Only the attention of the current question is used, since attention under one question misranks what a later question needs~\cite{cvma2026}. With $a_i$ the share of this attention per cached token of frame $f_i$, \name sets
 \begin{equation}
   r_i^{(t)}\propto r(f_i\mid q_t)^{1-\gamma}\,a_i^{\gamma}
   \label{eq:fusion}
 \end{equation}
-for cached frames ($c_i>0$), where $\gamma\in[0,1]$ sets the trust in attention, and the proportionality constant keeps the total relevance of the cached frames equal to their retrieval total. This choice is principled:
-
-\begin{proposition}
-\label{prop:fusion}
-Let $\hat r$ and $\hat a$ be the retrieval relevance and the attention restricted to the cached frames, each normalized to sum to one. Then, among all distributions $\pi$ over the cached frames,
-\begin{equation}
-\begin{aligned}
-  &\argmin_{\pi}\ (1-\gamma)\,\mathrm{KL}(\pi\,\|\,\hat r)+\gamma\,\mathrm{KL}(\pi\,\|\,\hat a)\\[-2pt]
-  &\qquad\propto\ \hat r^{\,1-\gamma}\hat a^{\,\gamma} .
-\end{aligned}
-\end{equation}
-\end{proposition}
-
-\noindent Proposition~\ref{prop:fusion} shows that Eq.~\eqref{eq:fusion} is the distribution closest to both signals, ranging from retrieval alone at $\gamma=0$ to attention alone at $\gamma=1$. Moreover, because the normalization fixes the total relevance of the cached frames, attention re-ranks them but cannot draw budget away from uncached frames, so a question about a new part of the video still directs its tokens there. A detailed proof is provided in the supplementary material.
+for cached frames ($c_i>0$) and keeps $r_i^{(t)}=r(f_i\mid q_t)$ for the others, where $\gamma\in[0,1]$ sets the trust in attention. This weighted geometric mean is the distribution closest to both signals in KL divergence, ranging from retrieval alone at $\gamma=0$ to attention alone at $\gamma=1$ (proof in the supplementary material). The proportionality constant keeps the total relevance of the cached frames equal to their retrieval total, so attention re-ranks the cached frames but cannot draw budget away from uncached ones, and a question about a new part of the video still directs its tokens there.
 
 \paragraph{Bounded Prefill.}
-Together, nested token ranks and the cache update in Eq.~\eqref{eq:incr} bound the prefill of the entire conversation:
+Because the pruner ranks the tokens of each frame once and the cache only grows, the prefill of a conversation is bounded by construction, however many turns it lasts:
 
 \begin{proposition}
 \label{prop:bound}
@@ -186,4 +168,4 @@ Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $f_i$
 \end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:bound} bounds the total prefill of every frame by its largest allocation, independently of the number of turns, so the whole conversation prefills at most the full tokens of the frames it ever shows. Re-allocating from scratch, in contrast, prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. A detailed proof is provided in the supplementary material.
+\noindent Proposition~\ref{prop:bound} shows that the whole conversation prefills at most the full tokens of the frames it ever shows. Re-allocating from scratch, in contrast, prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. A detailed proof is provided in the supplementary material.
