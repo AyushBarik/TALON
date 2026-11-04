@@ -24,15 +24,15 @@ where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$. We lift this
 \subsection{Token Allocation}
 \label{sec:allocation}
 
-Let $b_i$ be the number of tokens allocated to frame $f_i$, with $b_i=0$ meaning that the frame is dropped. Lifting~\eqref{eq:topk} to the token level replaces the binary decision $x_i$ by $b_i$ and the frame budget $K$ by a token budget $B$. Doing so, however, poses two key challenges. First, the objective must state what a frame is worth at every token count, a question that~\eqref{eq:topk} never faces, since it shows each frame either in full or not at all. Second, once frames can be shown cheaply, the budget reaches many frames that repeat the content of others, so the relevance of a frame must account for the frames already in the plan. \name addresses the first challenge with a token value function measured offline, and the second by conditioning relevance on the allocation. We formulate both for frames alone and then extend the formulation to the transcript of the video.
+Moving to token level RAG replaces the binary decision $x_i$ by $b_i$, where $b_i$ represents the number of tokens allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. Doing so, however, poses two key challenges. First, the objective must state what a frame is worth at every token count. Second, near-duplicate frames that repeat the content of others may be selected, so the relevance of a frame must account for already selected frames (inaccurate? as its account for frames weighted by the tokens allocated to them?). \name addresses the first challenge with a token value function calibrated offline (you can calibrated offline and continously calibrated across examples, then now R can be "updated" which you can define in a simple way), and the second by conditioning relevance on the allocation. We formulate both for frames alone and then extend the formulation to the transcript of the video. (not well written)
 
 \paragraph{Measuring Token Value.}
-Intuitively, the token count of a frame acts as its effective resolution. With few tokens, the VLM perceives only the coarse structure of the frame, such as the scene layout and large objects; with more tokens, it also perceives fine detail, such as small objects and on-screen text. How this added detail translates into downstream accuracy, however, is not known in advance, yet it decides how many tokens a frame deserves. We capture it with a \textit{token value function} $v(b)$, the probability that the VLM reads the evidence of a frame shown with $b$ tokens, and lift~\eqref{eq:topk} to
+Intuitively, the token count of a frame acts as its effective resolution. With few tokens, the VLM perceives only the coarse structure of the frame, such as the scene layout and large objects; with more tokens, it also perceives fine detail, such as small objects and on-screen text. How this added detail translates into downstream accuracy, however, is not known in advance, yet it decides how many tokens a frame deserves. We capture it with a \textit{token value function} $v(b)$, the probability (prefer not to say probability as reviewers may get angry) that the VLM reads the evidence of a frame shown with $b$ tokens, and lift~\eqref{eq:topk} to (did not mention how we got v, e.g. we took N video query pairs blah blah)
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
 \end{equation}
-The objective is thus the probability that the evidence is both in the prompt and readable. Maximizing it is the
+The objective is thus the probability that the evidence is both in the prompt and readable (dont say probability as its not really literal probability). Maximizing it is the (maybe put "Fig. Y" somewhere thsi is the figure for this offline curve ill add later)
 classical problem of optimal search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the
 evidence and tokens as the search effort. Top-$K$ retrieval~\eqref{eq:topk} is the special case $b_i\in\{0,b_{\max}\}$
 and $B=Kb_{\max}$, where $b_{\max}$ is the token count of a full frame.
@@ -41,12 +41,28 @@ The objective is only as good as its value function. A linear $v$ would reward e
 frame saturates, whereas a step at a fixed count would reproduce the all-or-nothing cost of~\eqref{eq:topk}. \name
 instead measures $v$ once per VLM, offline. Across a set of calibration videos and queries, it uniformly varies the
 number of tokens per frame and fits
-\begin{equation}
+\begin{equation} (hmm i change my mind should mention value function FIRST then the objective function)
   v(b)=\frac{b^{\alpha}}{b^{\alpha}+\tau^{\alpha}}
   \label{eq:curve}
 \end{equation}
 to the probability that the VLM assigns to the correct answer, where $\tau$ is the token count at which a frame reaches
-half of its value and $\alpha$ sets how sharply the value rises.
+half of its value and $\alpha$ sets how sharply the value rises. (do not say per VLM, just stick to it. We measure V offline, then later sort of and it is updated online and we can sort of define that. Yeah, and kind of fix up the writing, make it write better. No need to say top K retrieval is a special case.
+
+It's kind of obvious. Also never, never say this. Top K retrieval bracket one. That's not how you refer to things.
+
+You say equation. Equation one, equation two. You don't just say brackets one. Hope people know what that means. No one knows what that means.
+
+Maximizing two alone. No, you don't say maximizing equation 2. What is 2? Is it an equation? Is it a function? What is it? Never say stuff like this.
+
+Also, no need to say top K retrieval. No need to mention classical problem of optimal search again stick to the topic measuring token value right we're giving intuition and we're essentially wanting to say okay well that's the intuition uh we need this and we measure this by this offline curve.
+
+Okay, and this is the function. It's updated online. Make and you're putting this into objective function. Objective function looks like this. So there, I explained what v is.
+
+I showed you the equation for v offline as well as online and then I showed you what the objective function is. And done, that's literally it. There's nothing else. Yeah. Very straightforward. Right? No need to mention all this optimal search. What is the relevance to that?
+
+There is no relevance as a prior over the location of no, there is no prior, there is no location. Stop adopting this Bayesian framework. There is nothing Bayesian about. There is no prior.
+
+There is no probabilities here like it's we use probability once like uh try to avoid that term because that's very inaccurate like the reviewer will be angry at you so again so see how I explain very logically follows very logically so that's the measuring token value)
 
 \paragraph{Incorporating Frame Diversity.}
 Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the measured curve has $\alpha<1$,
