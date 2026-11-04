@@ -2,7 +2,7 @@
 % labels are nouns or math only. Items = frames f_i and text t_j (subtitle events) on one time axis (16 frames, 4 text items).
 % All distributions over items are PMFs (bars). Frames: solid bars; transcript events: light bars + purple marker.
 % Bar heights: the token plan from figs/gen_overview_pmfs.py (illustrative, not measured). Test-time re-allocation removed
-% 2026-10-31: no entropy check, no Bayesian update, no posterior plan. R_I, R_T: fitted curves.
+% 2026-10-31: no entropy check, no Bayesian update, no posterior plan. v_frame, v_text: fitted curves.
 % Frames: Video-MME video bepwr1-CNRU (illustration only).
 \definecolor{ink}{HTML}{2E3440}
 \definecolor{arrowgray}{HTML}{6B7280}
@@ -45,11 +45,11 @@
 \foreach \k/\x in {1/0.78, 2/1.48, 3/2.18} {\node[inner sep=0pt] at (\x,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame\k.jpg}};}
 \node at (2.82,3.8) {$\cdots$};
 \node[inner sep=0pt] at (3.5,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame6.jpg}};
-\node at (2.15,3.37) {$f_1\ \ \cdots\ \ f_N$};
+\node at (2.15,3.37) {frames};
 \foreach \x in {0.47,1.17,1.87} {\txtchip{(\x,2.72)}}
 \node at (2.82,2.87) {$\cdots$};
 \txtchip{(3.19,2.72)}
-\node at (2.15,2.45) {$t_1\ \ \cdots\ \ t_M$};
+\node at (2.15,2.45) {transcript};
 % film strip with a subtitle strip beneath it
 \fill[black!88, rounded corners=1pt] (0.25,0.95) rectangle (4.05,1.73);
 \foreach \x in {0.31,0.51,...,3.95} {\fill[white] (\x,1.6) rectangle ++(0.1,0.07); \fill[white] (\x,1.01) rectangle ++(0.1,0.07);}
@@ -62,18 +62,18 @@
 % ---------------- token allocator (frames and text, one budget) ----------------
 \node[card, fill=accA!7, draw=accA!45, minimum width=6.35cm, minimum height=4.45cm] (sch) at (7.825,2.55) {};
 \node[font=\rmfamily\small\bfseries] at (7.825,4.5) {Token Allocator};
-\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b}\sum_i C_iR_i(b_i)-\eta\sum_{i<j}s_{ij}R_i(b_i)R_j(b_j)$};
+\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b}\sum_i r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}v_i(b_i)v_j(b_j)$};
 \node[font=\scriptsize] at (7.825,3.66) {$\text{s.t.}\ \ \sum_i b_i\le B$};
-% quality curves (x = log2(1 + b), so b = 0 sits at the origin): frames R_I with the same frame at more tokens,
-% text R_T with an illustrative sentence in full and pruned to its kept words (red)
+% quality curves (x = log2(1 + b), so b = 0 sits at the origin): frames v_frame with the same frame at more tokens,
+% text v_text with an illustrative sentence in full and pruned to its kept words (red)
 \begin{scope}[shift={(5.4,1.1)}]
   \draw[ax] (0,0) -- (2.3,0); \draw[ax] (0,0) -- (0,2.2);
   \node[axl, rotate=90, anchor=south] at (-0.04,1.0) {P(gold)};
   \node[axl, anchor=north] at (1.1,-0.03) {tokens};
   \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.505*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
   \draw[black!70, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.42*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\rmfamily\footnotesize, text=txt, anchor=west] at (2.17,1.52) {$R_T$};
-  \node[font=\rmfamily\footnotesize, text=black!70, anchor=west] at (2.17,1.26) {$R_I$};
+  \node[font=\rmfamily\scriptsize, text=txt, anchor=west] at (2.12,1.52) {$v_{\text{text}}$};
+  \node[font=\rmfamily\scriptsize, text=black!70, anchor=west] at (2.12,1.26) {$v_{\text{frame}}$};
   \foreach \b/\im/\dy in {4.6/carV/0.1, 24/carS/0.2} {
     \pgfmathsetmacro{\tx}{0.27*log2(1+\b)} \pgfmathsetmacro{\ry}{1.42*(\b^0.841)/((\b^0.841)+7.73)}
     \fill[black!70] (\tx,\ry) circle (0.05);
