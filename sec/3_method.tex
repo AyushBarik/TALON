@@ -16,9 +16,9 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i$ denote the semantic similarity of $f_i$ with respect to $q$ (e.g., CLIP score~\cite{}), normalized across all frames. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the semantic similarity of $f_i$ with respect to $q$ (e.g., CLIP score~\cite{}), normalized across all frames, so that $r(\cdot\mid q)$ approximates the probability that each frame holds the evidence for $q$. Viewed from a mathematical angle, our frame allocation decision is a binary admit or reject, subject to a budget of $K$ frames, so as to maximize the total similarity of the admitted frames. Frame-level RAG is therefore naturally modeled as an integer linear program:
 \begin{equation}
-  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
+  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
   \label{eq:topk}
 \end{equation}
 where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$. We lift this frame-level objective to a multimodal token-level objective, which carefully defines \textit{how} tokens should be scored, and prove that our solution is theoretically more optimal for this objective compared to naive adaptive token allocation baselines (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{}, a standard feature of serving pipelines. We therefore reformulate our optimization objective to reuse the KV cache across turns. This improves both efficiency and accuracy, and we prove that the cumulative prefill cost stays bounded over long conversations due to our token pruner design (\cref{sec:multiturn}).
@@ -28,72 +28,87 @@ where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$. We lift this
 \subsection{Token Allocation}
 \label{sec:allocation}
 
-To lift~\eqref{eq:topk} to the token level, the allocation must value each item by two properties: whether it holds
-the evidence, and whether the VLM can read that evidence at the token count it receives. \name treats the $N$ frames
-and the $M$ transcript events of the video alike as items, indexed by $i\in[N+M]$. Let $b_i$ be the tokens of item $i$, with zero meaning that the item
-is not shown. For a frame, $r_i$ is its retrieval relevance as in~\eqref{eq:topk}; for a transcript event, $r_i$ is the
-relevance of its text to $q$, scaled by a weight $\beta$. \name allocates a budget $B$ by solving
-\begin{equation}
-  \max_{\mathbf b}\ \sum_{i}r_iv_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
-  \label{eq:relevance}
-\end{equation}
-where $v_i(b)$ is the probability that the VLM reads the evidence of item $i$ when the item is shown with $b$ tokens.
-The objective is thus the probability that the evidence is both in the prompt and readable. Maximizing it is the
-classical problem of optimal search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the
-evidence and tokens as the search effort. Top-$K$ retrieval~\eqref{eq:topk} is the special case with frames only,
-$b_i\in\{0,b_{\max}\}$, and $B=Kb_{\max}$.
+Let $b_i$ be the number of tokens allocated to frame $f_i$, with $b_i=0$ meaning that the frame is dropped. Lifting~\eqref{eq:topk} to the token level replaces the binary decision $x_i$ by $b_i$ and the frame budget $K$ by a token budget $B$. Doing so, however, poses two key challenges. First, the objective must state what a frame is worth at every token count, a question that~\eqref{eq:topk} never faces, since it shows each frame either in full or not at all. Second, once frames can be shown cheaply, the budget reaches many frames that repeat the content of others, so the relevance of a frame must account for the frames already in the plan. \name addresses the first challenge with a token value function measured offline, and the second by conditioning relevance on the allocation. We formulate both for frames alone and then extend the formulation to the transcript of the video.
 
 \paragraph{Measuring Token Value.}
-The objective is only as good as its value curves. A linear value would reward every token equally and ignore that a
-frame saturates, whereas a step at a fixed count would reproduce the all-or-nothing cost of~\eqref{eq:topk}.
-\name instead measures two curves once per VLM, $v_{\text{frame}}$ for frames and $v_{\text{text}}$ for transcript
-events, and sets $v_i$ to the curve of the type of item $i$. On a calibration split, it shows each evidence item at a set of fixed token counts and
-fits
+Intuitively, the token count of a frame acts as its effective resolution. With few tokens, the VLM perceives only the coarse structure of the frame, such as the scene layout and large objects; with more tokens, it also perceives fine detail, such as small objects and on-screen text. How this added detail translates into downstream accuracy, however, is not known in advance, yet it decides how many tokens a frame deserves. We capture it with a \textit{token value function} $v(b)$, the probability that the VLM reads the evidence of a frame shown with $b$ tokens, and lift~\eqref{eq:topk} to
 \begin{equation}
-  v_{\text{frame}}(b)=\frac{b^{\alpha}}{b^{\alpha}+\tau^{\alpha}}
+  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
+  \label{eq:relevance}
+\end{equation}
+The objective is thus the probability that the evidence is both in the prompt and readable. Maximizing it is the
+classical problem of optimal search~\cite{koopman1956,stone1975}, with relevance as the prior over the location of the
+evidence and tokens as the search effort. Top-$K$ retrieval~\eqref{eq:topk} is the special case $b_i\in\{0,b_{\max}\}$
+and $B=Kb_{\max}$, where $b_{\max}$ is the token count of a full frame.
+
+The objective is only as good as its value function. A linear $v$ would reward every token equally and ignore that a
+frame saturates, whereas a step at a fixed count would reproduce the all-or-nothing cost of~\eqref{eq:topk}. \name
+instead measures $v$ once per VLM, offline. Across a set of calibration videos and queries, it uniformly varies the
+number of tokens per frame and fits
+\begin{equation}
+  v(b)=\frac{b^{\alpha}}{b^{\alpha}+\tau^{\alpha}}
   \label{eq:curve}
 \end{equation}
 to the probability that the VLM assigns to the correct answer, where $\tau$ is the token count at which a frame reaches
-half of its value and $\alpha$ sets how sharply the value rises. $v_{\text{text}}$ takes the same form with its own
-half-value count and is fitted jointly with $v_{\text{frame}}$, so that both curves are expressed in the same units of answer probability. To shorten a
-transcript event, \name uses a prompt compressor that keeps the original words~\cite{llmlingua2}, so that a shortened
-event is a subset of the full one rather than a paraphrase.
+half of its value and $\alpha$ sets how sharply the value rises.
 
 \paragraph{Incorporating Frame Diversity.}
-Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the measured curves have $\alpha<1$,
-their slope is unbounded at zero tokens, so the optimum gives tokens to every item with $r_i>0$. Most of these frames
-add little, since consecutive frames often show the same content, yet $v_{\text{frame}}$ is measured one frame at a
-time and
-credits every copy in full. Each additional frame is also a potential distractor for the VLM. To discount repeated
-content, \name needs a similarity that captures whether two frames show the same content. Pixel differences are poorly
-suited, since camera motion changes pixels without changing content. Temporal distance is also insufficient, since a
-scene can return much later in the video. We, therefore, use the cosine $s_{ij}=\max\big(0,\cos(f_i,f_j)\big)$ of the
-image embeddings that the retriever already computes, with $s_{ij}=0$ whenever $i$ or $j$ is a transcript event, and
-solve
+Maximizing~\eqref{eq:relevance} alone, however, spreads the budget too thin. Because the measured curve has $\alpha<1$,
+its slope is unbounded at zero tokens, so the optimum gives tokens to every frame with nonzero relevance. Most of these
+frames add little, since consecutive frames often show the same content, yet $v$ is measured one frame at a time and
+credits every copy in full. Each additional frame is also a potential distractor for the VLM. The root cause is that
+$r(f_i\mid q)$ depends on the query alone, whereas a frame tells the VLM little once a similar frame is already shown in
+detail. We, therefore, condition the relevance of a frame on the allocation as well:
 \begin{equation}
-\begin{aligned}
-  \max_{\mathbf b}\ \ &\sum_{i}r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}\,v_i(b_i)\,v_j(b_j)\\[-2pt]
-  \text{s.t.}\ \ &\sum_{i}b_i\le B ,
-\end{aligned}
-% Penalty over unordered pairs i<j. The code (cover_allocate.py) sums ordered pairs with weight beta,
-% so this eta = 2*beta of the code.
-\label{eq:p1}
+  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\neq i}s_{ij}\,v(b_j) ,
+  \label{eq:cond}
 \end{equation}
-where $\eta$ sets the strength of the penalty. The penalty is large only when two shown frames are both similar and
-well funded, so the plan prefers frames with different content. Moreover, a frame receives no tokens at all once
-similar, well-funded frames cover its relevance, so redundancy limits how many frames are shown without a separate
-price per frame. A larger $\eta$ yields fewer, more distinct frames, while $\eta=0$ recovers~\eqref{eq:relevance}.
+where $s_{ij}$ measures whether $f_i$ and $f_j$ show the same content and $\eta$ sets how strongly the coverage by
+similar frames discounts relevance. Pixel differences are poorly suited for $s_{ij}$, since camera motion changes pixels
+without changing content. Temporal distance is also insufficient, since a scene can return much later in the video. We,
+therefore, use the cosine $s_{ij}=\max\big(0,\cos(f_i,f_j)\big)$ of the image embeddings that the retriever already
+computes. With the conditioned relevance, \name solves
+\begin{equation}
+  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
+% Ordered pairs (j != i) as in cover_allocate.py, so this eta equals the code's beta.
+  \label{eq:p1}
+\end{equation}
+The objective keeps the form of~\eqref{eq:relevance}, and only the relevance changes. A frame thus loses relevance only
+when similar frames are shown with many tokens, so the plan prefers frames with different content. Moreover, a frame
+whose conditioned relevance falls to zero receives no tokens at all, so redundancy limits how many frames are shown
+without a separate price per frame. A larger $\eta$ yields fewer, more distinct frames, while $\eta=0$
+recovers~\eqref{eq:relevance}.
+
+\paragraph{Extending to Transcripts.}
+Many questions hinge on what is said rather than shown, so \name also allocates tokens to the transcript of the video.
+The extension adds terms of the same form rather than a new mechanism. Let $u_1,\dots,u_M$ be the transcript events,
+and index frames and events jointly as items $i\in[N+M]$, with $b_i$ the tokens of item $i$. We abbreviate the query
+relevance of item $i$ as $r_i$, which is $r(f_i\mid q)$ for a frame and $\beta\,r(u_m\mid q)$ for an event $u_m$, the
+relevance of its text to $q$ scaled by a weight $\beta$. Likewise, $v_i$ is the value function of the type of item $i$:
+$v_{\text{frame}}$, given by~\eqref{eq:curve}, or $v_{\text{text}}$, which takes the same form with its own half-value
+count and is fitted jointly with $v_{\text{frame}}$, so that both curves are expressed in the same units of answer
+probability. To shorten an event, \name uses a prompt compressor that keeps the original words~\cite{llmlingua2}, so
+that a shortened event is a subset of the full one rather than a paraphrase. Finally, $s_{ij}=0$ whenever $i$ or $j$ is
+an event, so the relevance of an event is not conditioned on the plan. Expanding~\eqref{eq:cond}, the objective
+of~\eqref{eq:p1} over all items becomes
+\begin{equation}
+  J(\mathbf b)=\sum_{i}r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j) .
+  \label{eq:joint}
+\end{equation}
 
 \paragraph{Iterative Water-Filling.}
-The penalty couples every pair of frames, so~\eqref{eq:p1} is a quadratic knapsack problem with no separable
-solution. However, with the other items fixed, \eqref{eq:p1} is linear in $v_i(b_i)$. Its coefficient, clipped at zero,
+The conditioned relevance couples every pair of frames, so maximizing~\eqref{eq:joint} under the budget is a quadratic
+knapsack problem with no separable solution. However, with the other items fixed, $J$ is linear in $v_i(b_i)$. Its
+coefficient, clipped at zero,
 \begin{equation}
-  \tilde r_i=\max\Big(0,\ r_i-\eta\sum_{j\neq i}s_{ij}\,v_j(b_j)\Big) ,
+  \tilde r_i=\max\Big(0,\ r_i-2\eta\sum_{j\neq i}s_{ij}\,v_j(b_j)\Big) ,
   \label{eq:effective}
 \end{equation}
-is the relevance of item $i$ that similar items in the plan do not yet cover. The clipping changes nothing, since an
-item with a negative coefficient receives no tokens either way. For fixed $\tilde r$, the problem separates across
-items, and pricing each token at $\lambda\ge0$ lets every item choose its own token count:
+is the residual relevance of item $i$. The factor of two arises because $v_i(b_i)$ enters $J$ twice: it scales the
+conditioned relevance of item $i$, and it lowers the conditioned relevance of every item similar to $i$. An item is
+therefore charged both for the coverage it receives from similar items and for the coverage it provides to them. The
+clipping changes nothing, since an item with a negative coefficient receives no tokens either way. For fixed $\tilde r$,
+the problem separates across items, and pricing each token at $\lambda\ge0$ lets every item choose its own token count:
 \begin{equation}
   b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
   \label{eq:percost}
@@ -119,10 +134,10 @@ earn the same marginal value per token, so tokens flow to whichever item yields 
 effective relevance reaches zero receives no tokens.
 
 \name then alternates between the two steps (\cref{alg:iwf}). The first round starts from $\bar v_i=0$, so
-that $\tilde r=r$ and the round solves~\eqref{eq:relevance}. Each later round recomputes~\eqref{eq:effective} with
+that $\tilde r=r$ and the round maximizes~\eqref{eq:joint} with $\eta=0$. Each later round recomputes~\eqref{eq:effective} with
 $v_j(b_j)$ replaced by $\bar v_j$, a running average of $v_j(b_j)$ over the previous plans, and water-fills again. The average damps oscillation, since two similar
 frames would otherwise trade their tokens back and forth between rounds. \name returns the plan that scores highest
-under~\eqref{eq:p1}, and each round costs one water-filling and one product with the similarity matrix. Finally, \name
+under~\eqref{eq:joint}, and each round costs one water-filling and one product with the similarity matrix. Finally, \name
 merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
@@ -136,7 +151,7 @@ merges the selected frames and events in time order, each preceded by its timest
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
 \State $\bar v_i\gets 0$ \Comment{coverage of item $i$}
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets\max\!\big(0,\;r_i-\eta\textstyle\sum_{j\neq i}s_{ij}\bar v_j\big)$ \Comment{residual relevance}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\neq i}s_{ij}\bar v_j\big)$ \Comment{residual relevance}
   \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
@@ -151,16 +166,16 @@ merges the selected frames and events in time order, each preceded by its timest
   \State $\bar v_i\gets v_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(\bar v_i+v_i(b_i^{(\ell)})\big)$
 \EndFor
 \State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
-\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}v_i(b_i)v_j(b_j)$
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}v_i(b_i)v_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior allocation rules are feasible points of~\eqref{eq:relevance}: top-$K$ retrieval shows the $K$ most relevant
 frames in full, proportional allocation~\cite{luo2025quota} gives frame $i$ the tokens $r_iB$, and rank
-tiers~\cite{zhang2025qframe} assign fixed counts by rank. By Proposition~\ref{thm:everett}, the first round of
+tiers~\cite{zhang2025qframe} assign fixed counts by rank. By Proposition~\ref{thm:everett}, on frames the first round of
 \cref{alg:iwf} solves~\eqref{eq:relevance} exactly and therefore scores at least as high as each of these rules at
-equal spend. Because \cref{alg:iwf} keeps the best plan it visits, its output never scores lower under~\eqref{eq:p1}
+equal spend. Because \cref{alg:iwf} keeps the best plan it visits, its output never scores lower under~\eqref{eq:joint}
 than this first round. The gap to proportional allocation, moreover, is structural rather than an artifact of the
 token grid:
 

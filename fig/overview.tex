@@ -78,7 +78,7 @@
 \draw[arr] (ret.south) -- (1.45,1.82);
 
 % ---------------- (2) token allocator ----------------
-\node[font=\sffamily\scriptsize] at (7.725,4.0) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}\,v_i(b_i)\,v_j(b_j)$};
+\node[font=\sffamily\scriptsize] at (7.725,4.0) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)$};
 \node[font=\sffamily\scriptsize] at (7.725,3.6) {$\text{s.t.}\ \ \sum_i b_i\le B$};
 % value curves (x = 0.24 log2(1 + b), so b = 0 sits at the origin)
 \begin{scope}[shift={(5.2,0.6)}]
