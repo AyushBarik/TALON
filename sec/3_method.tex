@@ -16,20 +16,14 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Video RAG answers a query $q$ about a long video by passing the frames most relevant to $q$ to a frozen VLM. Let
-$f_i$ be the $i$-th frame and $r_i$ its retrieval relevance, normalized over the video so that $r_i$ is the probability
-that frame $i$ holds the evidence for $q$. Conventional video RAG~\cite{luo2024videorag} keeps the
-$K$ most relevant frames, each at its full cost of $b_{\max}$ tokens:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a frozen VLM~\cite{}. Let $f_1, \dots, f_N$ be uniformly sampled frames from $V$, and let $r_i$ denote the retrieval relevance of frame $i$ with respect to $q$, normalized across the video so that $r_i$ approximates the probability that frame $i$ contains the evidence for $q$. Frame-level RAG can thus naturally be modeled as an integer linear program:
 \begin{equation}
-  \max_{x_i\in\{0,1\}}\ \sum_{i}r_i\,x_i\qquad\text{s.t.}\quad\sum_{i}x_i\le K .
+  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K.
   \label{eq:topk}
 \end{equation}
-Problem~\eqref{eq:topk} maximizes the probability that the evidence enters the prompt, but it treats a frame as either
-absent or shown in full. Modern VLMs, however, accept a frame at any token count, and token
-pruning~\cite{yang2024visionzip} often preserves the content of a frame in a small fraction of its tokens. The budget
-of a prompt is therefore measured in tokens, and a decision made per frame wastes part of it.
 
-\paragraph{Design Challenges.}
+Lifting this optimization objective 
+
 Lifting~\eqref{eq:topk} to the token level raises two key questions. (i) How many tokens should each frame and
 transcript event receive under one budget, given that the value of a frame saturates with its token count and that
 neighboring frames often repeat each other? (ii) How can a conversation reuse the tokens already in the KV cache when
