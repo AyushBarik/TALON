@@ -1,119 +1,130 @@
-% Overview figure (figure*, drawn at \textwidth = 17.46 cm). Minimal: tinted stage bands, white cards, thin gray arrows;
-% labels are nouns or math only. Items = frames f_i and text t_j (subtitle events) on one time axis (16 frames, 4 text items).
-% All distributions over items are PMFs (bars). Frames: solid bars; transcript events: light bars + purple marker.
-% Bar heights: the token plan from figs/gen_overview_pmfs.py (illustrative, not measured). Test-time re-allocation removed
-% 2026-10-31: no entropy check, no Bayesian update, no posterior plan. v_frame, v_text: fitted curves.
-% Frames: Video-MME video bepwr1-CNRU (illustration only).
+% Overview figure (figure*, drawn at \textwidth = 17.46 cm). Three stages left to right:
+% (1) retrieval: video + subtitles -> retriever (with query q) -> relevance r_i over items in time order;
+% (2) Token Allocator (the contribution, the only accented stage): objective, value curves v_frame / v_text,
+%     water-filling -> token plan b_i;
+% (3) inference: frozen pruner keeps each frame's top-ranked tokens (storyboard in time order), the new tokens are
+%     appended to the KV cache of earlier turns, and the frozen VLM answers.
+% Bar heights and the plan are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU (illustration only).
 \definecolor{ink}{HTML}{2E3440}
 \definecolor{arrowgray}{HTML}{6B7280}
-\definecolor{bandA}{HTML}{EEF1F6}\definecolor{bandB}{HTML}{EDF3ED}\definecolor{bandC}{HTML}{F6F1E7}
-\definecolor{accA}{HTML}{5E81AC}
-\definecolor{prior}{HTML}{4C72B0}\definecolor{post}{HTML}{DD8452}\definecolor{lik}{HTML}{6B7280}\definecolor{txt}{HTML}{B5589A}
+\definecolor{bandN}{HTML}{F1F2F4}
+\definecolor{accA}{HTML}{4C72B0}
+\definecolor{frm}{HTML}{4C72B0}
+\definecolor{txt}{HTML}{B5589A}
 \newcommand{\snowflake}[2]{%
   \begin{scope}[shift={#1}, line width=0.55pt, draw=orxsky!85!black, line cap=round]
     \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:#2);
       \draw (\a:0.55*#2) -- ++(\a+45:0.32*#2); \draw (\a:0.55*#2) -- ++(\a-45:0.32*#2);}
   \end{scope}}
-% \pmf{x0,y0}{width}{height}{colour}{v1/t1,...,v20/t20}: 20 items on one time axis; t = 1 marks a transcript event
-\newcommand{\pmf}[5]{%
-  \begin{scope}[shift={(#1)}]
-    \foreach \v/\t [count=\i] in {#5} {
-      \ifnum\t=1 \fill[#4!45] ({(\i-0.5)*#2/20-0.3*#2/20},0) rectangle ++({0.6*#2/20},{\v*#3});
-      \else      \fill[#4]    ({(\i-0.5)*#2/20-0.3*#2/20},0) rectangle ++({0.6*#2/20},{\v*#3}); \fi}
-    \draw[black!45, line width=0.4pt] (0,0) -- (#2,0);
+% \items{width}{height scale}{v1/t1,...,v20/t20}: 20 items on one time axis; t = 1 marks a transcript event (light bar)
+\newcommand{\items}[3]{%
+  \foreach \v/\t [count=\i] in {#3} {
+    \ifnum\t=1 \fill[txt!55] ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2});
+    \else      \fill[frm]    ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2}); \fi}}
+% \prunedframe{center}{image}{kept tokens out of 32}: a frame as an 8x4 token grid; dropped tokens are greyed out.
+% The keep order is one fixed ranking (centre first), so a frame at b tokens holds its top b tokens.
+\newcommand{\prunedframe}[3]{%
+  \node[inner sep=0pt] at (#1) {\includegraphics[width=0.8cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+(-0.4,-0.225)$)}]
+    \foreach \c [count=\k from 0] in {10,11,18,19,9,12,17,20,2,3,26,27,1,4,25,28,8,13,16,21,0,5,24,29,6,14,22,30,7,15,23,31} {
+      \ifnum\k<#3\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[white, opacity=0.85] (\cx*0.1,\cy*0.1125) rectangle ++(0.1,0.1125);
+      \fi}
+    \draw[black!30, line width=0.15pt, xstep=0.1, ystep=0.1125] (0,0) grid (0.8,0.45);
+    \draw[black!45, line width=0.3pt] (0,0) rectangle (0.8,0.45);
   \end{scope}}
-\newcommand{\txtchip}[1]{% small transcript chip: two text lines
-  \fill[txt!14, rounded corners=1pt] #1 rectangle ++(0.6,0.3);
-  \draw[txt!70, line width=0.5pt] ($#1+(0.08,0.2)$) -- ++(0.44,0); \draw[txt!70, line width=0.5pt] ($#1+(0.08,0.1)$) -- ++(0.3,0);}
+\newcommand{\txtchip}[1]{% transcript event: a short text chip
+  \fill[txt!14, rounded corners=1pt] ($(#1)+(-0.35,-0.17)$) rectangle ++(0.7,0.34);
+  \draw[txt!75, line width=0.5pt] ($(#1)+(-0.26,0.06)$) -- ++(0.52,0);
+  \draw[txt!75, line width=0.5pt] ($(#1)+(-0.26,-0.06)$) -- ++(0.34,0);}
 
-\begin{tikzpicture}[font=\rmfamily\footnotesize, text=ink, line width=0.6pt,
-  card/.style={fill=white, draw=black!14, line width=0.5pt, rounded corners=6pt, align=center, inner sep=4pt},
-  arr/.style={{Circle[length=2.4pt]}-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
+\begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.6pt,
+  card/.style={fill=white, draw=black!18, line width=0.5pt, rounded corners=4pt, align=center, inner sep=3.5pt},
+  arr/.style={-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
   ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!55, line width=0.5pt},
-  axl/.style={font=\rmfamily\footnotesize, text=black!70}]
-
+  axl/.style={font=\sffamily\scriptsize, text=black!70},
+  stagelbl/.style={font=\sffamily\small\bfseries, anchor=north west, inner sep=0pt},
+  elbl/.style={font=\sffamily\scriptsize, text=black!75, inner sep=1.5pt}]
 
 % ---------------- bands ----------------
-\fill[rounded corners=8pt, bandA] (0,0) rectangle (4.3,5.6);
-\fill[rounded corners=8pt, bandB] (4.5,0) rectangle (11.15,5.6);
-\fill[rounded corners=8pt, bandC] (11.35,0) rectangle (17.4,5.6);
+\fill[rounded corners=6pt, bandN] (0,0) rectangle (4.3,4.75);
+\fill[rounded corners=6pt, accA!8] (4.45,0) rectangle (11.0,4.75);
+\draw[rounded corners=6pt, accA!55, line width=0.6pt] (4.45,0) rectangle (11.0,4.75);
+\fill[rounded corners=6pt, bandN] (11.15,0) rectangle (17.4,4.75);
+\node[stagelbl] at (0.2,4.55) {Retrieval};
+\node[stagelbl, text=accA!80!black] at (4.65,4.55) {Token Allocator};
+\node[stagelbl] at (11.35,4.55) {Inference};
 
-% ---------------- input: query, video + subtitles, cache ----------------
-\node[card, inner sep=3.5pt] (q) at (2.15,5.15) {Query $q$};
-\node[card, minimum width=3.7cm, minimum height=2.4cm] (cache) at (2.15,3.35) {};
-\node[font=\rmfamily\small] at (2.15,4.27) {Cache};
-\foreach \k/\x in {1/0.78, 2/1.48, 3/2.18} {\node[inner sep=0pt] at (\x,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame\k.jpg}};}
-\node at (2.82,3.8) {$\cdots$};
-\node[inner sep=0pt] at (3.5,3.8) {\includegraphics[width=0.62cm]{fig/frames/frame6.jpg}};
-\node at (2.15,3.37) {frames};
-\foreach \x in {0.47,1.17,1.87} {\txtchip{(\x,2.72)}}
-\node at (2.82,2.87) {$\cdots$};
-\txtchip{(3.19,2.72)}
-\node at (2.15,2.45) {transcript};
+% ---------------- (1) retrieval ----------------
 % film strip with a subtitle strip beneath it
-\fill[black!88, rounded corners=1pt] (0.25,0.95) rectangle (4.05,1.73);
-\foreach \x in {0.31,0.51,...,3.95} {\fill[white] (\x,1.6) rectangle ++(0.1,0.07); \fill[white] (\x,1.01) rectangle ++(0.1,0.07);}
-\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.62+(\k-1)*0.74},1.34) {\includegraphics[width=0.7cm]{fig/frames/frame\k.jpg}};}
-\fill[txt!14, rounded corners=1pt] (0.25,0.62) rectangle (4.05,0.86);
-\foreach \x/\l in {0.4/0.7, 1.25/0.55, 2.0/0.8, 3.0/0.6} {\draw[txt!70, line width=0.5pt] (\x,0.74) -- ++(\l,0);}
-\node[font=\rmfamily\footnotesize, text=black!70] at (2.15,0.32) {Video and subtitles};
-\draw[arr] (2.15,1.77) -- (cache.south);
-
-% ---------------- token allocator (frames and text, one budget) ----------------
-\node[card, fill=accA!7, draw=accA!45, minimum width=6.35cm, minimum height=4.45cm] (sch) at (7.825,2.55) {};
-\node[font=\rmfamily\small\bfseries] at (7.825,4.5) {Token Allocator};
-\node[font=\scriptsize] at (7.825,4.07) {$\max\limits_{\mathbf b}\sum_i r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}v_i(b_i)v_j(b_j)$};
-\node[font=\scriptsize] at (7.825,3.66) {$\text{s.t.}\ \ \sum_i b_i\le B$};
-% quality curves (x = log2(1 + b), so b = 0 sits at the origin): frames v_frame with the same frame at more tokens,
-% text v_text with an illustrative sentence in full and pruned to its kept words (red)
-\begin{scope}[shift={(5.4,1.1)}]
-  \draw[ax] (0,0) -- (2.3,0); \draw[ax] (0,0) -- (0,2.2);
-  \node[axl, rotate=90, anchor=south] at (-0.04,1.0) {P(gold)};
-  \node[axl, anchor=north] at (1.1,-0.03) {tokens};
-  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.505*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[black!70, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.27*\x}, {1.42*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\rmfamily\scriptsize, text=txt, anchor=west] at (2.12,1.52) {$v_{\text{text}}$};
-  \node[font=\rmfamily\scriptsize, text=black!70, anchor=west] at (2.12,1.26) {$v_{\text{frame}}$};
-  \foreach \b/\im/\dy in {4.6/carV/0.1, 24/carS/0.2} {
-    \pgfmathsetmacro{\tx}{0.27*log2(1+\b)} \pgfmathsetmacro{\ry}{1.42*(\b^0.841)/((\b^0.841)+7.73)}
-    \fill[black!70] (\tx,\ry) circle (0.05);
-    \node[inner sep=0pt, draw=black!40, line width=0.3pt, anchor=north west] at ({\tx+0.06},{\ry-\dy}) {\includegraphics[width=0.55cm]{fig/frames/\im.png}};}
-  \pgfmathsetmacro{\tx}{0.27*log2(195)} \pgfmathsetmacro{\ry}{1.42*(194^0.841)/((194^0.841)+7.73)}
-  \fill[black!70] (\tx,\ry) circle (0.05);
-  \node[inner sep=0pt, draw=black!40, line width=0.3pt, anchor=north east] at ({\tx-0.02},{\ry-0.24}) {\includegraphics[width=0.55cm]{fig/frames/carC.png}};
-  \pgfmathsetmacro{\xa}{0.27*log2(6)}  \pgfmathsetmacro{\ya}{1.505*(5^0.841)/((5^0.841)+3.44)}
-  \pgfmathsetmacro{\xb}{0.27*log2(15)} \pgfmathsetmacro{\yb}{1.505*(14^0.841)/((14^0.841)+3.44)}
-  \fill[txt] (\xa,\ya) circle (0.05); \fill[txt] (\xb,\yb) circle (0.05);
-  \node[draw=txt!40, fill=white, rounded corners=1pt, inner sep=1.5pt, font=\rmfamily\tiny, anchor=south] (tA) at (0.66,1.27)
-    {\textcolor{red!80!black}{eat spaghetti 2\,AM}};
-  \node[draw=txt!40, fill=white, rounded corners=1pt, inner sep=1.5pt, font=\rmfamily\tiny, align=left, anchor=south] (tB) at (1.72,1.64)
-    {I think I'm gonna go \textcolor{red!80!black}{eat}\\[-1.5pt] \textcolor{red!80!black}{spaghetti} at \textcolor{red!80!black}{2\,AM}.};
-  \draw[txt!60, densely dotted, line width=0.5pt] (tA.south) -- (\xa,{\ya+0.05});
-  \draw[txt!60, densely dotted, line width=0.5pt] (tB.south west) -- (\xb,{\yb+0.05});
+\fill[black!88, rounded corners=1pt] (0.25,3.15) rectangle (4.05,3.93);
+\foreach \x in {0.31,0.51,...,3.95} {\fill[white] (\x,3.8) rectangle ++(0.1,0.07); \fill[white] (\x,3.21) rectangle ++(0.1,0.07);}
+\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.62+(\k-1)*0.74},3.54) {\includegraphics[width=0.7cm]{fig/frames/frame\k.jpg}};}
+\fill[txt!14, rounded corners=1pt] (0.25,2.83) rectangle (4.05,3.07);
+\foreach \x/\l in {0.4/0.7, 1.25/0.55, 2.0/0.8, 3.0/0.6} {\draw[txt!70, line width=0.5pt] (\x,2.95) -- ++(\l,0);}
+\node[card] (ret) at (1.45,2.25) {retriever};
+\node[card] (q) at (3.4,2.25) {query $q$};
+\draw[arr] (1.45,2.8) -- (ret.north);
+\draw[arr] (q.west) -- (ret.east);
+% relevance over items in time order
+\begin{scope}[shift={(0.5,0.42)}]
+  \draw[ax] (0,0) -- (3.6,0); \draw[ax] (0,0) -- (0,1.35);
+  \node[axl, rotate=90, anchor=south] at (-0.04,0.65) {relevance $r_i$};
+  \node[axl, anchor=north] at (1.8,-0.02) {items in time order};
+  \items{3.4}{2.1}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
+                   .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
 \end{scope}
-% token plan over items in time order (frames solid, transcript events light)
-\begin{scope}[shift={(8.55,1.1)}]
-  \draw[ax] (0,0) -- (2.25,0); \draw[ax] (0,0) -- (0,2.2);
-  \node[axl, rotate=90, anchor=south] at (-0.04,1.0) {tokens};
-  \node[axl, anchor=north] at (1.1,-0.05) {items};
-  \foreach \u/\t [count=\i] in {0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
-                                0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0} {
-    \ifnum\t=1 \fill[prior!45] ({(\i-0.5)*0.107-0.03},0) rectangle ++(0.06,{2.4*\u});
-    \else      \fill[prior]    ({(\i-0.5)*0.107-0.03},0) rectangle ++(0.06,{2.4*\u}); \fi}
+\draw[arr] (ret.south) -- (1.45,1.82);
+
+% ---------------- (2) token allocator ----------------
+\node[font=\sffamily\scriptsize] at (7.725,4.0) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i<j}s_{ij}\,v_i(b_i)\,v_j(b_j)$};
+\node[font=\sffamily\scriptsize] at (7.725,3.6) {$\text{s.t.}\ \ \sum_i b_i\le B$};
+% value curves (x = 0.24 log2(1 + b), so b = 0 sits at the origin)
+\begin{scope}[shift={(5.2,0.6)}]
+  \draw[ax] (0,0) -- (2.05,0); \draw[ax] (0,0) -- (0,2.55);
+  \node[axl, rotate=90, anchor=south] at (-0.04,1.2) {value $v(b)$};
+  \node[axl, anchor=north] at (1.0,-0.02) {tokens $b$};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.24*\x}, {2.15*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[black!70, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.24*\x}, {2.05*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\scriptsize, text=txt, anchor=south west, inner sep=1pt] at (1.95,2.06) {$v_{\text{text}}$};
+  \node[font=\sffamily\scriptsize, text=black!70, anchor=north west, inner sep=1pt] at (1.95,1.9) {$v_{\text{frame}}$};
 \end{scope}
+% water-filling: relevance and value curves -> token plan
+\draw[arr] (7.45,1.05) -- node[elbl, above, align=center] {water-\\filling} node[elbl, below] {price $\lambda$} (8.45,1.05);
+% token plan over items in time order
+\begin{scope}[shift={(8.85,0.6)}]
+  \draw[ax] (0,0) -- (2.0,0); \draw[ax] (0,0) -- (0,2.55);
+  \node[axl, rotate=90, anchor=south] at (-0.04,1.2) {tokens $b_i$};
+  \node[axl, anchor=north] at (1.0,-0.02) {items in time order};
+  \items{1.95}{2.9}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+                   0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
+\end{scope}
+\draw[arr] (4.1,1.05) -- node[elbl, above] {$r_i$} (4.95,1.05);
 
-% ---------------- inference ----------------
-\node[card, minimum width=2.4cm, minimum height=0.8cm] (pr) at (12.75,2.8) {Token Pruner\hspace{0.2cm}};
-\snowflake{(13.7,2.8)}{0.1}
-\node[card, minimum width=1.7cm, minimum height=0.8cm] (vlm) at (15.3,2.8) {VLM\hspace{0.15cm}};
-\snowflake{(15.9,2.8)}{0.1}
-\node[card, minimum width=0.6cm, minimum height=0.7cm, font=\rmfamily\small] (ans) at (17.07,2.8) {$\hat y$};
-
-% ---------------- arrows ----------------
-\draw[arr] (cache.east) -- (cache.east -| sch.west);
-\draw[arr] (sch.east |- pr.west) -- (pr.west);
-\draw[arr] (pr.east) -- (vlm.west);
+% ---------------- (3) inference ----------------
+\node[card, minimum width=1.55cm, minimum height=0.8cm] (pr) at (12.25,2.95) {Token\\pruner\hspace{0.18cm}};
+\snowflake{(12.83,3.17)}{0.09}
+\draw[arr] (10.9,2.95) -- (pr.west);
+% storyboard: items in time order, each frame at its own token count (top-ranked tokens kept)
+\node[axl] at (15.25,3.72) {storyboard in time order};
+\prunedframe{13.9,2.95}{frame1.jpg}{10}
+\txtchip{14.85,2.95}
+\prunedframe{15.8,2.95}{frame3.jpg}{32}
+\prunedframe{16.75,2.95}{frame5.jpg}{18}
+\draw[arr] (pr.east) -- (13.45,2.95);
+% KV cache: tokens of earlier turns, then the new tokens of this turn appended at the end
+\node[axl, anchor=south west] at (11.42,1.42) {KV cache};
+\foreach \x in {0,...,9} {\fill[black!28] ({11.45+\x*0.3},1.05) rectangle ++(0.26,0.32);}
+\foreach \x in {0,1,2} {\fill[accA!75] ({14.45+\x*0.3},1.05) rectangle ++(0.26,0.32);}
+\node[axl, anchor=north] at (12.93,1.0) {earlier turns};
+\node[axl, anchor=north] at (14.83,1.0) {new $p_i$};
+\draw[arr] (15.3,2.62) -- (14.85,1.42);
+\node[card, minimum width=1.2cm, minimum height=0.7cm] (vlm) at (16.15,1.21) {VLM\hspace{0.22cm}};
+\snowflake{(16.5,1.21)}{0.08}
+\node[card, minimum width=0.45cm, minimum height=0.6cm, font=\sffamily\small] (ans) at (17.05,1.21) {$\hat y$};
+\draw[arr] (15.38,1.21) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
-\draw[arr] (q.east) -- (q.east -| vlm.north) -- (vlm.north);
-\draw[arr] (q.east -| sch.north) -- (sch.north);
+\node[axl] (qt) at (16.15,0.3) {question $q_t$};
+\draw[arr] (qt.north) -- (vlm.south);
 \end{tikzpicture}

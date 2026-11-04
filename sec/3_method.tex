@@ -4,10 +4,11 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{\textbf{\name overview.} The Token Allocator (\cref{sec:allocation}) spends one token budget across the
-  frames and transcript events of a video, and the pruner and the VLM execute the plan. In a conversation, multi-turn
-  allocation (\cref{sec:multiturn}) reuses the cached tokens and prefills only the ones a new question still needs.
-  Lighter bars are text items; the plan is illustrative.}
+  \caption{\textbf{\name overview.} A retriever scores every frame and transcript event against the query ($r_i$). The
+  Token Allocator (\cref{sec:allocation}) combines these relevances with the measured value curves and spends one
+  token budget across all items by water-filling. The frozen pruner keeps the top-ranked tokens of each frame (greyed
+  patches are dropped), and in a conversation (\cref{sec:multiturn}) only the new tokens $p_i$ are appended to the KV
+  cache before the frozen VLM answers. Lighter bars are transcript events; all bars are illustrative.}
   \label{fig:overview}
 \end{figure*}
 
