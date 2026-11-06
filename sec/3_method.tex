@@ -33,7 +33,7 @@ is the cosine similarity between the image embedding of $f_i$ and the text embed
 Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by the number of tokens $b_i$ allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. This formulation, however, raises two key questions: (i) how much is a frame worth at a given token count, and (ii) how should the relevance of a frame change once similar frames already receive tokens? \name answers both in its Token Scheduler, which computes the token allocation: the first with a token value function that is fitted offline and updated online, and the second by conditioning relevance on the current allocation. We formulate both for frames and then extend them to the transcript of the video.
 
 \paragraph{Pruning Frames and Transcripts to a Token Count.}
-Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Since the ranking does not depend on the query, a frame shown with fewer tokens keeps a subset of the tokens it keeps with more, a property that \cref{sec:multiturn} exploits to bound the prefill of a conversation. Transcript events are pruned in the same way: a token-level prompt compressor~\cite{llmlingua2} scores every token of an event, and \name keeps the top-scored tokens, so that a shortened event remains a subset of the original words rather than a paraphrase.
+Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned in the same way.
 
 \paragraph{Measuring Token Value.}
 Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves. \name therefore learns a \textit{token value} function by logistic regression on the log token count,
@@ -41,7 +41,7 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
 \begin{equation}
   v(b)=\sigma\big(\theta_1\log b+\theta_0\big) ,
   \label{eq:curve}
-\end{equation}
+\end{equation} \ayush{look into cdf func}
 fitting $\theta$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\todo{Fig.~Y}), and updating it online from feedback on answered queries (e.g., accuracy, user feedback). Weighting the value of each frame by its relevance gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
@@ -74,7 +74,7 @@ Many questions hinge on what is said rather than shown, so \name also allocates 
 \end{equation}
 where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
-\paragraph{Iterative Water-Filling.}
+\paragraph{Iterative Water-Filling.} \ayush{look into a more accurate name}
 Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are coupled: the optimal token count of a frame depends on the token counts of the frames similar to it. Once the token values of the other frames are fixed, however, the problem separates across items and admits an exact solution. The Token Scheduler therefore alternates between fixing the relevances and allocating the tokens~\cite{frank1956,jaggi2013}, as summarized in \cref{alg:iwf}.
 
 \textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
