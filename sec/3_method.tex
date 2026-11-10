@@ -45,8 +45,8 @@ Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by
 
 \name answers both in its Token Scheduler, which computes the token allocation: the first with a token value function that is fitted offline and updated online and asynchronously to serving, and the second by conditioning relevance on the current allocation. We formulate both for frames and then extend them to the transcript of the video.
 
-\paragraph{Storing and Pruning Tokens.}
-Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, when the video is indexed, and ranks its output tokens by the attention they receive within the encoder. Rather than storing the frame itself, \name stores these ranked tokens, so that a retrieved frame enters the VLM directly, without re-running the vision encoder. Storing tokens takes more space than storing compressed frames, but it saves the encoder computation every time a frame is retrieved. Following the RAG paradigm, \name thus retrieves tokens rather than frames, and showing a frame with $b_i$ tokens amounts to keeping its top $b_i$ tokens, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned in the same way. \fan{maybe merge it into the next paragraph as it is not new and short.}
+\paragraph{Pruning Frames and Transcripts to a Token Count.}
+Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned in the same way. \fan{maybe merge it into the next paragraph as it is not new and short.}
 
 \paragraph{Capturing Token Value.}
 Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves. \name therefore learns a \textit{token value} function by logistic regression on the log token count, \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.}
@@ -87,8 +87,8 @@ Many questions hinge on what is said rather than shown, so \name also allocates 
 \end{equation}
 where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
-\paragraph{Exact Token Allocation.}
-Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are coupled: the optimal token count of a frame depends on the token counts of the frames similar to it. Once the token values of the other frames are fixed, however, the problem separates across items and admits an exact solution. The Token Scheduler therefore alternates between fixing the relevances and allocating the tokens~\cite{frank1956,jaggi2013}. \fan{one may argue: why not SGD?}
+\paragraph{Iterative Water-Filling.} \ayush{look into a more accurate name}
+Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are coupled: the optimal token count of a frame depends on the token counts of the frames similar to it. Once the token values of the other frames are fixed, however, the problem separates across items and admits an exact solution. The Token Scheduler therefore alternates between fixing the relevances and allocating the tokens~\cite{frank1956,jaggi2013}, as summarized in \cref{alg:iwf}. \fan{one may argue: why not SGD?}
 
 \textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
 \begin{equation}
@@ -97,21 +97,48 @@ Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are cou
 \end{equation}
 where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
 
-\textit{Allocating the tokens.} With fixed relevances, the items no longer depend on each other, and the allocation becomes an integer linear program. Let $x_{ib}\in\{0,1\}$ indicate that item $i$ receives $b$ tokens, where $b$ ranges over the token counts that the pruner supports, including zero. The Token Scheduler then solves
+\textit{Allocating the tokens.} With fixed relevances, the items no longer depend on each other, and the Token Scheduler allocates the budget exactly by water-filling~\cite{boyd2004}, which is commonly used for resource allocation in networking. Water-filling sets a single price $\lambda$ per token, and each item receives tokens until the value of an additional token falls below this price:
 \begin{equation}
-\begin{aligned}
-  \max_{\mathbf x}\ &\sum_{i}\sum_{b}\tilde r_i\,v_i(b)\,x_{ib}\\[-2pt]
-  \text{s.t.}\ \ &\sum_{i}\sum_{b}b\,x_{ib}\le B,\quad \sum_{b}x_{ib}=1\ \ \forall i .
-\end{aligned}
-  \label{eq:ilp}
+  b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
+  \label{eq:percost}
 \end{equation}
-Since $v_i(b)$ is fixed for every supported token count, the objective is linear in $\mathbf x$, even though the token value itself is S-shaped (\cref{fig:value}). The Token Scheduler solves this program with the Gurobi solver~\cite{gurobi}, whose branch and cut~\cite{padberg1991} certifies that the allocation is optimal for the fixed relevances. Frames and transcript events thus compete for the same budget, and each item receives the token count $b_i^*$ for which $x_{ib}=1$.
+where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the price at which the allocation spends $B$. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the fixed relevances even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
 
-\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the allocation with the highest value of Eq.~\eqref{eq:joint} across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+
+\begin{algorithm}[t]
+\caption{Iterative Water-Filling Token Allocation}
+\label{alg:iwf}
+\small
+\begin{algorithmic}[1]
+\Require relevances $r_i$, token values $v_i(b)$ for $b\le b_{\max}$ \ayush{too many symbols? fix later}
+\Require similarities $s_{ij}$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
+\Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
+\Statex Each update with index $i$ applies to every item $i\in[N+M]$.
+\State $\bar v_i\gets 0$ \Comment{current values}
+\For{$\ell=1,\dots,L$}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\neq i}s_{ij}\bar v_j\big)$ \Comment{gradient}
+  \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
+  \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
+  \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
+    \State $\lambda\gets(\lambda_{\mathrm{lo}}+\lambda_{\mathrm{hi}})/2$
+    \State $b_i\gets\argmax_{b}\;\tilde r_iv_i(b)-\lambda b$ \Comment{best response}
+    \If{$\sum_i b_i>B$}
+      \State $\lambda_{\mathrm{lo}}\gets\lambda$ \Comment{over budget}
+    \Else
+      \State $\lambda_{\mathrm{hi}}\gets\lambda$,\; $b_i^{(\ell)}\gets b_i$ \Comment{feasible}
+    \EndIf
+  \EndWhile
+  \State $\bar v_i\gets v_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(\bar v_i+v_i(b_i^{(\ell)})\big)$
+\EndFor
+\State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}v_i(b_i)v_j(b_j)$
+\end{algorithmic}
+\end{algorithm}
 
 
 \paragraph{Optimality over Prior Allocation Rules.}
-Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of the Token Scheduler solves Eq.~\eqref{eq:relevance} exactly, and thus achieves the highest objective among all allocations with the same token spend, including both rules. Moreover, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is strictly suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
+Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance} exactly, and thus achieves the highest objective among all allocations with the same token spend, including both rules. Moreover, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is strictly suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
 
 \begin{proposition}
 \label{prop:proportional}

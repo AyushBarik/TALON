@@ -1,7 +1,7 @@
 % Overview figure (figure*, drawn at \textwidth = 17.46 cm). Three stages left to right:
 % (1) retrieval: video + subtitles -> retriever (with query q) -> relevance r_i over items in time order;
 % (2) Token Scheduler (the contribution, the only accented stage): objective, value curves v_frame / v_text,
-%     integer program -> token plan b_i;
+%     water-filling -> token plan b_i;
 % (3) inference: frozen pruner keeps each frame's top-ranked tokens (storyboard in time order), the new tokens are
 %     appended to the KV cache of earlier turns, and the frozen VLM answers.
 % Bar heights and the plan are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU (illustration only).
@@ -90,8 +90,8 @@
   \node[font=\sffamily\scriptsize, text=txt, anchor=south west, inner sep=1pt] at (1.95,2.06) {$v_{\text{text}}$};
   \node[font=\sffamily\scriptsize, text=black!70, anchor=north west, inner sep=1pt] at (1.95,1.9) {$v_{\text{frame}}$};
 \end{scope}
-% integer program: relevance and value curves -> token plan
-\draw[arr] (7.45,1.05) -- node[elbl, above, align=center] {integer\\program} node[elbl, below] {exact} (8.45,1.05);
+% water-filling: relevance and value curves -> token plan
+\draw[arr] (7.45,1.05) -- node[elbl, above, align=center] {water-\\filling} node[elbl, below] {price $\lambda$} (8.45,1.05);
 % token plan over items in time order
 \begin{scope}[shift={(8.85,0.6)}]
   \draw[ax] (0,0) -- (2.0,0); \draw[ax] (0,0) -- (0,2.55);
