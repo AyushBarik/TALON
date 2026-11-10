@@ -90,6 +90,11 @@
 \makeatother
 
 \usepackage{amsthm}
+\usepackage{multirow}               % main results table: stacked header cells
+\usepackage{colortbl}               % main results table: shaded row of our method
+\newlength{\splitw}                 % main results table: width of each Video-MME split column
+\newcolumntype{V}{>{\centering\arraybackslash}p{\splitw}}
+\newcommand{\venue}[1]{\textsubscript{\,#1}}   % venue under a baseline name, e.g. Q-Frame [x]_{ICCV'25}
 \usepackage{tikz}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}   % no "end for"/"end if" lines (DDPM / CLRS style)
@@ -123,6 +128,7 @@
 \definecolor{orxred}{HTML}{D55E00}
 \definecolor{orxpurple}{HTML}{CC79A7}
 \definecolor{orxsky}{HTML}{56B4E9}
+\definecolor{groupbg}{HTML}{E9E1F4}   % main results table: light purple band naming the VLM
 
 \newcommand{\ayush}[1]{\textcolor{purple}{[Ayush: #1]}}
 \newcommand{\fan}[1]{\textcolor{blue}{[Fan: #1]}}

@@ -1,0 +1,4 @@
+method,budget,tflops,accuracy
+RAG,12288,261.18,76.22
+Uniform pruning,12288,718.70,75.94
+Q-Frame,12288,262.40,74.70

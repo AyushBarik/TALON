@@ -1,40 +1,178 @@
 \section{Evaluation}
 \label{sec:exp}
 
-\TODO{Evaluation intro.}
+We evaluate \name on three long-video question-answering benchmarks and one multi-turn dialogue benchmark with two VLMs of different architectures, and
+compare it against frame selection and token allocation methods under the same token budget. We implement \name and
+all baselines in PyTorch, and run all experiments on two NVIDIA A100 GPUs. Unless stated otherwise, every method draws
+from the same candidate frames, sampled from each video at 1 fps and kept at their native resolution, and receives the
+same budget of 12,288 tokens per question, the default video budget of Qwen3-VL. \name scores the relevance of each
+frame with SigLIP~2~\cite{siglip2} and of each transcript segment with BGE~\cite{bge}, using the question together with
+its answer options as the query. Further implementation details are provided in the appendix.
 
 \subsection{Experimental Setup}
 \label{sec:exp-setup}
 
-\paragraph{Models and benchmarks.} \TODO{}
+\paragraph{Models.} We evaluate \name on two VLMs that differ in how they encode frames:
+\begin{itemize}
+  \item Qwen3-VL-8B~\cite{bai2025qwen3vl}: Encodes each frame at its native resolution, so the number of visual tokens
+    of a frame grows with its resolution, at one token per $32\times32$ pixels.
+  \item InternVL3.5-4B~\cite{wang2025internvl35}: Pairs an InternViT-300M vision encoder with the Qwen3-4B language
+    model~\cite{qwen3}, and encodes each $448\times448$ image tile into 256 visual tokens.
+\end{itemize}
 
-\paragraph{Baselines.} \TODO{}
+\paragraph{Benchmarks.} We evaluate on three long-video multiple-choice benchmarks and one multi-turn benchmark:
+\begin{itemize}
+  \item MLVU~\cite{zhou2024mlvu}: Contains videos from 3 minutes to over 2 hours across diverse genres. We use the
+    2,174 multiple-choice questions of its development set, on 1,122 videos.
+  \item LongVideoBench (LVB)~\cite{wu2024longvideobench}: Contains videos of up to an hour whose questions refer to a
+    specific moment of the video. We use its validation set of 1,337 questions on 753 videos, without subtitles.
+  \item Video-MME~\cite{fu2024videomme}: Contains 2,700 questions on 900 videos, split by duration into short
+    (under 2 minutes), medium (4--15 minutes), and long (30--60 minutes) videos. We use its subtitled setting, in
+    which subtitle tokens count toward the same token budget.
+  \item MT-Video-Bench~\cite{mtvideobench2025}: Contains 1,000 multi-turn dialogues about videos from diverse domains,
+    and evaluates perception and interaction across six competencies. We use it to evaluate \name across the turns of
+    a conversation.
+\end{itemize}
 
-\paragraph{Metrics.} \TODO{}
+\paragraph{Baselines.} We compare \name against the following approaches:
+\begin{itemize}
+  \item Uniform sampling: Samples frames at uniform intervals over the whole video, without retrieval, until the
+    frames fill the token budget.
+  \item RAG: Retrieves the top-$K$ frames by relevance at their native resolution, with $K$ set so that the
+    retrieved frames fill the token budget.
+  \item Uniform pruning: Retrieves the top-64 frames by relevance and keeps 192 tokens of each, chosen by the same
+    token pruner as \name (\cref{sec:allocation}). It thus isolates the benefit of allocating tokens unevenly across
+    frames.
+  \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance with the Gumbel-max trick and shows them at three
+    resolutions, with the most relevant frames at the highest resolution. We replace its Long-CLIP scorer with
+    SigLIP~2, so that it shares the relevance of \name.
+  \item QuoTA~\cite{luo2025quota}: Decouples the question into the entities it asks about with chain-of-thought
+    reasoning, scores each frame against them, and assigns each frame a number of tokens that grows with its score. We
+    use its CLIP-based scoring variant with SigLIP~2.
+  \item FOCUS~\cite{zhu2026focus}: Treats short clips as the arms of a multi-armed bandit and selects keyframes by
+    exploring the clips with the highest upper confidence bounds, without scoring every frame.
+  \item AdaAlloc~\cite{an2026adaalloc}: Uses the VLM to plan how to split the budget between sparse low-resolution
+    frames across the whole video and dense high-resolution frames from segments localized by a temporal grounding
+    model.
+\end{itemize}
 
 \subsection{Main Results}
 \label{sec:exp-main}
 
+\begin{table*}[t]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  % Rules that border a shaded row get no booktabs gap, so the shading touches the rule.
+  \newcommand{\na}{--}
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % purple band naming the VLM
+  % The four Video-MME splits share one width, so the inner header table lines up with the columns below it.
+  \settowidth{\splitw}{Medium}
+  \newcommand{\maintab}{%
+  \begin{tabular}{l ccc cc VVVV}
+    \toprule
+    Method & \#Frames & TFLOPs $\downarrow$ & TTFT (s) $\downarrow$
+      & MLVU $\uparrow$ & LVB $\uparrow$
+      & \multicolumn{4}{c}{%
+        \begin{tabular}{@{}VVVV@{}}
+          \multicolumn{4}{c}{Video-MME $\uparrow$} \\
+          \cmidrule(lr){1-4}
+          Overall & Short & Medium & Long \\[2.6pt]  % extra depth centers the block's ink (no descenders)
+        \end{tabular}} \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    RAG                                                      & 64 & 268 & 2.6 & 76.2 & 64.9 & 73.1 & 82.2 & 73.7 & 63.4 \\
+    \quad + Uniform pruning                                  & 64 & 582 & 3.9 & 75.9 & 64.0 & 73.1 & 82.4 & 73.4 & 63.6 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 44 & 270 & 2.1 & 74.7 & 65.7 & 71.1 & 80.1 & 70.3 & 63.0 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 128 & \na & 11.5 & \na & 66.6 & 74.4 & 83.2 & 74.4 & 65.4 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \rowcolor{orxblue!8}
+    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \specialrule{\lightrulewidth}{0pt}{0pt}
+    \group{InternVL3.5-4B~\cite{wang2025internvl35}}
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \rowcolor{orxblue!8}
+    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
+  \end{tabular}}%
+  % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
+  % 20 column sides. This stays correct when the numbers change.
+  \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
+  \maintab
+  \caption{\TODO{Main results.} Accuracy (\%) on MLVU, LongVideoBench (LVB) and Video-MME with subtitles, with the
+    compute (TFLOPs) and time to first token (TTFT) of each method.}
+  \label{tab:main}
+\end{table*}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/multiturn_curve.pdf}
+  \caption{\TODO{}}
+  \label{fig:multiturn}
+\end{figure}
+
+\paragraph{\name achieves the Pareto frontier in single-turn question answering.} \TODO{} (\cref{fig:budget},
+\cref{tab:main})
+
+\paragraph{\name achieves the Pareto frontier across multi-turn conversations.} \TODO{} (\cref{fig:multiturn})
+
+% \paragraph{Qualitative analysis.} \TODO{Seems moderately useless; perhaps remove if space constrained.}
+% (\cref{fig:radar,fig:case})
+
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\linewidth]{fig/videomme_radar.pdf}
+%   \caption{\TODO{}}
+%   \label{fig:radar}
+% \end{figure}
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\linewidth]{fig/case_study.pdf}
+%   \caption{\TODO{}}
+%   \label{fig:case}
+% \end{figure}
+
 \begin{table}[t]
   \centering
   \small
-  \begin{tabular}{@{}lccc@{}}
+  \renewcommand{\arraystretch}{1.2}
+  \settowidth{\splitw}{Medium}%
+  \newcommand{\na}{--}
+  \newcommand{\abltab}{%
+  \begin{tabular}{l c VVVV}
     \toprule
-    \TODO{} & & & \\
-    \midrule
-    & & & \\
+    Method & TFLOPs $\downarrow$
+      & \multicolumn{4}{c}{%
+        \begin{tabular}{@{}VVVV@{}}
+          \multicolumn{4}{c}{Video-MME $\uparrow$} \\
+          \cmidrule(lr){1-4}
+          Overall & Short & Medium & Long \\[2.6pt]
+        \end{tabular}} \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \rowcolor{orxblue!8}
+    \textbf{\name}                 & \na & \na & \na & \na & \na \\
+    \quad w/o text allocation      & \na & \na & \na & \na & \na \\
+    \quad w/o diversity            & \na & \na & \na & \na & \na \\
     \bottomrule
-  \end{tabular}
-  \caption{\TODO{Main results.}}
-  \label{tab:main}
+  \end{tabular}}%
+  % Equal gaps that make the table exactly \columnwidth (12 column sides).
+  \sbox0{\setlength{\tabcolsep}{0pt}\abltab}%
+  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/12\relax}%
+  \abltab
+  \caption{\TODO{}}
+  \label{tab:ablation}
 \end{table}
 
-\TODO{}
+\paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation})
 
-
-\TODO{}
-
-\subsection{Ablation Studies}
-\label{sec:exp-ablation}
-
-\TODO{}

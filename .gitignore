@@ -7,3 +7,5 @@
 *.pdf
 *.synctex.gz
 *.png.bak
+!fig/*.pdf
+__pycache__/
