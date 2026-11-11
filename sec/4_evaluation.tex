@@ -72,13 +72,15 @@ its answer options as the query. Further implementation details are provided in 
   \begin{tabular}{l cc cc VVVV}
     \toprule
     Method & \#Frames & TFLOPs $\downarrow$
-      & MLVU $\uparrow$ & LVB $\uparrow$
+      & \begin{tabular}{@{}c@{}}MLVU $\uparrow$ \\ {\scriptsize (12.6 min)}\end{tabular}
+      & \begin{tabular}{@{}c@{}}LVB $\uparrow$ \\ {\scriptsize (7.9 min)}\end{tabular}
       & \multicolumn{4}{c}{%
         \begin{tabular}{@{}VVVV@{}}
           \multicolumn{4}{c}{Video-MME $\uparrow$} \\
           \cmidrule(lr){1-4}
-          Overall & Short & Medium & Long \\[2.6pt]  % extra depth centers the block's ink (no descenders)
-        \end{tabular}} \\
+          Overall & Short & Medium & Long \\
+          {\scriptsize (17.0 min)} & {\scriptsize (1.3 min)} & {\scriptsize (8.6 min)} & {\scriptsize (41.1 min)} \\[2.6pt]
+        \end{tabular}} \\  % (x min): mean video length of the benchmark or split
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na \\
