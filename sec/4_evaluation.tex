@@ -61,50 +61,49 @@ its answer options as the query. Further implementation details are provided in 
 
 \begin{table*}[t]
   \centering
-  \footnotesize
+  \small
   \renewcommand{\arraystretch}{1.2}
   % Rules that border a shaded row get no booktabs gap, so the shading touches the rule.
   \newcommand{\na}{--}
-  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{9}{l}{\textit{#1}} \\}  % purple band naming the VLM
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % purple band naming the VLM
   \newcommand{\maintab}{%
-  \begin{tabular}{l cc cc cccc}
+  \begin{tabular}{l cc cc ccccc}
     \toprule
-    \multirow{2}{*}{Method} & \multirow{2}{*}{\#Frames} & \multirow{2}{*}{TFLOPs $\downarrow$}
-      & \multirow{2}{*}{MLVU {\scriptsize(13 min)} $\uparrow$} & \multirow{2}{*}{LVB {\scriptsize(8 min)} $\uparrow$}
-      & \multicolumn{4}{c}{Video-MME $\uparrow$} \\
-    \cmidrule(lr){6-9}
-    & & & & & Overall {\scriptsize(17 min)} & Short {\scriptsize(1 min)} & Medium {\scriptsize(9 min)} & Long {\scriptsize(41 min)} \\  % (x min): mean video length
+    \multirow{2}{*}{Method} & \multicolumn{2}{c}{MLVU} & \multicolumn{2}{c}{LVB} & \multicolumn{5}{c}{Video-MME} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-10}
+    & Acc. $\uparrow$ & TFLOPs $\downarrow$ & Acc. $\uparrow$ & TFLOPs $\downarrow$
+      & Overall $\uparrow$ & Short $\uparrow$ & Medium $\uparrow$ & Long $\uparrow$ & TFLOPs $\downarrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
-    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na \\
-    RAG                                                      & 64 & 268 & 76.2 & 64.9 & 73.1 & 82.2 & 73.7 & 63.4 \\
-    \quad + Uniform pruning                                  & 64 & 582 & 75.9 & 64.0 & 73.1 & 82.4 & 73.4 & 63.6 \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 44 & 270 & 74.7 & 65.7 & 71.1 & 80.1 & 70.3 & 63.0 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 128 & 2276 & 77.2 & 66.6 & 74.4 & 83.2 & 74.4 & 65.4 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 62 & 266 & 71.7 & 64.0 & 70.1 & 79.1 & 69.4 & 61.8 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 42 & 580 & 73.6 & 65.5 & 71.1 & 83.1 & 68.9 & 61.3 \\
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    RAG                                                      & 76.2 & 261 & 64.9 & 277 & 73.1 & 82.2 & 73.7 & 63.4 & 270 \\
+    \quad + Uniform pruning                                  & 75.9 & 719 & 64.0 & 526 & 73.1 & 82.4 & 73.4 & 63.6 & 500 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 74.7 & 262 & 65.7 & 281 & 71.1 & 80.1 & 70.3 & 63.0 & 270 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 77.2 & 3215 & 66.6 & 1857 & 74.4 & 83.2 & 74.4 & 65.4 & 1728 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 71.7 & 256 & 64.0 & 275 & 70.1 & 79.1 & 69.4 & 61.8 & 270 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 73.6 & 547 & 65.5 & 605 & 71.1 & 83.1 & 68.9 & 61.3 & 594 \\
     \rowcolor{orxblue!8}
-    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
-    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na \\
-    RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \na & \na & \na & \na & \na & \na & \na \\
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \rowcolor{orxblue!8}
-    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
   % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
-  % 18 column sides. This stays correct when the numbers change.
+  % 20 column sides. This stays correct when the numbers change.
   \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
-  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/18\relax}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
   \maintab
   \caption{\TODO{Main results.} Accuracy (\%) on MLVU, LongVideoBench (LVB) and Video-MME with subtitles, with the
-    compute (TFLOPs) of each method.}
+    compute (TFLOPs per question) of each method on each benchmark.}
   \label{tab:main}
 \end{table*}
 
