@@ -38,8 +38,8 @@ def main():
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
         ax.set_xlim(0, 300)
         ax.set_xticks([35, 70, 135, 275])
-        ax.set_ylim(60, 68)
-        ax.set_yticks([60, 62, 64, 66, 68])
+        ax.set_ylim(64, 80)
+        ax.set_yticks([64, 68, 72, 76, 80])
         # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
         ax.plot([], [], " ", label="RAG")
         for method, (color, marker) in METHODS.items():
@@ -61,7 +61,7 @@ def main():
         ax.set_yticklabels([""] * 4)
 
     ax.set_xlabel("TFLOPs")
-    ax.set_ylabel("LongVideoBench accuracy (%)")
+    ax.set_ylabel("MLVU accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
 
