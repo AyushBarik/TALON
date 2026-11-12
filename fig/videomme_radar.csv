@@ -5,12 +5,12 @@ Qwen3-VL-8B,RAG,Information Synopsis,85.76
 Qwen3-VL-8B,RAG,Perception,80.66
 Qwen3-VL-8B,RAG,Counting Problem,52.61
 Qwen3-VL-8B,RAG,Recognition,74.06
-Qwen3-VL-8B,Uniform pruning,Reasoning,69.14
-Qwen3-VL-8B,Uniform pruning,OCR Problems,81.29
-Qwen3-VL-8B,Uniform pruning,Information Synopsis,87.62
-Qwen3-VL-8B,Uniform pruning,Perception,82.18
-Qwen3-VL-8B,Uniform pruning,Counting Problem,51.12
-Qwen3-VL-8B,Uniform pruning,Recognition,74.66
+Qwen3-VL-8B,Uniform pruning,Reasoning,67.28
+Qwen3-VL-8B,Uniform pruning,OCR Problems,79.14
+Qwen3-VL-8B,Uniform pruning,Information Synopsis,84.21
+Qwen3-VL-8B,Uniform pruning,Perception,80.66
+Qwen3-VL-8B,Uniform pruning,Counting Problem,47.39
+Qwen3-VL-8B,Uniform pruning,Recognition,71.81
 Qwen3-VL-8B,Q-Frame,Reasoning,68.31
 Qwen3-VL-8B,Q-Frame,OCR Problems,76.98
 Qwen3-VL-8B,Q-Frame,Information Synopsis,84.21
@@ -23,3 +23,21 @@ Qwen3-VL-8B,QuoTA,Information Synopsis,87.62
 Qwen3-VL-8B,QuoTA,Perception,84.59
 Qwen3-VL-8B,QuoTA,Counting Problem,51.49
 Qwen3-VL-8B,QuoTA,Recognition,74.96
+Qwen3-VL-8B,FOCUS,Reasoning,66.15
+Qwen3-VL-8B,FOCUS,OCR Problems,77.70
+Qwen3-VL-8B,FOCUS,Information Synopsis,85.45
+Qwen3-VL-8B,FOCUS,Perception,81.87
+Qwen3-VL-8B,FOCUS,Counting Problem,47.39
+Qwen3-VL-8B,FOCUS,Recognition,70.16
+Qwen3-VL-8B,AdaAlloc,Reasoning,66.56
+Qwen3-VL-8B,AdaAlloc,Perception,77.64
+Qwen3-VL-8B,AdaAlloc,Counting Problem,51.12
+Qwen3-VL-8B,AdaAlloc,Recognition,74.06
+Qwen3-VL-8B,AdaAlloc,OCR Problems,76.98
+Qwen3-VL-8B,AdaAlloc,Information Synopsis,84.83
+Qwen3-VL-8B,TALON (Ours),Reasoning,75.93
+Qwen3-VL-8B,TALON (Ours),Perception,85.20
+Qwen3-VL-8B,TALON (Ours),Counting Problem,52.61
+Qwen3-VL-8B,TALON (Ours),Recognition,77.51
+Qwen3-VL-8B,TALON (Ours),OCR Problems,84.17
+Qwen3-VL-8B,TALON (Ours),Information Synopsis,90.71
