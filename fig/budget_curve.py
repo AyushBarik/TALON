@@ -38,20 +38,20 @@ def main():
 
     if rows:
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
-        ax.set_xscale("log")  # TFLOPs = LLM prefill per question (Sec. 4, Compute)
-        ax.set_xlim(25, 300)
-        ax.set_xticks([25, 50, 100, 200])
-        ax.set_xticklabels(["25", "50", "100", "200"])
+        ax.set_xscale("log")  # Cost ($) of running all 2,174 MLVU questions; csv column "tflops" holds USD
+        ax.set_xlim(0.5, 7)
+        ax.set_xticks([0.5, 1, 2, 4])
+        ax.set_xticklabels(["0.5", "1", "2", "4"])
         ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-        ax.set_ylim(64, 80)
-        ax.set_yticks([64, 68, 72, 76, 80])
+        ax.set_ylim(60, 80)
+        ax.set_yticks([60, 64, 68, 72, 76, 80])
         # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
         ax.plot([], [], " ", label="RAG")
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
             if method == "RAG" or not pts:
                 continue
-            pts = [p for p in pts if p[0] >= 25]  # axis starts at 25 TFLOPs
+            pts = [p for p in pts if p[0] >= 0.5]  # axis starts at $0.50
             x, y, _ = zip(*pts)
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
@@ -66,7 +66,7 @@ def main():
         ax.set_yticks([0.2, 0.4, 0.6, 0.8])
         ax.set_yticklabels([""] * 4)
 
-    ax.set_xlabel("TFLOPs")
+    ax.set_xlabel("Cost ($)")
     ax.set_ylabel("MLVU accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
