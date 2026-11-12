@@ -38,11 +38,10 @@ def main():
 
     if rows:
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
-        ax.set_xscale("log")  # Cost ($) of running all 2,174 MLVU questions; csv column "tflops" holds USD
-        ax.set_xlim(0.5, 7)
-        ax.set_xticks([0.5, 1, 2, 4])
-        ax.set_xticklabels(["0.5", "1", "2", "4"])
-        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        # Linear axis: Cost ($) of running all 2,174 MLVU questions (csv column "tflops" holds USD), ticks every $0.50
+        ax.set_xlim(0.5, 5.5)
+        ax.set_xticks([0.5 * k for k in range(1, 12)])
+        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
         ax.set_ylim(60, 80)
         ax.set_yticks([60, 64, 68, 72, 76, 80])
         # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
