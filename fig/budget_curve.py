@@ -40,14 +40,16 @@ def main():
         ax.set_xticks([35, 70, 135, 275])
         ax.set_ylim(60, 68)
         ax.set_yticks([60, 62, 64, 66, 68])
+        # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
+        ax.plot([], [], " ", label="RAG")
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
-            if not pts:
+            if method == "RAG" or not pts:
                 continue
             x, y, _ = zip(*pts)
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
-                    zorder=3 if ours else 2, label=method if method == "RAG" else "+ " + method)  # as in Table 1
+                    zorder=3 if ours else 2, label="+ " + method)
         ax.legend(loc="upper left", frameon=False, fontsize=6)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
