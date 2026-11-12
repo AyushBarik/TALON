@@ -36,8 +36,6 @@ its answer options as the query. Further implementation details are provided in 
 
 \paragraph{Baselines.} We compare \name against the following approaches:
 \begin{itemize}
-  \item Uniform sampling: Samples frames at uniform intervals over the whole video, without retrieval, until the
-    frames fill the token budget.
   \item RAG: Retrieves the top-$K$ frames by relevance at their native resolution, with $K$ set so that the
     retrieved frames fill the token budget.
   \item Uniform pruning: Retrieves the top-64 frames by relevance and keeps 192 tokens of each, chosen by the same
@@ -75,7 +73,6 @@ its answer options as the query. Further implementation details are provided in 
       & Overall $\uparrow$ & Short $\uparrow$ & Medium $\uparrow$ & Long $\uparrow$ & TFLOPs $\downarrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
-    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & 76.2 & 261 & 64.9 & 277 & 73.1 & 82.2 & 73.7 & 63.4 & 270 \\
     \quad + Uniform pruning                                  & 74.8 & \textbf{245} & 63.1 & \textbf{264} & 70.7 & 79.9 & 70.2 & 62.0 & \textbf{261} \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 74.7 & 262 & 65.7 & 281 & 71.1 & 80.1 & 70.3 & 63.0 & 270 \\
@@ -86,7 +83,6 @@ its answer options as the query. Further implementation details are provided in 
     \quad + \textbf{\name (Ours)}                            & \textbf{78.1} & 277 & \textbf{66.6} & 283 & \textbf{77.3} & 83.6 & 76.8 & 71.7 & 275 \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
-    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
