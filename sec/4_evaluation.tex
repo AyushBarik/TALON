@@ -42,7 +42,7 @@ jointly over frames and subtitle segments.
 \begin{itemize}
   \item RAG: Retrieves the top-$K$ frames by relevance at their native resolution, with $K$ set so that the
     retrieved frames fill the token budget.
-  \item Uniform pruning: Retrieves the top-64 frames by relevance and keeps 192 tokens of each, chosen by the same
+  \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each, chosen by the same
     token pruner as \name (\cref{sec:allocation}). It thus isolates the benefit of allocating tokens unevenly across
     frames.
   \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance with the Gumbel-max trick and shows them at three
@@ -81,7 +81,7 @@ jointly over frames and subtitle segments.
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     RAG                                                      & & & & & & & & & & & & \\
-    \quad + Uniform pruning                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}245 & \cellcolor{heat2}3.0 & \cellcolor{heat3}63.1 & \cellcolor{heat0}264 & \cellcolor{heat3}3.1 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}261 & \cellcolor{heat2}2.9 \\
+    \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}245 & \cellcolor{heat2}3.0 & \cellcolor{heat3}63.1 & \cellcolor{heat0}264 & \cellcolor{heat3}3.1 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}261 & \cellcolor{heat2}2.9 \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat1}262 & \cellcolor{heat1}2.6 & \cellcolor{heat1}65.7 & \cellcolor{heat1}281 & \cellcolor{heat1}2.5 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat1}270 & \cellcolor{heat0}2.4 \\
     \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & 1355 & 24.0 & \cellcolor{heat0}\textbf{66.6} & 1857 & 20.2 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 1728 & 15.8 \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat1}256 & \cellcolor{heat0}2.6 & \cellcolor{heat3}64.0 & \cellcolor{heat1}275 & \cellcolor{heat0}2.5 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}270 & \cellcolor{heat1}2.5 \\
@@ -90,7 +90,7 @@ jointly over frames and subtitle segments.
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     RAG                                                      & & & & & & & & & & & & \\
-    \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Top-K (w/ pruning)                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & 1275 & & \cellcolor{heat2}62.5 & 1753 & & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & 1623 & \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}178 & & \cellcolor{heat4}58.8 & \cellcolor{heat0}178 & & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}174 & \\

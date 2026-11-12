@@ -5,12 +5,12 @@ Qwen3-VL-8B,RAG,Information Synopsis,85.76
 Qwen3-VL-8B,RAG,Perception,80.66
 Qwen3-VL-8B,RAG,Counting Problem,52.61
 Qwen3-VL-8B,RAG,Recognition,74.06
-Qwen3-VL-8B,Uniform pruning,Reasoning,69.14
-Qwen3-VL-8B,Uniform pruning,OCR Problems,81.29
-Qwen3-VL-8B,Uniform pruning,Information Synopsis,87.62
-Qwen3-VL-8B,Uniform pruning,Perception,82.18
-Qwen3-VL-8B,Uniform pruning,Counting Problem,51.12
-Qwen3-VL-8B,Uniform pruning,Recognition,74.66
+Qwen3-VL-8B,Top-K (w/ pruning),Reasoning,69.14
+Qwen3-VL-8B,Top-K (w/ pruning),OCR Problems,81.29
+Qwen3-VL-8B,Top-K (w/ pruning),Information Synopsis,87.62
+Qwen3-VL-8B,Top-K (w/ pruning),Perception,82.18
+Qwen3-VL-8B,Top-K (w/ pruning),Counting Problem,51.12
+Qwen3-VL-8B,Top-K (w/ pruning),Recognition,74.66
 Qwen3-VL-8B,Q-Frame,Reasoning,68.31
 Qwen3-VL-8B,Q-Frame,OCR Problems,76.98
 Qwen3-VL-8B,Q-Frame,Information Synopsis,84.21

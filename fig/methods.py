@@ -8,7 +8,7 @@ from orx_figstyle import BASELINE, PALETTE
 METHODS = {
     "Uniform sampling": (PALETTE["black"], "x"),
     "RAG": (BASELINE, "v"),
-    "Uniform pruning": (PALETTE["cyan"], "P"),
+    "Top-K (w/ pruning)": (PALETTE["cyan"], "P"),
     "Q-Frame": (PALETTE["orange"], "s"),
     "QuoTA": (PALETTE["green"], "D"),
     "FOCUS": (PALETTE["red"], "^"),
