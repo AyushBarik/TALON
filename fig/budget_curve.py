@@ -47,7 +47,7 @@ def main():
             x, y, _ = zip(*pts)
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
-                    zorder=3 if ours else 2, label=method)
+                    zorder=3 if ours else 2, label=method if method == "RAG" else "+ " + method)  # as in Table 1
         ax.legend(loc="upper left", frameon=False, fontsize=6)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
