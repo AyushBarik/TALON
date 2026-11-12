@@ -59,7 +59,7 @@ def main():
         ax.set_yticklabels([""] * 4)
 
     ax.set_xlabel("TFLOPs")
-    ax.set_ylabel("LVB accuracy (%)")
+    ax.set_ylabel("LongVideoBench accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
 
