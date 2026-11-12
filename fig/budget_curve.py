@@ -8,6 +8,8 @@ Regenerate:  uv run --no-project --with matplotlib --with numpy python fig/budge
 """
 
 import csv
+
+import matplotlib.ticker
 import os
 from collections import defaultdict
 
@@ -36,8 +38,11 @@ def main():
 
     if rows:
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
-        ax.set_xlim(0, 300)
-        ax.set_xticks([35, 70, 135, 275])
+        ax.set_xscale("log")  # log TFLOPs axis so QuoTA (~1,100-1,400 TFLOPs) fits; ticks at the budgets and QuoTA
+        ax.set_xlim(18, 1800)
+        ax.set_xticks([35, 70, 135, 275, 1300])
+        ax.set_xticklabels(["35", "70", "135", "275", "1300"])
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_ylim(64, 80)
         ax.set_yticks([64, 68, 72, 76, 80])
         # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
@@ -50,7 +55,7 @@ def main():
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
                     zorder=3 if ours else 2, label="+ " + method)
-        ax.legend(loc="lower right", frameon=False, fontsize=6)
+        ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
         ax.set_xlim(0.5, 4.5)
