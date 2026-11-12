@@ -23,7 +23,7 @@ from orx_figstyle import COLUMN, save, use_style
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "videomme_radar.csv")
-MODELS = ["Qwen3-VL-8B"]  # one radar, half a column wide, next to Table 2
+MODELS = ["Qwen3-VL-8B", "InternVL3.5-4B"]
 # (key in the CSV, axis label, questions), clockwise from the top
 GROUPS = [
     ("Reasoning", "Reasoning", 972),
@@ -77,15 +77,18 @@ def main():
     vals = [x for d in acc.values() for x in d.values()]
     lo, hi = (np.floor(min(vals) / 5) * 5 - 5, np.ceil(max(vals) / 5) * 5) if vals else (0.0, 1.0)
 
-    width, height, size = 1.62, 2.05, 1.0  # figure width/height and radar diameter (in): half of a 3.25 in column
-    fig = plt.figure(figsize=(width, height))
-    ax = fig.add_axes([(1 - size / width) / 2, 0.40, size / width, size / height], polar=True)
-    radar(ax, MODELS[0], acc, lo, hi)
-    handles = [Line2D([], [], color=c, marker=m, ms=3, lw=1.3 if is_ours(k) else 0.8,
-                      label=k if k == "RAG" else "+ " + k)
-               for k, (c, m) in METHODS.items() if (MODELS[0], k) in acc]
-    fig.legend(handles=handles, loc="lower center", ncol=2, frameon=False, fontsize=5.5, handlelength=1.6,
-               columnspacing=0.8, borderaxespad=0.1)
+    height, size = 1.95, 0.84  # figure height and radar diameter (in)
+    w, h = size / COLUMN, size / height
+    fig = plt.figure(figsize=(COLUMN, height))
+    for i, model in enumerate(MODELS):
+        cx = 0.25 + 0.5 * i
+        ax = fig.add_axes([cx - w / 2, 0.31, w, h], polar=True)
+        radar(ax, model, acc, lo, hi)
+        fig.text(cx, 0.97, model, ha="center", va="top", fontsize=6.5)
+    handles = [Line2D([], [], color=c, marker=m, ms=3, lw=1.3 if is_ours(k) else 0.8, label=k)
+               for k, (c, m) in METHODS.items()]
+    fig.legend(handles=handles, loc="lower center", ncol=4, frameon=False, fontsize=5.5, handlelength=1.6,
+               columnspacing=0.9, borderaxespad=0.1)
     print(save(fig, os.path.join(HERE, "videomme_radar")))
 
 
