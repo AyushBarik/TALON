@@ -50,7 +50,7 @@ def main():
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
                     zorder=3 if ours else 2, label="+ " + method)
-        ax.legend(loc="upper left", frameon=False, fontsize=6)
+        ax.legend(loc="lower right", frameon=False, fontsize=6)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
         ax.set_xlim(0.5, 4.5)
