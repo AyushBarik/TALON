@@ -73,23 +73,21 @@ its answer options as the query. Further implementation details are provided in 
       & Overall $\uparrow$ & Short $\uparrow$ & Medium $\uparrow$ & Long $\uparrow$ & TFLOPs $\downarrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
-    RAG                                                      & 76.2 & 261 & 64.9 & 277 & 73.1 & 82.2 & 73.7 & 63.4 & 270 \\
-    \quad + Uniform pruning                                  & 74.8 & 245 & 63.1 & 264 & 70.7 & 79.9 & 70.2 & 62.0 & 261 \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 74.7 & 262 & 65.7 & 281 & 71.1 & 80.1 & 70.3 & 63.0 & 270 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 77.2 & 1355 & \textbf{66.6} & 1857 & 74.4 & 83.2 & 74.4 & 65.4 & 1728 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 71.7 & 256 & 64.0 & 275 & 70.1 & 79.1 & 69.4 & 61.8 & 270 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 73.2 & 251 & 65.1 & 273 & 71.0 & 82.8 & 69.4 & 60.7 & 276 \\
-    \rowcolor{orxblue!8}
-    \quad + \textbf{\name (Ours)}                            & \textbf{78.1} & 277 & \textbf{66.6} & 283 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} & 275 \\
+    RAG                                                      & \cellcolor{heat2}76.2 & \cellcolor{heat1}261 & \cellcolor{heat2}64.9 & \cellcolor{heat1}277 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.2 & \cellcolor{heat3}73.7 & 63.4 & \cellcolor{heat1}270 \\
+    \quad + Uniform pruning                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}245 & \cellcolor{heat3}63.1 & \cellcolor{heat0}264 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}261 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat1}262 & \cellcolor{heat1}65.7 & \cellcolor{heat1}281 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat1}270 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & 1355 & \cellcolor{heat0}\textbf{66.6} & 1857 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 1728 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat1}256 & \cellcolor{heat3}64.0 & \cellcolor{heat1}275 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}270 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat1}251 & \cellcolor{heat2}65.1 & \cellcolor{heat1}273 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}276 \\
+    \quad + \textbf{\name (Ours)}                            & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat2}277 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat1}283 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat1}275 \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \textbf{71.3} & 1275 & 62.5 & 1753 & 64.9 & 74.7 & 64.6 & 55.4 & 1623 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 69.5 & 178 & 58.8 & 178 & 66.4 & 75.9 & 65.9 & 57.4 & 174 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 71.1 & 399 & \textbf{63.6} & 419 & \textbf{67.9} & \textbf{79.2} & \textbf{66.7} & \textbf{57.8} & 411 \\
-    \rowcolor{orxblue!8}
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & 1275 & \cellcolor{heat2}62.5 & 1753 & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & 1623 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}178 & \cellcolor{heat4}58.8 & \cellcolor{heat0}178 & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}174 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat1}71.1 & 399 & \cellcolor{heat0}\textbf{63.6} & 419 & \cellcolor{heat0}\textbf{67.9} & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat0}\textbf{66.7} & \cellcolor{heat0}\textbf{57.8} & 411 \\
     \quad + \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
