@@ -38,10 +38,10 @@ def main():
 
     if rows:
         # Linear axis: Cost ($) of running all 2,174 MLVU questions through the OpenRouter API (csv column "tflops"
-        # holds USD), ticks every $0.50. A point beyond the axis is drawn as an arrow at the right edge with its cost.
+        # holds USD), one tick per dollar. QuoTA's Qwen2-VL-2B scorer is not counted.
         XMAX = 8.0
-        ax.set_xlim(0.5, XMAX)
-        ax.set_xticks([0.5 * k for k in range(1, 17)])
+        ax.set_xlim(0.8, XMAX)
+        ax.set_xticks(list(range(1, 9)))
         ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
         ax.set_ylim(60, 80)
         ax.set_yticks([60, 64, 68, 72, 76, 80])
@@ -56,11 +56,6 @@ def main():
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
                     zorder=3 if ours else 2, label="+ " + method)
-            for cost, acc, _ in (p for p in pts if p[0] > XMAX):
-                ax.plot([x[-1], XMAX], [y[-1], acc], color=color, lw=1.0, ls="--", zorder=2, clip_on=False)
-                ax.plot([XMAX], [acc], marker=">", color=color, ms=4, zorder=3, clip_on=False)
-                ax.annotate(f"${cost:.2f}", xy=(XMAX, acc), xytext=(-3, 4), textcoords="offset points",
-                            ha="right", va="bottom", fontsize=6, color=color)
         ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.

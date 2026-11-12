@@ -2,7 +2,6 @@ method,budget,tflops,accuracy
 Top-K (w/ pruning),1536,1.065,65.04
 Top-K (w/ pruning),3072,2.755,69.64
 Top-K (w/ pruning),6144,6.110,72.77
-Top-K (w/ pruning),12288,33.351,75.94
 Q-Frame,1536,1.109,71.67
 Q-Frame,3072,1.919,73.09
 Q-Frame,6144,3.398,74.15
@@ -23,3 +22,4 @@ TALON (Ours),1536,1.009,73.37
 TALON (Ours),3072,1.944,75.62
 TALON (Ours),6144,3.757,76.22
 TALON (Ours),12288,7.043,78.10
+Top-K (w/ pruning),12288,6.290,72.63
