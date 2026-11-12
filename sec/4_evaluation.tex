@@ -77,22 +77,22 @@ its answer options as the query. Further implementation details are provided in 
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & 76.2 & 261 & 64.9 & 277 & 73.1 & 82.2 & 73.7 & 63.4 & 270 \\
-    \quad + Uniform pruning                                  & 74.8 & 245 & 63.1 & 264 & 70.7 & 79.9 & 70.2 & 62.0 & 261 \\
+    \quad + Uniform pruning                                  & 74.8 & \textbf{245} & 63.1 & \textbf{264} & 70.7 & 79.9 & 70.2 & 62.0 & \textbf{261} \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 74.7 & 262 & 65.7 & 281 & 71.1 & 80.1 & 70.3 & 63.0 & 270 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 77.2 & 3215 & 66.6 & 1857 & 74.4 & 83.2 & 74.4 & 65.4 & 1728 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 77.2 & 3215 & \textbf{66.6} & 1857 & 74.4 & 83.2 & 74.4 & 65.4 & 1728 \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 71.7 & 256 & 64.0 & 275 & 70.1 & 79.1 & 69.4 & 61.8 & 270 \\
     \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 73.2 & 251 & 65.1 & 273 & 71.0 & 82.8 & 69.4 & 60.7 & 276 \\
     \rowcolor{orxblue!8}
-    \textbf{\name (Ours)}                                    & 78.1 & 277 & 66.6 & 283 & 77.3 & 83.6 & 76.8 & 71.7 & 275 \\
+    \textbf{\name (Ours)}                                    & \textbf{78.1} & 277 & \textbf{66.6} & 283 & \textbf{77.3} & 83.6 & 76.8 & 71.7 & 275 \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Uniform pruning                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 71.3 & 3135 & 62.5 & 1753 & 64.9 & 74.7 & 64.6 & 55.4 & 1623 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 69.5 & 178 & 58.8 & 178 & 66.4 & 75.9 & 65.9 & 57.4 & 174 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 71.1 & 399 & 63.6 & 419 & 67.9 & 79.2 & 66.7 & 57.8 & 411 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \textbf{71.3} & 3135 & 62.5 & 1753 & 64.9 & 74.7 & 64.6 & 55.4 & 1623 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 69.5 & \textbf{178} & 58.8 & \textbf{178} & 66.4 & 75.9 & 65.9 & 57.4 & \textbf{174} \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 71.1 & 399 & \textbf{63.6} & 419 & \textbf{67.9} & 79.2 & 66.7 & 57.8 & 411 \\
     \rowcolor{orxblue!8}
     \textbf{\name (Ours)}                                    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
