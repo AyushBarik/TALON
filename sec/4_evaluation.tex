@@ -23,9 +23,11 @@ its answer options as the query. Further implementation details are provided in 
 \paragraph{Benchmarks.} We evaluate on three long-video multiple-choice benchmarks and one multi-turn benchmark:
 \begin{itemize}
   \item MLVU~\cite{zhou2024mlvu}: Contains videos from 3 minutes to over 2 hours across diverse genres. We use the
-    2,174 multiple-choice questions of its development set, on 1,122 videos.
+    2,174 multiple-choice questions of its development set, on 1,122 videos. It provides no subtitles, so the input
+    is visual only.
   \item LongVideoBench (LVB)~\cite{wu2024longvideobench}: Contains videos of up to an hour whose questions refer to a
-    specific moment of the video. We use its validation set of 1,337 questions on 753 videos, without subtitles.
+    specific moment of the video. We use its validation set of 1,337 questions on 753 videos, without subtitles, so the input is
+    visual only.
   \item Video-MME~\cite{fu2024videomme}: Contains 2,700 questions on 900 videos, split by duration into short
     (under 2 minutes), medium (4--15 minutes), and long (30--60 minutes) videos. We use its subtitled setting, in
     which subtitle tokens count toward the same token budget.
@@ -33,6 +35,8 @@ its answer options as the query. Further implementation details are provided in 
     and evaluates perception and interaction across six competencies. We use it to evaluate \name across the turns of
     a conversation.
 \end{itemize}
+On MLVU and LVB, \name thus allocates the token budget over frames only, whereas on Video-MME it allocates the budget
+jointly over frames and subtitle segments.
 
 \paragraph{Baselines.} We compare \name against the following approaches:
 \begin{itemize}
