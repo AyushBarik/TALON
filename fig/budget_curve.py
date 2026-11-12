@@ -38,8 +38,8 @@ def main():
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
         ax.set_xlim(0, 300)
         ax.set_xticks([35, 70, 135, 275])
-        ax.set_ylim(60, 70)
-        ax.set_yticks([60, 62, 64, 66, 68, 70])
+        ax.set_ylim(60, 68)
+        ax.set_yticks([60, 62, 64, 66, 68])
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
             if not pts:
