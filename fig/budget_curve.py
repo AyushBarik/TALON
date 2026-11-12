@@ -1,7 +1,7 @@
 """Accuracy against compute as the token budget varies (one column).
 
 Each method is one line through its four budgets (1,536 / 3,072 / 6,144 / 12,288 tokens), placed at the TFLOPs it
-measured at that budget. Data: fig/budget_curve.csv with columns method,budget,tflops,accuracy (one row per method and
+measured at that budget, on LongVideoBench (LVB). QuoTA's frame scorer puts it far right of the axis (~1,600+ TFLOPs). Data: fig/budget_curve.csv with columns method,budget,tflops,accuracy (one row per method and
 budget, from the benchmark runs). Until that file exists the script draws the empty axes as a placeholder.
 
 Regenerate:  uv run --no-project --with matplotlib --with numpy python fig/budget_curve.py
@@ -35,14 +35,11 @@ def main():
     fig, ax = figure(width=COLUMN, ratio=0.72)
 
     if rows:
-        # TFLOPs on a log axis (QuoTA's frame scorer costs ~5x the rest); accuracy in whole points.
-        ax.set_xscale("log")
-        ax.set_xlim(200, 2000)
-        ax.set_xticks([200, 500, 1000, 2000])
-        ax.set_xticklabels(["200", "500", "1000", "2000"])
-        ax.minorticks_off()
-        ax.set_ylim(70, 80)
-        ax.set_yticks([70, 72, 74, 76, 78, 80])
+        # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
+        ax.set_xlim(0, 300)
+        ax.set_xticks([35, 70, 135, 275])
+        ax.set_ylim(60, 70)
+        ax.set_yticks([60, 62, 64, 66, 68, 70])
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
             if not pts:
@@ -51,7 +48,7 @@ def main():
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
                     zorder=3 if ours else 2, label=method)
-        ax.legend(loc="lower right", frameon=False, fontsize=6)
+        ax.legend(loc="upper left", frameon=False, fontsize=6)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
         ax.set_xlim(0.5, 4.5)
@@ -61,8 +58,8 @@ def main():
         ax.set_yticks([0.2, 0.4, 0.6, 0.8])
         ax.set_yticklabels([""] * 4)
 
-    ax.set_xlabel("TFLOPs per question (lower is better)")
-    ax.set_ylabel("MLVU accuracy (%, higher is better)")
+    ax.set_xlabel("TFLOPs")
+    ax.set_ylabel("LVB accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
 
