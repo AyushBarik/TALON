@@ -18,4 +18,5 @@ FOCUS,6144,129.61,63.28
 QuoTA,1536,1618.66,60.36
 Uniform pruning,1536,24.83,56.84
 Uniform pruning,3072,55.84,59.09
+Uniform pruning,6144,126.34,61.78
 AdaAlloc,1536,69.20,58.86
