@@ -35,11 +35,14 @@ def main():
     fig, ax = figure(width=COLUMN, ratio=0.72)
 
     if rows:
-        # Fixed, integer axes: TFLOPs linear from 0, accuracy in whole points.
-        ax.set_xlim(0, 800)
-        ax.set_xticks([0, 200, 400, 600, 800])
-        ax.set_ylim(70, 78)
-        ax.set_yticks([70, 72, 74, 76, 78])
+        # TFLOPs on a log axis (QuoTA's frame scorer costs ~5x the rest); accuracy in whole points.
+        ax.set_xscale("log")
+        ax.set_xlim(200, 2000)
+        ax.set_xticks([200, 500, 1000, 2000])
+        ax.set_xticklabels(["200", "500", "1000", "2000"])
+        ax.minorticks_off()
+        ax.set_ylim(70, 80)
+        ax.set_yticks([70, 72, 74, 76, 78, 80])
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
             if not pts:
@@ -58,8 +61,8 @@ def main():
         ax.set_yticks([0.2, 0.4, 0.6, 0.8])
         ax.set_yticklabels([""] * 4)
 
-    ax.set_xlabel("TFLOPs")
-    ax.set_ylabel("MLVU accuracy (%)")
+    ax.set_xlabel("TFLOPs per question (lower is better)")
+    ax.set_ylabel("MLVU accuracy (%, higher is better)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
 
