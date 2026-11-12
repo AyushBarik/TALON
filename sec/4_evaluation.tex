@@ -71,40 +71,40 @@ summed over every call that a method makes to it for that question.
   % Rules that border a shaded row get no booktabs gap, so the shading touches the rule.
   \newcommand{\na}{--}
   \newcommand{\hd}[2]{\begin{tabular}{@{}c@{}}#1\\[-1pt]#2\end{tabular}}  % two-line column header
-  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{13}{l}{\textit{#1}} \\}  % purple band naming the VLM
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % purple band naming the VLM
   \newcommand{\maintab}{%
-  \begin{tabular}{l ccc ccc cccccc}
+  \begin{tabular}{l cc cc ccccc}
     \toprule
-    \multirow{2}{*}{Method} & \multicolumn{3}{c}{MLVU (w/o subtitles)} & \multicolumn{3}{c}{LVB (w/o subtitles)} & \multicolumn{6}{c}{Video-MME (w/ subtitles)} \\
-    \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-13}
-    & \hd{Overall}{$\uparrow$} & \hd{TFLOPs}{$\downarrow$} & \hd{Latency}{(s) $\downarrow$}
-      & \hd{Overall}{$\uparrow$} & \hd{TFLOPs}{$\downarrow$} & \hd{Latency}{(s) $\downarrow$}
+    \multirow{2}{*}{Method} & \multicolumn{2}{c}{MLVU (w/o subtitles)} & \multicolumn{2}{c}{LVB (w/o subtitles)} & \multicolumn{5}{c}{Video-MME (w/ subtitles)} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-10}
+    & \hd{Overall}{$\uparrow$} & \hd{TFLOPs}{$\downarrow$}
+      & \hd{Overall}{$\uparrow$} & \hd{TFLOPs}{$\downarrow$}
       & \hd{Overall}{$\uparrow$} & \hd{Short}{$\uparrow$} & \hd{Medium}{$\uparrow$} & \hd{Long}{$\uparrow$}
-      & \hd{TFLOPs}{$\downarrow$} & \hd{Latency}{(s) $\downarrow$} \\
+      & \hd{TFLOPs}{$\downarrow$} \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
-    RAG                                                      & & & & & & & & & & & & \\
-    \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}117 & \cellcolor{heat2}3.0 & \cellcolor{heat3}63.1 & \cellcolor{heat0}111 & \cellcolor{heat3}3.1 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}123 & \cellcolor{heat2}2.9 \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat4}209 & \cellcolor{heat1}2.6 & \cellcolor{heat1}65.7 & 225 & \cellcolor{heat1}2.5 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat4}218 & \cellcolor{heat0}2.4 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & \cellcolor{heat4}226 & 24.0 & \cellcolor{heat0}\textbf{66.6} & 247 & 20.2 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 247 & 15.8 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat4}211 & \cellcolor{heat0}2.6 & \cellcolor{heat3}64.0 & 226 & \cellcolor{heat0}2.5 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat4}224 & \cellcolor{heat1}2.5 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat4}203 & 12.4 & \cellcolor{heat2}65.1 & 222 & 10.2 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat4}225 & 10.9 \\
-    \quad + \textbf{\name (Ours)}                            & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat4}230 & \cellcolor{heat1}2.7 & \cellcolor{heat0}\textbf{66.6} & 234 & \cellcolor{heat1}2.6 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat4}232 & \cellcolor{heat2}2.7 \\
+    RAG                                                      & & & & & & & & & \\
+    \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}75.9 & \cellcolor{heat1}218 & \cellcolor{heat3}64.0 & \cellcolor{heat1}232 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 & \cellcolor{heat1}230 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat1}209 & \cellcolor{heat1}65.7 & \cellcolor{heat1}225 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat0}218 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & \cellcolor{heat2}226 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat2}247 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & \cellcolor{heat2}247 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat1}211 & \cellcolor{heat3}64.0 & \cellcolor{heat1}226 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}224 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat0}203 & \cellcolor{heat2}65.1 & \cellcolor{heat0}222 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}225 \\
+    \quad + \textbf{\name (Ours)}                            & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat2}230 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat1}234 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat1}232 \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
-    RAG                                                      & & & & & & & & & & & & \\
-    \quad + Top-K (w/ pruning)                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & \cellcolor{heat1}153 & & \cellcolor{heat2}62.5 & \cellcolor{heat1}154 & & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & \cellcolor{heat1}151 & \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}142 & & \cellcolor{heat4}58.8 & \cellcolor{heat0}143 & & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}140 & \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat1}71.1 & 314 & & \cellcolor{heat0}\textbf{63.6} & 331 & & \cellcolor{heat0}\textbf{67.9} & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat0}\textbf{66.7} & \cellcolor{heat0}\textbf{57.8} & 325 & \\
-    \quad + \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    RAG                                                      & & & & & & & & & \\
+    \quad + Top-K (w/ pruning)                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & \cellcolor{heat1}153 & \cellcolor{heat2}62.5 & \cellcolor{heat1}154 & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & \cellcolor{heat1}151 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}142 & \cellcolor{heat4}58.8 & \cellcolor{heat0}143 & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}140 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat1}71.1 & 314 & \cellcolor{heat0}\textbf{63.6} & 331 & \cellcolor{heat0}\textbf{67.9} & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat0}\textbf{66.7} & \cellcolor{heat0}\textbf{57.8} & 325 \\
+    \quad + \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
   % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
-  % 26 column sides. This stays correct when the numbers change.
+  % 20 column sides. This stays correct when the numbers change.
   \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
-  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/26\relax}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
   \maintab
   \caption{\TODO{Main results.} Accuracy (\%) on MLVU, LongVideoBench (LVB) and Video-MME with subtitles, with the
     compute (TFLOPs per question) of each method on each benchmark.}
