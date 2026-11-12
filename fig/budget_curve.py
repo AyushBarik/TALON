@@ -32,41 +32,56 @@ def load(path):
 
 
 def main():
+    """Broken log x-axis: TFLOPs per question (LLM prefill of every VLM call, Sec. 4) for every method, and a narrow
+    panel for QuoTA, whose 128 Qwen2-VL-2B scorer calls per question put it near 600-800 TFLOPs."""
+    import matplotlib.pyplot as plt
     use_style()
     rows = load(DATA)
-    fig, ax = figure(width=COLUMN, ratio=0.72)
-
-    if rows:
-        # Linear axis: Cost ($) of running all 2,174 MLVU questions through the OpenRouter API (csv column "tflops"
-        # holds USD), one tick per dollar. QuoTA's Qwen2-VL-2B scorer is not counted.
-        XMAX = 8.0
-        ax.set_xlim(0.8, XMAX)
-        ax.set_xticks(list(range(1, 9)))
-        ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
-        ax.set_ylim(60, 80)
-        ax.set_yticks([60, 64, 68, 72, 76, 80])
-        # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
-        ax.plot([], [], " ", label="RAG")
-        for method, (color, marker) in METHODS.items():
-            pts = sorted(rows.get(method, []))
-            if method == "RAG" or not pts:
-                continue
-            inside = [p for p in pts if p[0] <= XMAX]
-            x, y, _ = zip(*inside)
-            ours = is_ours(method)
-            ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
-                    zorder=3 if ours else 2, label="+ " + method)
-        ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
-    else:
-        # Placeholder: four x ticks, one per budget, and no data yet.
-        ax.set_xlim(0.5, 4.5)
-        ax.set_ylim(0, 1)
-        ax.set_xticks([1, 2, 3, 4])
-        ax.set_xticklabels([""] * 4)
-        ax.set_yticks([0.2, 0.4, 0.6, 0.8])
-        ax.set_yticklabels([""] * 4)
-
-    ax.set_xlabel("Cost ($)")
+    fig = plt.figure(figsize=(COLUMN, COLUMN * 0.72))
+    gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.16, top=0.97)
+    ax = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1], sharey=ax)
+    LEFT, RIGHT = (20.0, 300.0), (560.0, 860.0)
+    for a in (ax, ax2):
+        a.set_xscale("log")
+        a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    ax.set_xlim(*LEFT)
+    ax.set_xticks([25, 50, 100, 200])
+    ax.set_xticklabels(["25", "50", "100", "200"])
+    ax2.set_xlim(*RIGHT)
+    ax2.set_xticks([600, 800])
+    ax2.set_xticklabels(["600", "800"])
+    ax.set_ylim(60, 80)
+    ax.set_yticks([60, 64, 68, 72, 76, 80])
+    ax2.tick_params(labelleft=False, left=False)
+    ax.spines["right"].set_visible(False)
+    ax2.spines["left"].set_visible(False)
+    d = 0.015  # diagonal break marks, same angle on both panels
+    kw = dict(color="black", clip_on=False, lw=0.8)
+    ax.plot((1 - d, 1 + d), (-d * 1.6, d * 1.6), transform=ax.transAxes, **kw)
+    r = 5.0 / 1.25
+    ax2.plot((-d * r, d * r), (-d * 1.6, d * 1.6), transform=ax2.transAxes, **kw)
+    # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
+    ax.plot([], [], " ", label="RAG")
+    for method, (color, marker) in METHODS.items():
+        pts = sorted(rows.get(method, []))
+        if method == "RAG" or not pts:
+            continue
+        ours = is_ours(method)
+        style = dict(color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0, zorder=3 if ours else 2)
+        left = [p for p in pts if LEFT[0] <= p[0] <= LEFT[1]]
+        right = [p for p in pts if p[0] >= RIGHT[0]]
+        if left:
+            x, y, _ = zip(*left)
+            ax.plot(x, y, label="+ " + method, **style)
+        else:
+            ax.plot([], [], label="+ " + method, **style)
+        if right:
+            x, y, _ = zip(*right)
+            ax2.plot(x, y, **style)
+    ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
+    ax.set_xlabel("TFLOPs")
+    ax2.set_xlabel("QuoTA", fontsize=6)
     ax.set_ylabel("MLVU accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
