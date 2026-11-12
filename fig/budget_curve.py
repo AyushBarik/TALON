@@ -38,10 +38,10 @@ def main():
 
     if rows:
         # Linear TFLOPs axis with one tick per budget (1,536 / 3,072 / 6,144 / 12,288 tokens on LVB).
-        ax.set_xscale("log")  # log TFLOPs axis so QuoTA (~1,100-1,400 TFLOPs) fits; ticks at the budgets and QuoTA
-        ax.set_xlim(18, 1800)
-        ax.set_xticks([35, 70, 135, 275, 1300])
-        ax.set_xticklabels(["35", "70", "135", "275", "1300"])
+        ax.set_xscale("log")  # TFLOPs = LLM prefill per question (Sec. 4, Compute)
+        ax.set_xlim(25, 300)
+        ax.set_xticks([25, 50, 100, 200])
+        ax.set_xticklabels(["25", "50", "100", "200"])
         ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_ylim(64, 80)
         ax.set_yticks([64, 68, 72, 76, 80])
@@ -51,6 +51,7 @@ def main():
             pts = sorted(rows.get(method, []))
             if method == "RAG" or not pts:
                 continue
+            pts = [p for p in pts if p[0] >= 25]  # axis starts at 25 TFLOPs
             x, y, _ = zip(*pts)
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,

@@ -38,6 +38,9 @@ its answer options as the query. Further implementation details are provided in 
 On MLVU and LVB, \name thus allocates the token budget over frames only, whereas on Video-MME it allocates the budget
 jointly over frames and subtitle segments.
 
+\paragraph{Compute.} We report compute in TFLOPs per question, the prefill compute of the language model of the VLM
+summed over every call that a method makes to it for that question.
+
 \paragraph{Baselines.} We compare \name against the following approaches:
 \begin{itemize}
   \item RAG: Retrieves the top-$K$ frames by relevance at their native resolution, with $K$ set so that the
@@ -81,20 +84,20 @@ jointly over frames and subtitle segments.
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     RAG                                                      & & & & & & & & & & & & \\
-    \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}245 & \cellcolor{heat2}3.0 & \cellcolor{heat3}63.1 & \cellcolor{heat0}264 & \cellcolor{heat3}3.1 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}261 & \cellcolor{heat2}2.9 \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat1}262 & \cellcolor{heat1}2.6 & \cellcolor{heat1}65.7 & \cellcolor{heat1}281 & \cellcolor{heat1}2.5 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat1}270 & \cellcolor{heat0}2.4 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & 1355 & 24.0 & \cellcolor{heat0}\textbf{66.6} & 1857 & 20.2 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 1728 & 15.8 \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat1}256 & \cellcolor{heat0}2.6 & \cellcolor{heat3}64.0 & \cellcolor{heat1}275 & \cellcolor{heat0}2.5 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}270 & \cellcolor{heat1}2.5 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat1}251 & 12.4 & \cellcolor{heat2}65.1 & \cellcolor{heat1}273 & 10.2 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}276 & 10.9 \\
-    \quad + \textbf{\name (Ours)}                            & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat2}277 & \cellcolor{heat1}2.7 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat1}283 & \cellcolor{heat1}2.6 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat1}275 & \cellcolor{heat2}2.7 \\
+    \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}74.8 & \cellcolor{heat0}117 & \cellcolor{heat2}3.0 & \cellcolor{heat3}63.1 & \cellcolor{heat0}111 & \cellcolor{heat3}3.1 & \cellcolor{heat4}70.7 & \cellcolor{heat3}79.9 & \cellcolor{heat4}70.2 & 62.0 & \cellcolor{heat0}123 & \cellcolor{heat2}2.9 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat4}209 & \cellcolor{heat1}2.6 & \cellcolor{heat1}65.7 & 225 & \cellcolor{heat1}2.5 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat4}218 & \cellcolor{heat0}2.4 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat1}77.2 & \cellcolor{heat4}226 & 24.0 & \cellcolor{heat0}\textbf{66.6} & 247 & 20.2 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 247 & 15.8 \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat4}71.7 & \cellcolor{heat4}211 & \cellcolor{heat0}2.6 & \cellcolor{heat3}64.0 & 226 & \cellcolor{heat0}2.5 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat4}224 & \cellcolor{heat1}2.5 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat4}203 & 12.4 & \cellcolor{heat2}65.1 & 222 & 10.2 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat4}225 & 10.9 \\
+    \quad + \textbf{\name (Ours)}                            & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat4}230 & \cellcolor{heat1}2.7 & \cellcolor{heat0}\textbf{66.6} & 234 & \cellcolor{heat1}2.6 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat4}232 & \cellcolor{heat2}2.7 \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     RAG                                                      & & & & & & & & & & & & \\
     \quad + Top-K (w/ pruning)                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & 1275 & & \cellcolor{heat2}62.5 & 1753 & & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & 1623 & \\
-    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}178 & & \cellcolor{heat4}58.8 & \cellcolor{heat0}178 & & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}174 & \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat1}71.1 & 399 & & \cellcolor{heat0}\textbf{63.6} & 419 & & \cellcolor{heat0}\textbf{67.9} & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat0}\textbf{66.7} & \cellcolor{heat0}\textbf{57.8} & 411 & \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \cellcolor{heat0}\textbf{71.3} & \cellcolor{heat1}153 & & \cellcolor{heat2}62.5 & \cellcolor{heat1}154 & & \cellcolor{heat3}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat3}64.6 & \cellcolor{heat3}55.4 & \cellcolor{heat1}151 & \\
+    \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat2}69.5 & \cellcolor{heat0}142 & & \cellcolor{heat4}58.8 & \cellcolor{heat0}143 & & \cellcolor{heat2}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat1}65.9 & \cellcolor{heat1}57.4 & \cellcolor{heat0}140 & \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat1}71.1 & 314 & & \cellcolor{heat0}\textbf{63.6} & 331 & & \cellcolor{heat0}\textbf{67.9} & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat0}\textbf{66.7} & \cellcolor{heat0}\textbf{57.8} & 325 & \\
     \quad + \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
@@ -156,9 +159,9 @@ jointly over frames and subtitle segments.
         \end{tabular}} \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \rowcolor{orxblue!8}
-    \textbf{\name}                 & 275 & 77.3 & 83.6 & 76.8 & 71.7 \\
-    \quad w/o text allocation      & 275 & 73.7 & 81.9 & 74.9 & 64.4 \\
-    \quad w/o diversity            & 269 & 76.6 & 82.4 & 76.4 & 70.8 \\
+    \textbf{\name}                 & 232 & 77.3 & 83.6 & 76.8 & 71.7 \\
+    \quad w/o text allocation      & 226 & 73.7 & 81.9 & 74.9 & 64.4 \\
+    \quad w/o diversity            & 226 & 76.6 & 82.4 & 76.4 & 70.8 \\
     \bottomrule
   \end{tabular}}%
   % Equal gaps that make the table exactly \columnwidth (12 column sides).
