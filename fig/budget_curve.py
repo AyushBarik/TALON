@@ -32,8 +32,8 @@ def load(path):
 
 
 def main():
-    """Broken log x-axis: TFLOPs per question (LLM prefill of every VLM call, Sec. 4) for every method, and a narrow
-    panel for QuoTA, whose 128 Qwen2-VL-2B scorer calls per question put it near 600-800 TFLOPs."""
+    """Broken x-axis: $1-8 for every method, and a narrow panel for QuoTA, whose 128 scorer calls per question put
+    it near $50 (log axes). Cost ($) = OpenRouter API bill (input + output) for all 2,174 MLVU questions."""
     import matplotlib.pyplot as plt
     use_style()
     rows = load(DATA)
@@ -41,16 +41,16 @@ def main():
     gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.16, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
-    LEFT, RIGHT = (20.0, 300.0), (560.0, 860.0)
+    LEFT, RIGHT = (0.9, 8.5), (46.0, 56.0)
     for a in (ax, ax2):
         a.set_xscale("log")
         a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(*LEFT)
-    ax.set_xticks([25, 50, 100, 200])
-    ax.set_xticklabels(["25", "50", "100", "200"])
+    ax.set_xticks([1, 2, 4, 8])
+    ax.set_xticklabels(["1", "2", "4", "8"])
     ax2.set_xlim(*RIGHT)
-    ax2.set_xticks([600, 800])
-    ax2.set_xticklabels(["600", "800"])
+    ax2.set_xticks([48, 54])
+    ax2.set_xticklabels(["48", "54"])
     ax.set_ylim(60, 80)
     ax.set_yticks([60, 64, 68, 72, 76, 80])
     ax2.tick_params(labelleft=False, left=False)
@@ -69,7 +69,7 @@ def main():
             continue
         ours = is_ours(method)
         style = dict(color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0, zorder=3 if ours else 2)
-        left = [p for p in pts if LEFT[0] <= p[0] <= LEFT[1]]
+        left = [p for p in pts if p[0] <= LEFT[1]]
         right = [p for p in pts if p[0] >= RIGHT[0]]
         if left:
             x, y, _ = zip(*left)
@@ -80,8 +80,10 @@ def main():
             x, y, _ = zip(*right)
             ax2.plot(x, y, **style)
     ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
-    ax.set_xlabel("TFLOPs")
-    ax2.set_xlabel("QuoTA", fontsize=6)
+    ax.set_xlabel("Cost ($)")
+    # one x label for both panels, centred under the whole axis
+    l0, l1 = ax.get_position().x0, ax2.get_position().x1
+    ax.xaxis.set_label_coords(((l0 + l1) / 2 - l0) / ax.get_position().width, -0.12)
     ax.set_ylabel("MLVU accuracy (%)")
     print(save(fig, os.path.join(HERE, "budget_curve")))
 
