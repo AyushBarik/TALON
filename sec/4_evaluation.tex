@@ -111,17 +111,10 @@ that a method calls, summed over every call for that question.
   \label{tab:main}
 \end{table*}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/multiturn_curve.pdf}
-  \caption{\TODO{} multiturn figure}
-  \label{fig:multiturn}
-\end{figure}
-
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.} \TODO{} (\cref{fig:budget},
 \cref{tab:main})
 
-\paragraph{\name achieves the Pareto frontier across multi-turn conversations.} \TODO{} (\cref{fig:multiturn})
+\paragraph{\name achieves the Pareto frontier across multi-turn conversations.} \TODO{} (\cref{tab:multiturn})
 
 % \paragraph{Qualitative analysis.} \TODO{Seems moderately useless; perhaps remove if space constrained.}
 % (\cref{fig:radar,fig:case})
@@ -173,4 +166,27 @@ that a method calls, summed over every call for that question.
 \end{table}
 
 \paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation})
+
+\begin{table}[t]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \newcommand{\mttab}{%
+  \begin{tabular}{l c c}
+    \toprule
+    Method & TFLOPs $\downarrow$ & MT-Video-Bench $\uparrow$ \\
+    \midrule
+    \rowcolor{orxblue!8}
+    \textbf{\name}             & 275 & 58.5 \\
+    \quad w/o attention        & 315 & 57.4 \\
+    \bottomrule
+  \end{tabular}}%
+  % Equal gaps that make the table exactly \columnwidth (6 column sides), as in Table 2.
+  \sbox0{\setlength{\tabcolsep}{0pt}\mttab}%
+  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/6\relax}%
+  \mttab
+  \caption{Multi-turn \name with and without attention-guided relevance on MT-Video-Bench (200 conversations,
+    450 judged turns; 6{,}144 visual tokens per turn). TFLOPs are summed over all turns of a conversation.}
+  \label{tab:multiturn}
+\end{table}
 

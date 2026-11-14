@@ -38,7 +38,7 @@ def main():
     use_style()
     rows = load(DATA)
     fig = plt.figure(figsize=(COLUMN, COLUMN * 0.72))
-    gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.16, top=0.97)
+    gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
     LEFT, RIGHT = (0.9, 8.5), (46.0, 56.0)

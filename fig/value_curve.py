@@ -36,7 +36,10 @@ def main():
     acc = np.array([100 * float(r["accuracy"]) for r in rows])
 
     use_style()
-    fig, ax = figure(width=COLUMN, ratio=0.72)
+    import matplotlib.pyplot as plt
+    # Same printed size and plot-area margins as Figure 1 (budget_curve.py), so single-column figures line up.
+    fig, ax = plt.subplots(figsize=(COLUMN, COLUMN * 0.72))
+    fig.subplots_adjust(left=0.13, right=0.97, bottom=0.17, top=0.97)
     grid = np.exp(np.linspace(np.log(3.5), np.log(1000), 300))
     for name, (f, p0, color, ls) in FAMILIES.items():
         p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
