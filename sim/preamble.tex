@@ -10,5 +10,7 @@
 %    per-duration gaps shrunk by 0.6, the ratio seen for "w/o text allocation" between that subset and the full set.
 %  Table 3, w/o carried allocation: compute = Q-Frame's measured cost in standard multi-turn chat at the same
 %    per-turn budget (about 640 TFLOPs per conversation); accuracy placed between the two measured rows.
-%  The VideoRAG rows of Table 1 are left out of the simulated paper: no measurement and no protocol exist yet.
+%  Table 1, VideoRAG and VideoRAG + TALON rows: ASSUMED, no measurement exists. Base set near Top-K (w/ pruning);
+%    the TALON gain set near the gain over Top-K in the embedding-based rows; TFLOPs set near the other rows.
+%  The appendix is a separate document; sim/X_suppl.tex (proof drafts) is not read by main.tex.
 \newcommand{\simnum}[1]{\ifshowsimulated\textcolor{red}{#1}\else#1\fi}

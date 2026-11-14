@@ -8,7 +8,8 @@ query, and VideoRAG~\cite{jeong2025videorag} retrieves whole videos from a corpu
 of work structures the index. VideoRAG~\cite{ren2025videorag} builds a graph-based knowledge index across videos,
 Vgent~\cite{shen2025vgent} represents a video as a graph of clips that preserves their semantic and temporal
 dependencies, followed by a structured reasoning step that filters retrieval noise, and AVA~\cite{yan2025ava} indexes a
-video as an event knowledge graph that an agent searches. Other systems add spatio-temporal
+video as an event knowledge graph that an agent searches; later systems build similar graph
+indexes~\cite{yang2026g2frag,chen2026memdreamer,yan2026ecrag}. Other systems add spatio-temporal
 structure~\cite{fu2026videostir} or temporal alignment~\cite{cao2025tvrag} to retrieval, and
 \citet{lee2026rethinking} benchmark retrieval and generation separately.
 These systems, however, focus on what to index and retrieve, and pass every retrieved item to the VLM at its full
@@ -30,16 +31,13 @@ query-oriented frame score, and AdaptToken~\cite{qi2026adapttoken} distributes a
 frames according to the response entropy of the VLM. Concurrent with our work, AdaAlloc~\cite{an2026adaalloc} lets the
 VLM plan how to split the budget between sparse low-resolution frames and dense high-resolution frames; it became
 public after the CVPR~2027 cutoff for prior work, and we include it in our comparisons for completeness. All of these
-methods allocate with a fixed rule or a heuristic plan. \name instead derives the allocation as the solution of an
-optimization problem with a learned token value, extends it to transcripts, and maintains it across the turns of a
-conversation.
+methods allocate with a fixed rule or a heuristic plan, whereas \name solves for the allocation, extends it to
+transcripts, and maintains it across the turns of a conversation.
 
 \paragraph{Token compression and KV-cache reuse.}
-A complementary line of work reduces the tokens of a given input. FastV~\cite{chen2024fastv} and
-VisionZip~\cite{yang2024visionzip} prune visual tokens by attention, ToMe~\cite{bolya2023tome} merges similar tokens
-inside the vision encoder, and LongVU~\cite{shen2024longvu}, DyCoke~\cite{tao2024dycoke}, and
-MARC~\cite{wu2026marc} compress video tokens by exploiting their temporal redundancy. For language models,
-H$_2$O~\cite{zhang2023h2o} and StreamingLLM~\cite{xiao2024streamingllm} evict entries of the KV cache, and
-ReKV~\cite{rekv2025} retrieves cached video KV entries for streaming question answering. These methods, however,
-compress each frame or cache independently. \name uses a pruner only to realize a token count, decides the counts
-jointly, and reuses cached tokens instead of evicting them.
+A complementary line of work reduces the tokens of a given input, by pruning~\cite{chen2024fastv,yang2024visionzip} or
+merging~\cite{bolya2023tome} visual tokens, by compressing video tokens across
+time~\cite{shen2024longvu,tao2024dycoke,wu2026marc}, or by evicting or retrieving entries of the KV
+cache~\cite{zhang2023h2o,xiao2024streamingllm,rekv2025}. These methods, however, compress each frame or cache
+independently. \name uses a pruner only to realize a token count, decides the counts jointly, and reuses cached
+tokens instead of evicting them.

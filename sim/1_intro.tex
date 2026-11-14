@@ -5,22 +5,21 @@
   \centering
   \includegraphics[width=\linewidth]{fig/budget_curve.pdf}
   \caption{\textbf{Accuracy against cost on MLVU} (Qwen3-VL-8B). Each line traces one method across token budgets
-    from 1,536 to 12,288. Cost is the API bill for the input and output tokens of 1,000 queries. \name is the most
-    accurate method at every cost, whereas the per-frame scorer calls of QuoTA place it beyond the axis break.}
+    from 1,536 to 12,288. Cost is the API bill of 1,000 queries. \name is the most accurate method at every cost; the
+    scorer calls of QuoTA place it beyond the axis break.}
   \label{fig:budget}
 \end{figure}
 
 Vision-language models (VLMs) now answer open-ended questions about
 videos~\cite{bai2025qwen3vl,wang2025internvl35}, and the videos of practical interest are long. Applications such as
-video analytics over camera feeds~\cite{yan2025ava}, assistants that recall hours of egocentric footage, and search
-over lectures, meetings, and broadcasts all pose questions whose evidence occupies a few seconds of a video that
+video analytics over camera feeds~\cite{yan2025ava} and search over lectures, meetings, and broadcasts pose questions whose evidence occupies a few seconds of a video that
 lasts from minutes to hours~\cite{fu2024videomme,zhou2024mlvu,wu2024longvideobench}.
 
-Processing every frame of such a video is impractical. An hour of video sampled at one frame per second yields
-millions of visual tokens, which exceeds the context window of current VLMs and incurs a prohibitive compute cost.
+Processing every frame of such a video is impractical: an hour of video at one frame per second yields millions of
+visual tokens, far beyond the context window of current VLMs.
 Existing systems, therefore, widely resort to retrieval-augmented generation (RAG). They index the video offline,
 either by embedding its frames and transcript~\cite{luo2024videorag,jeong2025videorag} or by building a graph over
-its clips and entities~\cite{ren2025videorag,shen2025vgent,yan2025ava}, and supply the VLM with only the evidence
+its clips and entities~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}, and supply the VLM with only the evidence
 retrieved for each query.
 
 Both forms of RAG, however, have limitations. Graph-based RAG attains high accuracy, but must caption and link
@@ -54,14 +53,15 @@ We evaluate \name on MLVU, LongVideoBench, and Video-MME with two VLMs, and on t
 same budget of 12,288 tokens, \name improves the accuracy of Qwen3-VL-8B by 2.2 to 4.2 points over retrieval with
 uniform token pruning, and matches or exceeds QuoTA, the strongest baseline, which requires 2.8--3.4$\times$ more
 compute. With a quarter of the budget, \name is more accurate on MLVU than Q-Frame, FOCUS, and AdaAlloc at the full
-budget (\cref{fig:budget}). In conversations, it uses up to 5.2$\times$ less compute at comparable accuracy.
+budget (\cref{fig:budget}), and its gains carry over to graph-based retrieval when paired with VideoRAG. In
+conversations, it uses up to 5.2$\times$ less compute at comparable accuracy.
 
 Our contributions are as follows:
 \begin{itemize}
-  \item We introduce \name, a plug-and-play framework that moves video RAG from frame-level to token-level evidence
-    selection, formulated as one budgeted optimization over frames and transcript segments.
+  \item We introduce \name, a plug-and-play framework that formulates video RAG as one budgeted token allocation
+    over frames and transcript segments.
   \item We design the Token Scheduler, which combines a learned token value with iterative water-filling, and prove
     that it attains a higher objective than the allocation rules of prior work.
-  \item We extend token allocation to multi-turn conversations by reusing the KV cache and updating relevance with
-    the attention of the VLM, and prove that the cumulative prefill stays bounded.
+  \item We extend token allocation to multi-turn conversations with KV-cache reuse and attention-updated
+    relevance, and prove that the cumulative prefill stays bounded.
 \end{itemize}

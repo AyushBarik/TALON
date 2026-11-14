@@ -8,7 +8,7 @@ stated otherwise, every method draws from the same candidate frames, sampled fro
 their native resolution, and receives the same budget of 12,288 tokens per question, the default video budget of
 Qwen3-VL. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
 BGE~\cite{bge}, using the question together with its answer options as the query. Further implementation details are
-provided in the supplementary material.
+provided in the appendix.
 
 \subsection{Experimental Setup}
 \label{sec:exp-setup}
@@ -17,17 +17,13 @@ provided in the supplementary material.
 encodes each frame at its native resolution, at one token per $32\times32$ pixels, whereas
 InternVL3.5-4B~\cite{wang2025internvl35} encodes each $448\times448$ image tile into 256 visual tokens.
 
-\paragraph{Benchmarks.} We use the following benchmarks:
-\begin{itemize}
-  \item MLVU~\cite{zhou2024mlvu}: Contains videos from 3 minutes to over 2 hours. We use the 2,174 multiple-choice
-    questions of its development set. It provides no subtitles, so the input is visual only.
-  \item LongVideoBench (LVB)~\cite{wu2024longvideobench}: Contains videos of up to an hour whose questions refer to a
-    specific moment. We use its validation set of 1,337 questions, without subtitles.
-  \item Video-MME~\cite{fu2024videomme}: Contains 2,700 questions on short, medium, and long videos. We use its
-    subtitled setting, in which subtitle tokens count toward the same budget.
-  \item MT-Video-Bench (MTVB)~\cite{mtvideobench2025}: Contains multi-turn dialogues about videos. We evaluate on 200
-    of its conversations, whose answers are scored by an LLM judge.
-\end{itemize}
+\paragraph{Benchmarks.} We use three long-video multiple-choice benchmarks. MLVU~\cite{zhou2024mlvu} contains videos
+from 3 minutes to over 2 hours; we use the 2,174 questions of its development set. LongVideoBench
+(LVB)~\cite{wu2024longvideobench} contains videos of up to an hour whose questions refer to a specific moment; we use
+its validation set of 1,337 questions. Neither provides subtitles in our setting, so the input is visual only.
+Video-MME~\cite{fu2024videomme} contains 2,700 questions on short, medium, and long videos; we use its subtitled
+setting, in which subtitle tokens count toward the same budget. For the multi-turn setting, we use 200 conversations of
+MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge.
 
 \paragraph{Metrics.} We report accuracy together with compute, measured in TFLOPs per question: the prefill compute
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,
@@ -47,6 +43,8 @@ candidates into the input of the VLM:
   \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution
     frames and dense high-resolution frames from localized segments (concurrent work).
 \end{itemize}
+Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}. We therefore also pair \name with VideoRAG~\cite{ren2025videorag}, which passes the frames of its retrieved
+clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget across them.
 
 \subsection{Main Results}
 \label{sec:exp-main}
@@ -69,11 +67,13 @@ candidates into the input of the VLM:
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     RAG                                                      & & & & & & & & & \\
     \quad + Top-K (w/ pruning) & \cellcolor{heat3}75.9 & \cellcolor{heat1}218 & \cellcolor{heat3}64.0 & \cellcolor{heat1}232 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 & \cellcolor{heat1}230 \\
-    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25} & \cellcolor{heat3}74.7 & \cellcolor{heat1}209 & \cellcolor{heat1}65.7 & \cellcolor{heat1}225 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat0}218 \\
-    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26} & \cellcolor{heat1}77.2 & 781 & \cellcolor{heat0}\textbf{66.6} & 676 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 647 \\
+    \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25} & \cellcolor{heat3}74.7 & \cellcolor{heat1}209 & \cellcolor{heat2}65.7 & \cellcolor{heat1}225 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat0}218 \\
+    \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26} & \cellcolor{heat2}77.2 & 781 & \cellcolor{heat1}66.6 & 676 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 647 \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26} & \cellcolor{heat4}71.7 & \cellcolor{heat1}211 & \cellcolor{heat3}64.0 & \cellcolor{heat1}226 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}224 \\
-    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat0}203 & \cellcolor{heat2}65.1 & \cellcolor{heat0}222 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}225 \\
-    \quad + \textbf{\name (Ours)} & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat2}230 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat1}234 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} & \cellcolor{heat1}232 \\
+    \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat0}203 & \cellcolor{heat3}65.1 & \cellcolor{heat0}222 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}225 \\
+    \quad + \textbf{\name (Ours)} & \cellcolor{heat1}78.1 & \cellcolor{heat2}230 & \cellcolor{heat1}66.6 & \cellcolor{heat1}234 & \cellcolor{heat1}77.3 & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat1}76.8 & \cellcolor{heat1}71.7 & \cellcolor{heat1}232 \\
+    VideoRAG~\cite{ren2025videorag} & \cellcolor{heat3}\simnum{76.4} & \cellcolor{heat2}\simnum{226} & \cellcolor{heat3}\simnum{65.2} & \cellcolor{heat1}\simnum{238} & \cellcolor{heat3}\simnum{74.0} & \cellcolor{heat1}\simnum{82.6} & \cellcolor{heat3}\simnum{74.3} & \cellcolor{heat4}\simnum{65.1} & \cellcolor{heat1}\simnum{236} \\
+    \quad + \textbf{\name (Ours)} & \cellcolor{heat0}\textbf{\simnum{78.6}} & \cellcolor{heat2}\simnum{233} & \cellcolor{heat0}\textbf{\simnum{67.3}} & \cellcolor{heat1}\simnum{239} & \cellcolor{heat0}\textbf{\simnum{77.6}} & \cellcolor{heat1}\simnum{83.4} & \cellcolor{heat0}\textbf{\simnum{77.1}} & \cellcolor{heat0}\textbf{\simnum{72.3}} & \cellcolor{heat1}\simnum{237} \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     RAG                                                      & & & & & & & & & \\
@@ -95,13 +95,14 @@ candidates into the input of the VLM:
 \end{table*}
 
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.}
-\cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B, \name attains the highest
-accuracy on all three benchmarks, tied with QuoTA on LVB. Relative to Top-K (w/ pruning), which shares its retriever, pruner, and budget,
+\cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B and embedding-based RAG, \name
+attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. Relative to Top-K (w/ pruning), which shares its retriever, pruner, and budget,
 \name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline, within one
 point of \name on MLVU and LVB, but its per-frame scorer calls cost 2.8--3.4$\times$ more compute. The gains carry over to
 InternVL3.5-4B: \name remains the most accurate method on MLVU and
 Video-MME, where it improves on the best baseline by \simnum{2.2} and \simnum{4.1} points, and is within
-\simnum{0.6} points of AdaAlloc on LVB at less than half of its compute.
+\simnum{0.6} points of AdaAlloc on LVB at less than half of its compute. \name also transfers to graph-based retrieval: paired with VideoRAG, it gains
+\simnum{2.2}, \simnum{2.1}, and \simnum{3.6} points on the three benchmarks at about the same compute.
 
 \cref{fig:budget} and \cref{fig:multiturn}(a) vary the budget from 1,536 to 12,288 tokens on MLVU. \name is the most
 accurate method at every budget, and its advantage grows as the budget shrinks: at 1,536 tokens it reaches 73.4\%,
@@ -167,9 +168,10 @@ from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accur
 \paragraph{Performance breakdown.}
 \cref{tab:ablation} removes one component of the Token Scheduler at a time. Replacing water-filling with an
 allocation proportional to relevance, at matched compute, lowers accuracy by \simnum{2.5} points overall and by
-\simnum{6.8} points on long videos, which confirms that the gain stems from where the tokens are placed. Removing text allocation, so that subtitles no longer compete with frames for the
+\simnum{6.8} points on long videos. Removing text allocation, so that subtitles no longer compete with frames for the
 budget, costs 3.6 points overall and 7.3 points on long videos, whose questions often hinge on speech. Removing the
-diversity term costs 0.7 points. The vision encoder adds 48 TFLOPs per question, and the Token Scheduler itself calls no model.
+diversity term costs 0.7 points. The vision encoder adds 48 TFLOPs per question. A sensitivity analysis of the hyperparameters is provided in the
+appendix.
 
 \begin{table}[t]
   \centering
