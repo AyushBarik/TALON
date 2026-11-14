@@ -41,11 +41,11 @@ def main():
     for method, (color, _) in METHODS.items():
         if method in by:
             ours = is_ours(method)
-            handles[method] = cdf(ax, by[method], color=color, lw=1.4 if ours else 0.8, zorder=3 if ours else 2)
+            handles[method] = cdf(ax, by[method], color=color, lw=1.0, zorder=3 if ours else 2)  # one line width for all
     turns = [r for r in json.load(open(os.path.join(HERE, "overlap_turns.json"))) if r["turn"] >= 2]
     color = METHODS["TALON (Ours)"][0]
-    cdf(bx, [100 * r["reused"] / r["need"] for r in turns], color=color, lw=1.4)
-    for a, xl, yl in ((ax, "Candidate frames shown (%)", "CDF of queries (%)"), (bx, "Tokens already cached (%)", "CDF of turns (%)")):
+    cdf(bx, [100 * r["reused"] / r["need"] for r in turns], color=color, lw=1.0)
+    for a, xl, yl in ((ax, "Candidate frames shown (%)", "CDF of queries (%)"), (bx, "Tokens reused from previous turns (%)", "CDF of turns (%)")):
         a.set_xlim(0, 100); a.set_ylim(0, 100); a.set_xticks(TICKS); a.set_yticks(TICKS)
         a.set_xlabel(xl); a.set_ylabel(yl, labelpad=1)
     order = [m for m in METHODS if m in handles]
