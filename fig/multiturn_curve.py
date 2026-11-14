@@ -44,7 +44,8 @@ def main():
             ours = is_ours(method)
             ax.plot(x, y, color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0,
                     zorder=3 if ours else 2, label=method)
-        ax.legend(loc="lower right", frameon=False, fontsize=6)
+        ax.set_ylim(54, 62)  # the 95% interval of a score is about +-3.3 points at 223 judged turns
+        ax.legend(loc="lower center", frameon=False, fontsize=6, ncol=2)
     else:
         # Placeholder: four x ticks, one per budget, and no data yet.
         ax.set_xlim(0.5, 4.5)
@@ -54,8 +55,8 @@ def main():
         ax.set_yticks([0.2, 0.4, 0.6, 0.8])
         ax.set_yticklabels([""] * 4)
 
-    ax.set_xlabel("TFLOPs per dialogue")
-    ax.set_ylabel("Dialogue accuracy (%)")
+    ax.set_xlabel("TFLOPs per conversation")
+    ax.set_ylabel("MT-Video-Bench score")
     print(save(fig, os.path.join(HERE, "multiturn_curve")))
 
 

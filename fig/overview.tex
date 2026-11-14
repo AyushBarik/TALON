@@ -70,7 +70,7 @@
 \stage{0.12}{5.1}{1}{Scoring}{stepA}
 \stage{8.02}{5.1}{2}{Allocation}{stepB}
 \stage{0.12}{0.75}{3}{Inference}{stepC}
-\draw[arr] (7.5,2.6) -- node[elbl, above, pos=0.3] {$r_i$} (8.5,2.6);
+\draw[arr] (7.5,2.75) -- (7.9,2.75);
 \draw[arr] (11.2,1.8) -- node[elbl, right, pos=0.35] {$b_i$} (11.2,1.31);
 
 % ---------------- (1) relevance ----------------
@@ -87,7 +87,7 @@
 \draw[arr] (2.95,3.61) -- (db.north);
 \begin{scope}[shift={(4.75,2.3)}]
   \draw[ax] (0,0) -- (2.6,0); \draw[ax] (0,0) -- (0,1.2);
-  \node[axl, rotate=90, anchor=south] at (-0.03,0.58) {relevance};
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.58) {$r(\cdot\mid q)$};
   \node[axl, anchor=north] at (1.3,-0.02) {time};
   \items{2.5}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
@@ -97,29 +97,25 @@
 \draw[arr] (2.6,2.6 -| db.east) -- (4.3,2.6);
 
 % ---------------- (2) allocation ----------------
-% The objective is the hub: relevance r_i (from stage 1) and the token value curves both feed it; it outputs the tokens.
-\begin{scope}[shift={(9.05,3.72)}]
-  \draw[ax] (0,0) -- (2.9,0); \draw[ax] (0,0) -- (0,1.15);
-  \node[axl, rotate=90, anchor=south] at (-0.03,0.55) {accuracy};
-  \node[axl, anchor=north] at (1.3,-0.02) {tokens};
-  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.335*\x}, {1.05*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.335*\x}, {0.97*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\footnotesize, text=txt!75!black, anchor=south west, inner sep=1pt] at (2.72,0.95) {$v_{\text{text}}$};
-  \node[font=\sffamily\footnotesize, text=frm, anchor=north west, inner sep=1pt] at (2.72,0.85) {$v_{\text{frame}}$};
+% Equation on top; below it the two things it names: the token value curves (left) and the solution (right).
+\node[font=\sffamily\footnotesize, align=center] at (12.65,4.36) {$\max\limits_{\mathbf b,\mathbf w}\ \sum_i r(f_i\mid q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_m r(u_m\mid q)\,v_{\text{text}}(w_m)$\\[1pt]$\text{s.t.}\ \ \sum_i b_i+\sum_m w_m\le B$};
+\begin{scope}[shift={(8.8,2.3)}]
+  \draw[ax] (0,0) -- (3.3,0); \draw[ax] (0,0) -- (0,1.5);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.75) {accuracy};
+  \node[axl, anchor=north] at (1.65,-0.02) {tokens};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.4*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.3*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\footnotesize, text=txt!75!black, anchor=south west, inner sep=1pt] at (3.1,1.3) {$v_{\text{text}}$};
+  \node[font=\sffamily\footnotesize, text=frm, anchor=north west, inner sep=1pt] at (3.1,1.15) {$v_{\text{frame}}$};
 \end{scope}
-\node[fill=chipF, draw=edgeB, line width=0.6pt, rounded corners=3pt, inner sep=4pt, align=left, font=\sffamily\scriptsize] (obj) at (10.85,2.6)
-  {$\max\limits_{\mathbf b,\mathbf w}\ \sum_i r(f_i\mid q,\mathbf b)\,v_{\text{frame}}(b_i)$\\[-1pt]$\qquad\ +\,\beta\sum_m r(u_m\mid q)\,v_{\text{text}}(w_m)$\\[2pt]$\text{s.t.}\ \ \sum_i b_i+\sum_m w_m\le B$};
-\draw[arr] (12.35,3.68) -- (12.35,3.68 |- obj.north);
-\begin{scope}[shift={(14.2,2.3)}]
-  \draw[ax] (0,0) -- (3.0,0); \draw[ax] (0,0) -- (0,2.45);
-  \node[axl, rotate=90, anchor=south] at (-0.03,1.4) {tokens};
-  \node[axl, anchor=north] at (1.5,-0.02) {time};
-  \items{2.9}{2.6}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+\begin{scope}[shift={(13.95,2.3)}]
+  \draw[ax] (0,0) -- (3.25,0); \draw[ax] (0,0) -- (0,1.5);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.75) {tokens};
+  \node[axl, anchor=north] at (1.6,-0.02) {time};
+  \items{3.15}{1.75}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
                    0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
-  \fill[frm] (1.25,2.2) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (1.39,2.27) {frame};
-  \fill[txt] (2.2,2.2) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.34,2.27) {text};
+  \node[font=\sffamily\scriptsize\itshape, text=ink, anchor=north east, inner sep=1pt, align=right] at (3.25,1.55) {solved via iterative\\water-filling};
 \end{scope}
-\draw[arr] (obj.east) -- (14.1,2.6);
 
 % ---------------- (3) inference ----------------
 % the frozen pruner is a container that holds its output: the frames at their token counts and the text events
