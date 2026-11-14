@@ -30,6 +30,15 @@
     \draw[ink!30, line width=0.15pt, xstep=0.125, ystep=0.140625] (0,0) grid (1.0,0.5625);
     \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.0,0.5625);
   \end{scope}}
+% \nnet{center}{half width}{half height}: a faint fully connected network drawn behind a model's name
+\newcommand{\nnet}[3]{%
+  \begin{scope}[shift={(#1)}]
+    \foreach \xa/\na/\xb/\nb in {-1/3/-0.33/4, -0.33/4/0.33/4, 0.33/4/1/3} {
+      \foreach \i in {1,...,\na} { \foreach \j in {1,...,\nb} {
+        \draw[ink!22, line width=0.25pt] ({\xa*#2},{(2*\i-\na-1)/3*#3}) -- ({\xb*#2},{(2*\j-\nb-1)/3*#3}); } } }
+    \foreach \xa/\na in {-1/3, -0.33/4, 0.33/4, 1/3} { \foreach \i in {1,...,\na} {
+      \fill[ink!14, draw=ink!28, line width=0.25pt] ({\xa*#2},{(2*\i-\na-1)/3*#3}) circle (0.055); } }
+  \end{scope}}
 \newcommand{\txtchip}[1]{% transcript event: a short text chip
   \fill[txt!35, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
   \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,0.07)$) -- ++(0.6,0);
@@ -58,23 +67,24 @@
 \fill[rounded corners=6pt, bandB] (7.9,1.6) rectangle (17.4,4.92);
 \draw[rounded corners=6pt, edgeB, line width=0.6pt] (7.9,1.6) rectangle (17.4,4.92);
 \fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,1.3);
-\stage{0.12}{4.62}{1}{Retrieval}{stepA}
+\stage{0.12}{4.62}{1}{Relevance}{stepA}
 \stage{8.02}{4.62}{2}{Allocation}{stepB}
 \stage{0.12}{0.65}{3}{Inference}{stepC}
 \draw[arr] (7.5,2.5) -- node[elbl, above] {$r_i$} (7.9,2.5);
 \draw[arr] (11.2,1.6) -- node[elbl, right, pos=0.3] {$b_i$} (11.2,1.14);
 
-% ---------------- (1) retrieval ----------------
+% ---------------- (1) relevance ----------------
+% No frame is selected here: the query is compared with the stored embedding of EVERY frame and transcript event.
 \fill[ink!88, rounded corners=1pt] (0.2,3.4) rectangle (7.3,4.25);
 \foreach \x in {0.28,0.48,...,7.2} {\fill[white] (\x,4.16) rectangle ++(0.1,0.05); \fill[white] (\x,3.44) rectangle ++(0.1,0.05);}
 \foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.91+(\k-1)*1.42},3.825) {\includegraphics[width=1.2cm]{fig/frames/frame\k.jpg}};}
 \fill[txt!35, rounded corners=1pt] (0.2,3.13) rectangle (7.3,3.33);
 \foreach \x/\l in {0.5/1.0, 1.9/0.8, 3.1/1.2, 4.7/0.9, 6.0/0.9} {\draw[txt!85!black, line width=0.5pt] (\x,3.23) -- ++(\l,0);}
 \node[qa] (q) at (1.0,2.35) {\textbf{Q:} Color of\\the last car?};
-\node[model, fill=modelA, minimum height=0.8cm, inner xsep=8pt] (ret) at (3.0,2.35) {Retriever\hspace{0.2cm}};
-\snowflake{($(ret.north east)+(-0.2,-0.2)$)}{0.11}
-\draw[arr] (q.east) -- (ret.west);
-\draw[arr] (3.0,3.11) -- (ret.north);
+\node[cylinder, shape border rotate=90, aspect=0.28, fill=modelA, draw=modelD, line width=0.5pt, align=center,
+  minimum width=1.5cm, minimum height=1.15cm, inner sep=1pt, font=\sffamily\scriptsize, text=modelT] (db) at (3.0,2.35) {Frame\\database};
+\draw[arr] (q.east) -- (q.east -| db.west);
+\draw[arr] (3.0,3.11) -- (db.north);
 \begin{scope}[shift={(4.4,1.98)}]
   \draw[ax] (0,0) -- (2.95,0); \draw[ax] (0,0) -- (0,1.05);
   \node[axl, anchor=west] at (0.06,0.98) {$r_i$};
@@ -82,7 +92,7 @@
   \items{2.85}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
 \end{scope}
-\draw[arr] (ret.east) -- (4.3,2.35);
+\draw[arr] (2.35,2.35 -| db.east) -- (4.3,2.35);
 
 % ---------------- (2) allocation ----------------
 \node[font=\sffamily\footnotesize] at (12.65,4.08) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)\qquad\text{s.t.}\ \ \sum_i b_i\le B$};
@@ -108,15 +118,17 @@
 % the frozen pruner is a container that holds its output: the frames at their token counts and the text events
 \node[model, minimum width=9.9cm, minimum height=0.96cm] (pr) at (7.4,0.65) {};
 \node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.3,0.65) {Token\\pruner};
-\snowflake{($(pr.north east)+(-0.2,-0.2)$)}{0.11}
+\snowflake{($(pr.south east)+(-0.22,0.22)$)}{0.12}
 \prunedframe{4.85,0.65}{frame1.jpg}{10}
 \txtchip{6.1,0.65}
 \prunedframe{7.35,0.65}{frame3.jpg}{22}
 \prunedframe{8.6,0.65}{frame4.jpg}{12}
 \txtchip{9.85,0.65}
 \prunedframe{11.1,0.65}{frame5.jpg}{32}
-\node[model, minimum width=2.9cm, minimum height=0.96cm] (vlm) at (14.25,0.65) {VLM};
-\snowflake{($(vlm.north east)+(-0.2,-0.2)$)}{0.11}
+\node[model, fill=chipF, minimum width=2.9cm, minimum height=0.96cm] (vlm) at (14.25,0.65) {};
+\nnet{14.25,0.65}{0.95}{0.33}
+\node[font=\sffamily\footnotesize, text=modelT] at (14.25,0.65) {VLM};
+\snowflake{($(vlm.south east)+(-0.22,0.22)$)}{0.12}
 \node[qa, inner sep=5pt] (ans) at (16.55,0.65) {\textbf{A:} Blue};
 \draw[arr] (pr.east) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
