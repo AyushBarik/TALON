@@ -53,20 +53,17 @@
   elbl/.style={font=\sffamily\scriptsize, text=black!75, inner sep=1.5pt},
   model/.style={fill=black!7, draw=black!38, line width=0.5pt, rounded corners=3pt, align=center,
     minimum height=0.62cm, inner xsep=5pt, font=\sffamily\footnotesize},
-  bubble/.style={rectangle callout, fill=white, draw=black!30, line width=0.5pt, align=center,
-    inner sep=3pt, font=\sffamily\scriptsize\itshape}]
+  qa/.style={fill=white, draw=black!30, line width=0.5pt, rounded corners=3pt, align=left,
+    inner sep=3pt, font=\sffamily\scriptsize}]
 
 % ---------------- bands ----------------
-\fill[rounded corners=6pt, bandN] (0,0) rectangle (4.65,4.1);
-\fill[rounded corners=6pt, accA!8] (4.8,0) rectangle (11.15,4.1);
-\draw[rounded corners=6pt, accA!55, line width=0.6pt] (4.8,0) rectangle (11.15,4.1);
-\fill[rounded corners=6pt, bandN] (11.3,0) rectangle (17.4,4.1);
-\stage{0.12}{3.82}{1}{Retrieval}{black!75}
-\node[desc] at (0.17,3.52) {score every frame and transcript event};
-\stage{4.92}{3.82}{2}{Token Scheduler}{accA!85!black}
-\node[desc] at (4.97,3.52) {split the token budget $B$ by water-filling};
-\stage{11.42}{3.82}{3}{Inference}{black!75}
-\node[desc] at (11.47,3.52) {keep each frame's top $b_i$ tokens, then answer};
+\fill[rounded corners=6pt, bandN] (0,0) rectangle (4.65,3.85);
+\fill[rounded corners=6pt, accA!8] (4.8,0) rectangle (11.15,3.85);
+\draw[rounded corners=6pt, accA!55, line width=0.6pt] (4.8,0) rectangle (11.15,3.85);
+\fill[rounded corners=6pt, bandN] (11.3,0) rectangle (17.4,3.85);
+\stage{0.12}{3.55}{1}{Retrieval}{black!75}
+\stage{4.92}{3.55}{2}{Token Scheduler}{accA!85!black}
+\stage{11.42}{3.55}{3}{Inference}{black!75}
 
 % ---------------- (1) retrieval ----------------
 % film strip with a subtitle strip beneath it
@@ -77,7 +74,7 @@
 \foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!70, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
 \node[model] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
 \snowflake{($(ret.north east)+(-0.14,-0.14)$)}{0.075}
-\node[bubble, callout relative pointer={(0.22,-0.36)}] (q) at (3.3,1.76) {Color of the\\last car?};
+\node[qa] (q) at (3.4,1.72) {\textbf{Q:} Color of\\the last car?};
 \draw[arr] (1.2,2.15) -- (ret.north);
 \draw[arr] (q.west) -- (ret.east);
 % relevance over items in time order
@@ -118,19 +115,19 @@
 % ---------------- (3) inference ----------------
 % top row: frozen pruner -> items at their token counts; bottom row: query -> frozen VLM -> answer.
 % Items sit directly above the VLM, so every arrow into it is vertical.
-\node[model, inner xsep=9pt] (pr) at (12.2,2.5) {Token\\pruner\hspace{0.12cm}};
+\node[model, inner xsep=9pt] (pr) at (12.2,2.3) {Token\\pruner\hspace{0.12cm}};
 \snowflake{($(pr.north east)+(-0.14,-0.14)$)}{0.075}
-\draw[arr] (11.0,2.5) -- node[elbl, above] {$b_i$} (pr.west);
-\prunedframe{13.7,2.5}{frame3.jpg}{12}
-\txtchip{14.75,2.5}
-\prunedframe{15.8,2.5}{frame5.jpg}{30}
-\draw[arr] (pr.east) -- (13.1,2.5);
-\node[axl] at (14.75,3.03) {items at $b_i$ tokens};
-\node[model, minimum width=2.9cm] (vlm) at (14.65,1.1) {VLM};
+\draw[arr] (11.0,2.3) -- node[elbl, above] {$b_i$} (pr.west);
+\prunedframe{13.7,2.3}{frame3.jpg}{12}
+\txtchip{14.75,2.3}
+\prunedframe{15.8,2.3}{frame5.jpg}{30}
+\draw[arr] (pr.east) -- (13.1,2.3);
+\node[axl] at (14.75,2.85) {items at $b_i$ tokens};
+\node[model, minimum width=2.9cm] (vlm) at (14.65,0.8) {VLM};
 \snowflake{($(vlm.north east)+(-0.14,-0.14)$)}{0.075}
-\foreach \x in {13.7,14.75,15.8} {\draw[arr] (\x,2.17) -- (\x,1.41);}
-\node[bubble, callout relative pointer={(-0.22,-0.36)}] (q2) at (12.3,1.12) {Color of the\\last car?};
+\foreach \x in {13.7,14.75,15.8} {\draw[arr] (\x,1.97) -- (\x,1.11);}
+\node[qa] (q2) at (12.25,0.8) {\textbf{Q:} Color of\\the last car?};
 \draw[arr] (q2.east) -- (vlm.west);
-\node[bubble, callout relative pointer={(0.18,-0.36)}] (ans) at (16.75,1.12) {Blue.};
+\node[qa] (ans) at (16.78,0.8) {\textbf{A:} Blue};
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
