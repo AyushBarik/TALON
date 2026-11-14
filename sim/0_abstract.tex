@@ -1,0 +1,14 @@
+\begin{abstract}
+Video retrieval-augmented generation (RAG) answers a question about a long video by passing the most relevant frames
+to a vision-language model (VLM). Existing systems, however, operate at the frame level: every retrieved frame enters
+the VLM at the same token cost, although frames differ widely in relevance and the value of a frame saturates with its
+token count. We present \name, a plug-and-play token allocation framework that moves video RAG from frames to tokens.
+\name formulates evidence selection as a budgeted optimization over the token count of every frame and transcript
+segment, with a token value function fitted offline, and solves it by iterative water-filling, which attains a higher
+objective than the fixed allocation rules of prior work. In multi-turn conversations, \name carries the allocation
+across turns: it updates relevance with the attention of the VLM and prefills only the tokens that the KV cache lacks,
+so that the cumulative prefill of a conversation provably stays bounded. On MLVU, LongVideoBench, and Video-MME with
+two VLMs, \name improves accuracy by up to 4.2 points over compute-matched frame selection and token allocation
+methods, and matches or exceeds the strongest prior method at roughly one third of its compute. On MT-Video-Bench,
+\name reduces the compute of a conversation by up to 5.2$\times$ at comparable accuracy.
+\end{abstract}

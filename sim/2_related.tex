@@ -1,0 +1,45 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Video retrieval augmented generation.}
+RAG grounds generation in retrieved evidence. For long videos, Video-RAG~\cite{luo2024videorag} augments a VLM with
+visually aligned auxiliary texts, such as speech transcripts, on-screen text, and detected objects, retrieved for each
+query, and VideoRAG~\cite{jeong2025videorag} retrieves whole videos from a corpus as external knowledge. A second line
+of work structures the index. VideoRAG~\cite{ren2025videorag} builds a graph-based knowledge index across videos,
+Vgent~\cite{shen2025vgent} represents a video as a graph of clips that preserves their semantic and temporal
+dependencies, followed by a structured reasoning step that filters retrieval noise, and AVA~\cite{yan2025ava} indexes a
+video as an event knowledge graph that an agent searches. Other systems add spatio-temporal
+structure~\cite{fu2026videostir} or temporal alignment~\cite{cao2025tvrag} to retrieval, and
+\citet{lee2026rethinking} benchmark retrieval and generation separately.
+These systems, however, focus on what to index and retrieve, and pass every retrieved item to the VLM at its full
+cost. \name instead decides how many tokens each retrieved item receives, and can be placed after any of these
+retrievers.
+
+\paragraph{Keyframe selection.}
+Most VLMs sample frames uniformly and therefore often miss the content that a query needs. Query-aware methods instead
+select frames by jointly optimizing their relevance and temporal coverage~\cite{tang2025aks,peng2026qca}, by greedy
+marginal utility~\cite{shi2026markey}, by learning to query informative combinations of
+frames~\cite{yu2024framevoyager}, with the attention of a small VLM used as a selector~\cite{wang2026dafs}, or by
+exploring clips as the arms of a bandit~\cite{zhu2026focus}. All of these methods, however, return a subset of frames,
+each at the same token cost. \name instead treats the token count of each frame as a decision variable.
+
+\paragraph{Token allocation across frames.}
+Closest to our work are methods that vary the token count of frames. Q-Frame~\cite{zhang2025qframe} shows frames at
+three resolutions according to their relevance rank, QuoTA~\cite{luo2025quota} assigns tokens in proportion to a
+query-oriented frame score, and AdaptToken~\cite{qi2026adapttoken} distributes a global token budget over groups of
+frames according to the response entropy of the VLM. Concurrent with our work, AdaAlloc~\cite{an2026adaalloc} lets the
+VLM plan how to split the budget between sparse low-resolution frames and dense high-resolution frames; it became
+public after the CVPR~2027 cutoff for prior work, and we include it in our comparisons for completeness. All of these
+methods allocate with a fixed rule or a heuristic plan. \name instead derives the allocation as the solution of an
+optimization problem with a learned token value, extends it to transcripts, and maintains it across the turns of a
+conversation.
+
+\paragraph{Token compression and KV-cache reuse.}
+A complementary line of work reduces the tokens of a given input. FastV~\cite{chen2024fastv} and
+VisionZip~\cite{yang2024visionzip} prune visual tokens by attention, ToMe~\cite{bolya2023tome} merges similar tokens
+inside the vision encoder, and LongVU~\cite{shen2024longvu}, DyCoke~\cite{tao2024dycoke}, and
+MARC~\cite{wu2026marc} compress video tokens by exploiting their temporal redundancy. For language models,
+H$_2$O~\cite{zhang2023h2o} and StreamingLLM~\cite{xiao2024streamingllm} evict entries of the KV cache, and
+ReKV~\cite{rekv2025} retrieves cached video KV entries for streaming question answering. These methods, however,
+compress each frame or cache independently. \name uses a pruner only to realize a token count, decides the counts
+jointly, and reuses cached tokens instead of evicting them.
