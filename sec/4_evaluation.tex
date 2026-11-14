@@ -2,8 +2,8 @@
 \label{sec:exp}
 
 We evaluate \name across VLM architectures and long-video benchmarks, in both single-turn and multi-turn Q\&A. We
-sample candidate frames at 0.5 fps and use a budget of 12,288 tokens by default, and perform studies on different
-budgets (\cref{sec:exp-main}). \name scores the relevance of frames with SigLIP~2~\cite{siglip2} and of transcripts
+sample candidate frames at 0.5 fps and compare all methods at matched compute (TFLOPs) by default, and perform studies
+on different compute budgets (\cref{sec:exp-main}). \name scores the relevance of frames with SigLIP~2~\cite{siglip2} and of transcripts
 with BGE~\cite{bge}. All experiments were done on NVIDIA A100 GPUs. Additional implementation details are provided in
 the appendix.
 
