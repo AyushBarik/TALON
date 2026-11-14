@@ -42,8 +42,8 @@ problem, which maximizes the relevance-weighted value of the evidence subject to
 Realizing this formulation raises two challenges. The first is to value tokens and to solve the allocation
 efficiently. The Token Scheduler of \name learns a \textit{token value} function offline, discounts frames that
 duplicate others already shown, and lets frames and transcript segments compete for the same budget. It solves the
-resulting problem by iterative water-filling, and we prove that the solution attains a higher objective than the
-allocation rules of prior work. The second challenge arises in multi-turn conversations, where re-allocating tokens
+resulting problem by iterative water-filling, and we derive the optimal allocation, which the
+allocation rules of prior work do not attain. The second challenge arises in multi-turn conversations, where re-allocating tokens
 for every question invalidates the KV cache that LLM serving systems reuse across
 turns~\cite{kwon2023vllm,zheng2024sglang}. \name instead carries the allocation across turns: it updates the
 relevance of cached frames with the attention of the VLM, and prefills only the tokens that the cache lacks, so that

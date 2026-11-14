@@ -5,8 +5,7 @@ Unless
 stated otherwise, every method draws from the same candidate frames, sampled from each video at 1 fps and kept at
 their native resolution, and receives the same budget of 12,288 tokens per question, the default video budget of
 Qwen3-VL. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
-BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, with videos disjoint from the evaluation videos, and keeps it fixed during evaluation. Further implementation details are
-provided in the appendix.
+BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, with videos disjoint from the evaluation videos, and keeps it fixed during evaluation. All hyperparameters ($\tau$, $\eta$, $\beta$, $\gamma$, $L$, and the softmax temperature) are tuned on these splits; their values and further implementation details are given in the appendix.
 
 \subsection{Experimental Setup}
 \label{sec:exp-setup}
@@ -104,15 +103,13 @@ Video-MME, where it improves on the best baseline by \simnum{2.2} and \simnum{4.
 \cref{fig:budget} and \cref{fig:multiturn}(a) vary the budget from 1,536 to 12,288 tokens on MLVU. \name is the most
 accurate method at every budget, and its advantage grows as the budget shrinks: at 1,536 tokens it reaches 73.4\%,
 1.7 points above the next best method and 8.3 points above Top-K (w/ pruning). With 3,072 tokens (53 TFLOPs), it exceeds the accuracy of Q-Frame,
-FOCUS, and AdaAlloc at 12,288 tokens (203--211 TFLOPs), a reduction of nearly 4$\times$. The reason is visible in
-\cref{fig:overlap}(a): \name gives tokens to a median of 82\% of the candidate frames, whereas the frame selection
-baselines show at most half of them.
+FOCUS, and AdaAlloc at 12,288 tokens (203--211 TFLOPs), a reduction of nearly 4$\times$.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/tflops_pair.pdf}
   \caption{\textbf{Accuracy against compute.} (a)~Single turn: MLVU accuracy against TFLOPs per query.
-    (b)~Multi turn: MT-Video-Bench accuracy (the first 100 conversations, 215 judged turns) against TFLOPs per conversation, summed over all turns. Each line spans per-turn budgets from 1,536 to 12,288 tokens.}
+    (b)~Multi turn: MT-Video-Bench accuracy (a 100-conversation subset for the four-budget sweep, 215 judged turns) against TFLOPs per conversation, summed over all turns. Each line spans per-turn budgets from 1,536 to 12,288 tokens.}
   \label{fig:multiturn}
 \end{figure}
 
@@ -183,7 +180,7 @@ hyperparameters is given in the appendix.
     \hspace{0.5em}w/o carried allocation & \simnum{640} & \cellcolor{heat1}\simnum{58.2} \\
     \bottomrule
   \end{tabular}
-  \caption{\textbf{Ablation of multi-turn scheduling} on MT-Video-Bench (200 conversations, 450 judged turns; 6{,}144
+  \caption{\textbf{Ablation of multi-turn scheduling} on MT-Video-Bench (Qwen3-VL-8B; 200 conversations, 450 judged turns; 6{,}144
     visual tokens per turn). TFLOPs are summed over all turns of a conversation.}
   \label{tab:multiturn}
 \end{table}
