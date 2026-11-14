@@ -17,21 +17,21 @@
   \foreach \v/\t [count=\i] in {#3} {
     \ifnum\t=1 \fill[txt] ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2});
     \else      \fill[frm]    ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2}); \fi}}
-% \prunedframe{center}{image}{kept tokens out of 32}: a frame (1.1 cm) as an 8x4 token grid; dropped tokens greyed out.
+% \prunedframe{center}{image}{kept tokens out of 32}: a frame (1.0 cm) as an 8x4 token grid; dropped tokens greyed out.
 % The keep order is one fixed ranking (centre first), so a frame at b tokens holds its top b tokens.
 \newcommand{\prunedframe}[3]{%
-  \node[inner sep=0pt] at (#1) {\includegraphics[width=1.1cm]{fig/frames/#2}};
-  \begin{scope}[shift={($(#1)+(-0.55,-0.309)$)}]
+  \node[inner sep=0pt] at (#1) {\includegraphics[width=1.0cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+(-0.5,-0.28125)$)}]
     \foreach \c [count=\k from 0] in {10,11,18,19,9,12,17,20,2,3,26,27,1,4,25,28,8,13,16,21,0,5,24,29,6,14,22,30,7,15,23,31} {
       \ifnum\k<#3\relax\else
         \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
-        \fill[white, opacity=0.85] (\cx*0.1375,\cy*0.1547) rectangle ++(0.1375,0.1547);
+        \fill[white, opacity=0.85] (\cx*0.125,\cy*0.140625) rectangle ++(0.125,0.140625);
       \fi}
-    \draw[ink!30, line width=0.15pt, xstep=0.1375, ystep=0.1547] (0,0) grid (1.1,0.619);
-    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.1,0.619);
+    \draw[ink!30, line width=0.15pt, xstep=0.125, ystep=0.140625] (0,0) grid (1.0,0.5625);
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.0,0.5625);
   \end{scope}}
 \newcommand{\txtchip}[1]{% transcript event: a short text chip
-  \fill[txt!18, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
+  \fill[txt!35, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
   \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,0.07)$) -- ++(0.6,0);
   \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,-0.07)$) -- ++(0.4,0);}
 % \stage{x}{y}{number}{title}{one-line description}: numbered stage heading
@@ -51,78 +51,82 @@
   qa/.style={fill=chipF, draw=chipD, line width=0.5pt, rounded corners=3pt, align=left,
     inner sep=3pt, font=\sffamily\scriptsize}]
 
-% ---------------- bands ----------------
-\fill[rounded corners=6pt, bandA] (0,0) rectangle (4.65,3.85);
-\fill[rounded corners=6pt, bandB] (4.8,0) rectangle (11.15,3.85);
-\draw[rounded corners=6pt, edgeB, line width=0.6pt] (4.8,0) rectangle (11.15,3.85);
-\fill[rounded corners=6pt, bandC] (11.3,0) rectangle (17.4,3.85);
-\stage{0.12}{3.55}{1}{Retrieval}{stepA}
-\stage{4.92}{3.55}{2}{Token Scheduler}{stepB}
-\stage{11.42}{3.55}{3}{Inference}{stepC}
+% ---------------- layout ----------------
+% Q and A sit once, in a column on the left, as the conversation with the user. The pipeline runs clockwise
+% around it: Q -> (1) Retrieval -> (2) Token Scheduler along the top row, b_i down into (3) Inference, which runs
+% right to left along the bottom row and returns A next to Q. The VLM gets the question through its "+ Q" edge.
+\fill[rounded corners=6pt, bandA] (2.05,2.0) rectangle (8.6,5.4);
+\fill[rounded corners=6pt, bandB] (8.75,2.0) rectangle (17.4,5.4);
+\draw[rounded corners=6pt, edgeB, line width=0.6pt] (8.75,2.0) rectangle (17.4,5.4);
+\fill[rounded corners=6pt, bandC] (2.05,0) rectangle (17.4,1.85);
+\stage{2.17}{5.12}{1}{Retrieval}{stepA}
+\stage{8.87}{5.12}{2}{Token Scheduler}{stepB}
+\stage{2.17}{1.57}{3}{Inference}{stepC}
+
+% ---------------- user: question and answer ----------------
+\node[qa] (q) at (0.95,2.85) {\textbf{Q:} Color of\\the last car?};
+\node[qa] (ans) at (0.95,0.8) {\textbf{A:} Blue};
 
 % ---------------- (1) retrieval ----------------
 % film strip with a subtitle strip beneath it
-\fill[ink!88, rounded corners=1pt] (0.2,2.47) rectangle (4.45,3.2);
-\foreach \x in {0.27,0.47,...,4.35} {\fill[white] (\x,3.09) rectangle ++(0.1,0.06); \fill[white] (\x,2.52) rectangle ++(0.1,0.06);}
-\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.635+(\k-1)*0.845},2.835) {\includegraphics[width=0.8cm]{fig/frames/frame\k.jpg}};}
-\fill[txt!18, rounded corners=1pt] (0.2,2.18) rectangle (4.45,2.4);
-\foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!85!black, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
-\node[model, fill=modelA] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
+\fill[ink!88, rounded corners=1pt] (2.25,4.0) rectangle (8.4,4.8);
+\foreach \x in {2.32,2.52,...,8.3} {\fill[white] (\x,4.69) rectangle ++(0.1,0.06); \fill[white] (\x,4.05) rectangle ++(0.1,0.06);}
+\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({2.88+(\k-1)*1.222},4.4) {\includegraphics[width=1.0cm]{fig/frames/frame\k.jpg}};}
+\fill[txt!35, rounded corners=1pt] (2.25,3.7) rectangle (8.4,3.92);
+\foreach \x/\l in {2.5/0.9, 3.75/0.7, 4.75/1.05, 6.15/0.8, 7.3/0.75} {\draw[txt!85!black, line width=0.5pt] (\x,3.81) -- ++(\l,0);}
+\node[model, fill=modelA] (ret) at (3.05,2.85) {Retriever\hspace{0.12cm}};
 \snowflake{($(ret.north east)+(-0.14,-0.14)$)}{0.075}
-\node[qa] (q) at (3.4,1.72) {\textbf{Q:} Color of\\the last car?};
-\draw[arr] (1.2,2.15) -- (ret.north);
-\draw[arr] (q.west) -- (ret.east);
+\draw[arr] (3.05,3.67) -- (ret.north);
+\draw[arr] (q.east) -- (ret.west);
 % relevance over items in time order
-\begin{scope}[shift={(0.5,0.42)}]
-  \draw[ax] (0,0) -- (3.95,0); \draw[ax] (0,0) -- (0,0.95);
-  \node[axl, rotate=90, anchor=south] at (-0.04,0.47) {relevance $r_i$};
+\begin{scope}[shift={(4.35,2.4)}]
+  \draw[ax] (0,0) -- (3.95,0); \draw[ax] (0,0) -- (0,1.05);
+  \node[axl, anchor=west] at (0.08,1.0) {relevance $r_i$};
   \node[axl, anchor=north] at (1.95,-0.02) {items in time order};
   \items{3.8}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
 \end{scope}
-\draw[arr] (ret.south) -- (1.2,1.3);
+\draw[arr] (ret.east) -- (4.25,2.85);
 
 % ---------------- (2) token scheduler ----------------
-\node[font=\sffamily\scriptsize] at (7.975,2.98) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)$};
-\node[font=\sffamily\scriptsize] at (7.975,2.6) {$\text{s.t.}\ \ \sum_i b_i\le B$};
-% value curves (x = 0.22 log2(1 + b), so b = 0 sits at the origin)
-\begin{scope}[shift={(5.45,0.45)}]
-  \draw[ax] (0,0) -- (1.9,0); \draw[ax] (0,0) -- (0,1.95);
-  \node[axl, rotate=90, anchor=south] at (-0.04,1.15) {value $v(b)$};
-  \node[axl, anchor=north] at (0.95,-0.02) {tokens $b$};
-  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.22*\x}, {1.7*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.22*\x}, {1.6*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\scriptsize, text=txt!80!black, anchor=south west, inner sep=1pt] at (1.78,1.6) {$v_{\text{text}}$};
-  \node[font=\sffamily\scriptsize, text=frm, anchor=north west, inner sep=1pt] at (1.78,1.45) {$v_{\text{frame}}$};
+\node[font=\sffamily\scriptsize] at (13.1,4.55) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)\qquad\text{s.t.}\ \ \sum_i b_i\le B$};
+% value curves (x = 0.28 log2(1 + b), so b = 0 sits at the origin)
+\begin{scope}[shift={(9.55,2.45)}]
+  \draw[ax] (0,0) -- (2.4,0); \draw[ax] (0,0) -- (0,1.75);
+  \node[axl, rotate=90, anchor=south] at (-0.04,0.9) {value $v(b)$};
+  \node[axl, anchor=north] at (1.2,-0.02) {tokens $b$};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.28*\x}, {1.55*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.28*\x}, {1.45*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\scriptsize, text=txt!80!black, anchor=south west, inner sep=1pt] at (2.27,1.45) {$v_{\text{text}}$};
+  \node[font=\sffamily\scriptsize, text=frm, anchor=north west, inner sep=1pt] at (2.27,1.3) {$v_{\text{frame}}$};
 \end{scope}
+\draw[arr] (8.45,2.62) -- node[elbl, above] {$r_i$} (9.15,2.62);
 % water-filling: relevance and value curves -> token plan
-\draw[arr] (7.9,1.0) -- node[elbl, above, align=center] {water-\\filling} node[elbl, below] {price $\lambda$} (8.75,1.0);
+\draw[arr] (12.5,3.1) -- node[elbl, above, align=center] {water-\\filling} node[elbl, below] {price $\lambda$} (13.45,3.1);
 % token plan over items in time order
-\begin{scope}[shift={(9.1,0.45)}]
-  \draw[ax] (0,0) -- (1.9,0); \draw[ax] (0,0) -- (0,1.95);
-  \node[axl, rotate=90, anchor=south] at (-0.04,1.15) {tokens $b_i$};
-  \node[axl, anchor=north] at (0.95,-0.02) {items in time order};
-  \items{1.85}{2.3}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+\begin{scope}[shift={(14.0,2.45)}]
+  \draw[ax] (0,0) -- (2.9,0); \draw[ax] (0,0) -- (0,1.75);
+  \node[axl, rotate=90, anchor=south] at (-0.04,0.9) {tokens $b_i$};
+  \node[axl, anchor=north] at (1.3,-0.02) {items in time order};
+  \items{2.8}{2.2}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
                    0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
 \end{scope}
-\draw[arr] (4.5,0.75) -- node[elbl, above] {$r_i$} (5.15,0.75);
 
-% ---------------- (3) inference ----------------
-% top row: frozen pruner -> items at their token counts; bottom row: query -> frozen VLM -> answer.
-% Items sit directly above the VLM, so every arrow into it is vertical.
-\node[model, inner xsep=9pt] (pr) at (12.2,2.3) {Token\\pruner\hspace{0.12cm}};
+% ---------------- (3) inference (right to left) ----------------
+\node[model, inner xsep=9pt] (pr) at (16.5,0.8) {Token\\pruner\hspace{0.12cm}};
 \snowflake{($(pr.north east)+(-0.14,-0.14)$)}{0.075}
-\draw[arr] (11.0,2.3) -- node[elbl, above] {$b_i$} (pr.west);
-\prunedframe{13.7,2.3}{frame3.jpg}{12}
-\txtchip{14.75,2.3}
-\prunedframe{15.8,2.3}{frame5.jpg}{30}
-\draw[arr] (pr.east) -- (13.1,2.3);
-\node[axl] at (14.75,2.85) {items at $b_i$ tokens};
-\node[model, minimum width=2.9cm] (vlm) at (14.65,0.8) {VLM};
+\draw[arr] (16.75,2.2) -- node[elbl, right] {$b_i$} (16.75,1.24);
+% items at their token counts, in time order (frames keep their top-ranked tokens)
+\prunedframe{7.6,0.8}{frame1.jpg}{6}
+\txtchip{8.85,0.8}
+\prunedframe{10.1,0.8}{frame3.jpg}{22}
+\prunedframe{11.35,0.8}{frame4.jpg}{12}
+\txtchip{12.6,0.8}
+\prunedframe{13.85,0.8}{frame5.jpg}{32}
+\node[axl] at (10.73,1.45) {items at $b_i$ tokens, in time order};
+\draw[arr] (pr.west) -- (14.42,0.8);
+\node[model, minimum width=3.0cm] (vlm) at (4.4,0.8) {VLM};
 \snowflake{($(vlm.north east)+(-0.14,-0.14)$)}{0.075}
-\foreach \x in {13.7,14.75,15.8} {\draw[arr] (\x,1.97) -- (\x,1.11);}
-\node[qa] (q2) at (12.25,0.8) {\textbf{Q:} Color of\\the last car?};
-\draw[arr] (q2.east) -- (vlm.west);
-\node[qa] (ans) at (16.78,0.8) {\textbf{A:} Blue};
-\draw[arr] (vlm.east) -- (ans.west);
+\draw[arr] (7.0,0.8) -- node[elbl, above] {+ Q} (vlm.east);
+\draw[arr] (vlm.west) -- (ans.east);
 \end{tikzpicture}
