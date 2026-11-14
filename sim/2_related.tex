@@ -1,10 +1,10 @@
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Video retrieval augmented generation.}
+\paragraph{Video retrieval-augmented generation.}
 RAG grounds generation in retrieved evidence. For long videos, Video-RAG~\cite{luo2024videorag} augments a VLM with
 visually aligned auxiliary texts, such as speech transcripts, on-screen text, and detected objects, retrieved for each
-query, and VideoRAG~\cite{jeong2025videorag} retrieves whole videos from a corpus as external knowledge. A second line
+query, and \citet{jeong2025videorag} retrieve whole videos from a corpus as external knowledge. A second line
 of work structures the index. VideoRAG~\cite{ren2025videorag} builds a graph-based knowledge index across videos,
 Vgent~\cite{shen2025vgent} represents a video as a graph of clips that preserves their semantic and temporal
 dependencies, followed by a structured reasoning step that filters retrieval noise, and AVA~\cite{yan2025ava} indexes a
@@ -28,9 +28,9 @@ each at the same token cost. \name instead treats the token count of each frame 
 Closest to our work are methods that vary the token count of frames. Q-Frame~\cite{zhang2025qframe} shows frames at
 three resolutions according to their relevance rank, QuoTA~\cite{luo2025quota} assigns tokens in proportion to a
 query-oriented frame score, and AdaptToken~\cite{qi2026adapttoken} distributes a global token budget over groups of
-frames according to the response entropy of the VLM. Concurrent with our work, AdaAlloc~\cite{an2026adaalloc} lets the
-VLM plan how to split the budget between sparse low-resolution frames and dense high-resolution frames; it became
-public after the CVPR~2027 cutoff for prior work, and we include it in our comparisons for completeness. All of these
+frames according to the response entropy of the VLM. Concurrent with our work, the recently released
+AdaAlloc~\cite{an2026adaalloc} lets the VLM plan how to split the budget between sparse low-resolution frames and
+dense high-resolution frames; we include it in our comparisons for completeness. All of these
 methods allocate with a fixed rule or a heuristic plan, whereas \name solves for the allocation, extends it to
 transcripts, and maintains it across the turns of a conversation.
 

@@ -11,7 +11,7 @@
 \subsection{Overview and Problem Formulation}
 \label{sec:overview}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{ren2025videorag,shen2025vgent,tang2025aks}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a budget of $K$ frames, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{jeong2025videorag,tang2025aks,zhang2025qframe}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a budget of $K$ frames, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
@@ -174,4 +174,4 @@ Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $f_i$
 \end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:bound} shows that a conversation prefills at most the full tokens of the frames it ever shows, whereas re-allocating from scratch prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. Prior allocation methods, in contrast, select frames afresh for every question, so their prefill grows with the conversation. A detailed proof is provided in the appendix.
+\noindent Proposition~\ref{prop:bound} shows that a conversation prefills at most the full tokens of the frames it ever shows, whereas re-allocating from scratch prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. Prior allocation methods also select frames afresh for every question, so their prefill grows with the conversation as well. A detailed proof is provided in the appendix.

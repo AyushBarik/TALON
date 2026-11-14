@@ -27,7 +27,7 @@ MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LL
 
 \paragraph{Metrics.} We report accuracy together with compute, measured in TFLOPs per question: the prefill compute
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,
-we sum the compute over all turns.
+we sum the compute over all turns. Offline indexing is not counted.
 
 \paragraph{Baselines.} All methods extend the same embedding-based RAG pipeline, and differ in how they turn its
 candidates into the input of the VLM:
@@ -129,11 +129,6 @@ than Top-K (w/ pruning), and it is the most accurate method at three of the four
 saving is substantial: a turn after the first finds a median of 81\% of the tokens it needs already in the cache
 (\cref{fig:overlap}(b)).
 
-\cref{tab:multiturn} ablates the two multi-turn components at 6,144 tokens per turn. Updating relevance with the
-attention of the VLM improves accuracy by 1.1 points and reduces compute by 13\%, since attention concentrates the
-allocation on frames that the cache already holds. Without the carried allocation, every turn allocates and prefills
-from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accuracy.
-
 \begin{table}[t]
   \centering
   \small
@@ -170,8 +165,13 @@ from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accur
 allocation proportional to relevance, at matched compute, lowers accuracy by \simnum{2.5} points overall and by
 \simnum{6.8} points on long videos. Removing text allocation, so that subtitles no longer compete with frames for the
 budget, costs 3.6 points overall and 7.3 points on long videos, whose questions often hinge on speech. Removing the
-diversity term costs 0.7 points. The vision encoder adds 48 TFLOPs per question. A sensitivity analysis of the hyperparameters is provided in the
-appendix.
+diversity term costs 0.7 points. The vision encoder adds 48 TFLOPs per question.
+
+\cref{tab:multiturn} ablates the two multi-turn components at 6,144 tokens per turn. Updating relevance with the
+attention of the VLM improves accuracy by 1.1 points and reduces compute by 13\%, since attention concentrates the
+allocation on frames that the cache already holds. Without the carried allocation, every turn prefills
+from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accuracy. A sensitivity analysis of the
+hyperparameters is given in the appendix.
 
 \begin{table}[t]
   \centering
