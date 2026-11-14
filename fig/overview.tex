@@ -63,20 +63,20 @@
 % ---------------- layout ----------------
 % Top row: (1) Relevance -> (2) Allocation; bottom row: (3) Inference, left to right. Stages connect box to box
 % (r_i, b_i). Q sits inside Relevance and A inside Inference; nothing is outside the stage boxes.
-\begin{scope}[yshift=0.4cm]
+\begin{scope}[yshift=0.15cm]
 \fill[rounded corners=6pt, bandA] (0,1.8) rectangle (7.5,5.4);
 \fill[rounded corners=6pt, bandB] (7.9,1.8) rectangle (17.4,5.4);
 \draw[rounded corners=6pt, edgeB, line width=0.6pt] (7.9,1.8) rectangle (17.4,5.4);
 \end{scope}
-\fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,1.9);
-\begin{scope}[yshift=0.4cm]
+\fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,1.65);
+\begin{scope}[yshift=0.15cm]
 \stage{0.12}{5.1}{1}{Scoring}{stepA}
 \stage{8.02}{5.1}{2}{Allocation}{stepB}
 \end{scope}
-\stage{0.12}{1.62}{3}{Inference}{stepC}
-\begin{scope}[yshift=0.4cm]
+\stage{0.12}{1.4}{3}{Inference}{stepC}
+\begin{scope}[yshift=0.15cm]
 \draw[arr] (7.5,2.75) -- (7.9,2.75);
-\draw[arr] (12.65,1.8) -- node[elbl, right, pos=0.4] {$b_i$} (12.65,0.91);
+\draw[arr] (12.65,1.8) -- node[elbl, right, pos=0.4] {$b_i$} (12.65,0.96);
 
 % ---------------- (1) relevance ----------------
 % No frame is selected here: the query is compared with the stored embedding of EVERY frame and transcript event.
@@ -127,20 +127,20 @@
 \end{scope}
 % ---------------- (3) inference ----------------
 % the frozen pruner is a container that holds its output: the frames at their token counts and the text events
-\node[model, fill=chipF, minimum width=9.5cm, minimum height=1.2cm] (pr) at (12.65,0.7) {};
-\node[font=\sffamily\footnotesize, text=modelT, align=center] at (8.75,0.7) {Token\\pruner};
+\node[model, fill=chipF, minimum width=9.5cm, minimum height=1.0cm] (pr) at (12.65,0.6) {};
+\node[font=\sffamily\footnotesize, text=modelT, align=center] at (8.75,0.6) {Token\\pruner};
 \snowflake{($(pr.south east)+(-0.24,0.24)$)}{0.13}
-\prunedframe{10.25,0.7}{frame1.jpg}{10}
-\txtchip{11.45,0.7}
-\prunedframe{12.65,0.7}{frame3.jpg}{22}
-\prunedframe{13.85,0.7}{frame4.jpg}{12}
-\txtchip{15.05,0.7}
-\prunedframe{16.25,0.7}{frame5.jpg}{32}
-\node[model, fill=chipF, minimum width=2.9cm, minimum height=1.2cm] (vlm) at (4.75,0.7) {};
-\nnet{4.75,0.7}{0.78}{0.43}
-\node[font=\sffamily\small, text=modelT] at (4.75,0.7) {VLM};
+\prunedframe{10.25,0.6}{frame1.jpg}{10}
+\txtchip{11.45,0.6}
+\prunedframe{12.65,0.6}{frame3.jpg}{22}
+\prunedframe{13.85,0.6}{frame4.jpg}{12}
+\txtchip{15.05,0.6}
+\prunedframe{16.25,0.6}{frame5.jpg}{32}
+\node[model, fill=chipF, minimum width=2.9cm, minimum height=1.0cm] (vlm) at (4.75,0.6) {};
+\nnet{4.75,0.6}{0.78}{0.36}
+\node[font=\sffamily\small, text=modelT] at (4.75,0.6) {VLM};
 \snowflake{($(vlm.south east)+(-0.24,0.24)$)}{0.13}
-\node[qa, inner sep=5pt] (ans) at (1.0,0.7) {\textbf{A:} Blue};
+\node[qa, inner sep=5pt] (ans) at (1.0,0.6) {\textbf{A:} Blue};
 \draw[arr] (pr.west) -- (vlm.east);
 \draw[arr] (vlm.west) -- (ans.east);
 \end{tikzpicture}
