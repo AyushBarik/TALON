@@ -61,8 +61,8 @@
 \stage{0.12}{4.62}{1}{Retrieval}{stepA}
 \stage{8.02}{4.62}{2}{Allocation}{stepB}
 \stage{0.12}{0.65}{3}{Inference}{stepC}
-\draw[arr] (7.5,3.17) -- node[elbl, above] {$r_i$} (7.9,3.17);
-\draw[arr] (12.65,1.6) -- node[elbl, right] {$b_i$} (12.65,1.3);
+\draw[arr] (7.5,2.5) -- node[elbl, above] {$r_i$} (7.9,2.5);
+\draw[arr] (11.2,1.6) -- node[elbl, right, pos=0.3] {$b_i$} (11.2,1.14);
 
 % ---------------- (1) retrieval ----------------
 \fill[ink!88, rounded corners=1pt] (0.2,3.4) rectangle (7.3,4.25);
@@ -109,15 +109,15 @@
 \node[model, minimum width=9.9cm, minimum height=0.96cm] (pr) at (7.4,0.65) {};
 \node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.3,0.65) {Token\\pruner};
 \snowflake{($(pr.north east)+(-0.2,-0.2)$)}{0.11}
-\prunedframe{4.85,0.65}{frame1.jpg}{6}
+\prunedframe{4.85,0.65}{frame1.jpg}{10}
 \txtchip{6.1,0.65}
 \prunedframe{7.35,0.65}{frame3.jpg}{22}
 \prunedframe{8.6,0.65}{frame4.jpg}{12}
 \txtchip{9.85,0.65}
 \prunedframe{11.1,0.65}{frame5.jpg}{32}
-\node[model, minimum width=2.6cm, minimum height=0.96cm] (vlm) at (14.1,0.65) {VLM};
+\node[model, minimum width=2.9cm, minimum height=0.96cm] (vlm) at (14.25,0.65) {VLM};
 \snowflake{($(vlm.north east)+(-0.2,-0.2)$)}{0.11}
-\node[qa, inner sep=5pt] (ans) at (16.4,0.65) {\textbf{A:} Blue};
+\node[qa, inner sep=5pt] (ans) at (16.55,0.65) {\textbf{A:} Blue};
 \draw[arr] (pr.east) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
