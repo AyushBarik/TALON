@@ -4,7 +4,7 @@
 We evaluate \name on three long-video question-answering benchmarks and one multi-turn dialogue benchmark with two VLMs of different architectures, and
 compare it against frame selection and token allocation methods under the same token budget. We implement \name and
 all baselines in PyTorch, and run all experiments on two NVIDIA A100 GPUs. Unless stated otherwise, every method draws
-from the same candidate frames, sampled from each video at 1 fps and kept at their native resolution, and receives the
+from the same candidate frames, sampled from each video at 0.5 fps and kept at their native resolution, and receives the
 same budget of 12,288 tokens per question, the default video budget of Qwen3-VL. \name scores the relevance of each
 frame with SigLIP~2~\cite{siglip2} and of each transcript segment with BGE~\cite{bge}, using the question together with
 its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, and keeps it fixed during evaluation. Further implementation details are provided in the appendix.

@@ -2,7 +2,7 @@
 \label{sec:exp}
 
 Unless
-stated otherwise, every method draws from the same candidate frames, sampled from each video at 1 fps and kept at
+stated otherwise, every method draws from the same candidate frames, sampled from each video at 0.5 fps and kept at
 their native resolution, and receives the same budget of 12,288 tokens per question. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
 BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, with videos disjoint from the evaluation videos, and keeps it fixed during evaluation. All hyperparameters ($\tau$, $\eta$, $\beta$, $\gamma$, $L$, and the softmax temperature) are tuned on these splits; their values and further implementation details are given in the appendix.
 
