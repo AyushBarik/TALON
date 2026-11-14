@@ -148,7 +148,7 @@ that a method calls, summed over every call for that question.
   \settowidth{\splitw}{Medium}%
   \newcommand{\na}{--}
   \newcommand{\abltab}{%
-  \begin{tabular}{l c VVVV}
+  \begin{tabular}{l@{\hspace{5pt}} c VVVV}
     \toprule
     Method & TFLOPs $\downarrow$
       & \multicolumn{4}{c}{%
@@ -158,15 +158,15 @@ that a method calls, summed over every call for that question.
           Overall & Short & Medium & Long \\[2.6pt]
         \end{tabular}} \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
-    \rowcolor{orxblue!8}
-    \textbf{\name}                 & 232 & 77.3 & 83.6 & 76.8 & 71.7 \\
-    \quad w/o text allocation      & 226 & 73.7 & 81.9 & 74.9 & 64.4 \\
-    \quad w/o diversity            & 226 & 76.6 & 82.4 & 76.4 & 70.8 \\
+    \textbf{\name}                 & \cellcolor{heat1}232 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} \\
+    \hspace{0.5em}w/o text allocation      & \cellcolor{heat0}226 & \cellcolor{heat3}73.7 & \cellcolor{heat2}81.9 & \cellcolor{heat2}74.9 & \cellcolor{heat4}64.4 \\
+    \hspace{0.5em}w/o diversity            & \cellcolor{heat0}226 & \cellcolor{heat1}76.6 & \cellcolor{heat2}82.4 & \cellcolor{heat1}76.4 & \cellcolor{heat1}70.8 \\
     \bottomrule
   \end{tabular}}%
   % Equal gaps that make the table exactly \columnwidth (12 column sides).
   \sbox0{\setlength{\tabcolsep}{0pt}\abltab}%
-  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/12\relax}%
+  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/11\relax}%
+  \xdef\ablsep{\the\tabcolsep}% Table 3 reuses this gap, so both tables start at the same indent
   \abltab
   \caption{\TODO{}}
   \label{tab:ablation}
@@ -178,20 +178,18 @@ that a method calls, summed over every call for that question.
   \centering
   \small
   \renewcommand{\arraystretch}{1.2}
-  \newcommand{\mttab}{%
-  \begin{tabular}{l c c}
+  % Same side gap as Table 2 (\ablsep); the two number columns share the remaining width.
+  \setlength{\tabcolsep}{\ablsep}%
+  \settowidth{\dimen0}{\hspace{0.5em}w/o attention}%
+  \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
+  \begin{tabular}{l@{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
     \toprule
     Method & TFLOPs $\downarrow$ & MT-Video-Bench $\uparrow$ \\
     \midrule
-    \rowcolor{orxblue!8}
-    \textbf{\name}             & 275 & 58.5 \\
-    \quad w/o attention        & 315 & 57.4 \\
+    \textbf{\name}             & \cellcolor{heat0}275 & \cellcolor{heat0}\textbf{58.5} \\
+    \hspace{0.5em}w/o attention        & \cellcolor{heat2}315 & \cellcolor{heat2}57.4 \\
     \bottomrule
-  \end{tabular}}%
-  % Equal gaps that make the table exactly \columnwidth (6 column sides), as in Table 2.
-  \sbox0{\setlength{\tabcolsep}{0pt}\mttab}%
-  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/6\relax}%
-  \mttab
+  \end{tabular}
   \caption{Multi-turn \name with and without attention-guided relevance on MT-Video-Bench (200 conversations,
     450 judged turns; 6{,}144 visual tokens per turn). TFLOPs are summed over all turns of a conversation.}
   \label{tab:multiturn}

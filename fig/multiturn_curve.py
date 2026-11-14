@@ -56,7 +56,7 @@ def main():
         ax.set_yticklabels([""] * 4)
 
     ax.set_xlabel("TFLOPs per conversation")
-    ax.set_ylabel("MT-Video-Bench score")
+    ax.set_ylabel("MTVB accuracy (%)")
     print(save(fig, os.path.join(HERE, "multiturn_curve")))
 
 
