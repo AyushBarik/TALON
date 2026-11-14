@@ -51,85 +51,87 @@
 \begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.6pt,
   card/.style={fill=white, draw=ink!18, line width=0.5pt, rounded corners=4pt, align=center, inner sep=3.5pt},
   arr/.style={-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
-  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=ink!55, line width=0.5pt},
-  axl/.style={font=\sffamily\scriptsize, text=ink!70},
+  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=ink, line width=0.6pt},
+  axl/.style={font=\sffamily\footnotesize, text=ink},
   desc/.style={font=\sffamily\scriptsize, text=ink!65, anchor=north west, inner sep=0pt, align=left},
-  elbl/.style={font=\sffamily\scriptsize, text=ink!75, inner sep=1.5pt},
+  elbl/.style={font=\sffamily\footnotesize, text=ink, inner sep=2pt},
   model/.style={fill=modelC, draw=modelD, text=modelT, line width=0.5pt, rounded corners=3pt, align=center,
     minimum height=0.62cm, inner xsep=5pt, font=\sffamily\footnotesize},
   qa/.style={fill=chipF, draw=chipD, line width=0.5pt, rounded corners=3pt, align=left,
     inner sep=3pt, font=\sffamily\scriptsize}]
 
 % ---------------- layout ----------------
-% Top row: (1) Retrieval -> (2) Allocation; bottom row: (3) Inference, left to right. Stages connect box to box
-% (r_i, b_i). Q sits inside Retrieval and A inside Inference; nothing is outside the stage boxes.
-\fill[rounded corners=6pt, bandA] (0,1.6) rectangle (7.5,4.92);
-\fill[rounded corners=6pt, bandB] (7.9,1.6) rectangle (17.4,4.92);
-\draw[rounded corners=6pt, edgeB, line width=0.6pt] (7.9,1.6) rectangle (17.4,4.92);
-\fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,1.3);
-\stage{0.12}{4.62}{1}{Relevance}{stepA}
-\stage{8.02}{4.62}{2}{Allocation}{stepB}
-\stage{0.12}{0.65}{3}{Inference}{stepC}
-\draw[arr] (7.5,2.5) -- node[elbl, above] {$r_i$} (7.9,2.5);
-\draw[arr] (11.2,1.6) -- node[elbl, right, pos=0.3] {$b_i$} (11.2,1.14);
+% Top row: (1) Relevance -> (2) Allocation; bottom row: (3) Inference, left to right. Stages connect box to box
+% (r_i, b_i). Q sits inside Relevance and A inside Inference; nothing is outside the stage boxes.
+\fill[rounded corners=6pt, bandA] (0,1.8) rectangle (7.5,5.4);
+\fill[rounded corners=6pt, bandB] (7.9,1.8) rectangle (17.4,5.4);
+\draw[rounded corners=6pt, edgeB, line width=0.6pt] (7.9,1.8) rectangle (17.4,5.4);
+\fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,1.5);
+\stage{0.12}{5.1}{1}{Relevance}{stepA}
+\stage{8.02}{5.1}{2}{Allocation}{stepB}
+\stage{0.12}{0.75}{3}{Inference}{stepC}
+\draw[arr] (7.5,2.75) -- node[elbl, above] {$r_i$} (7.9,2.75);
+\draw[arr] (11.2,1.8) -- node[elbl, right, pos=0.35] {$b_i$} (11.2,1.31);
 
 % ---------------- (1) relevance ----------------
 % No frame is selected here: the query is compared with the stored embedding of EVERY frame and transcript event.
-\fill[ink!88, rounded corners=1pt] (0.2,3.4) rectangle (7.3,4.25);
-\foreach \x in {0.28,0.48,...,7.2} {\fill[white] (\x,4.16) rectangle ++(0.1,0.05); \fill[white] (\x,3.44) rectangle ++(0.1,0.05);}
-\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.91+(\k-1)*1.42},3.825) {\includegraphics[width=1.2cm]{fig/frames/frame\k.jpg}};}
-\fill[txt!35, rounded corners=1pt] (0.2,3.13) rectangle (7.3,3.33);
-\foreach \x/\l in {0.5/1.0, 1.9/0.8, 3.1/1.2, 4.7/0.9, 6.0/0.9} {\draw[txt!85!black, line width=0.5pt] (\x,3.23) -- ++(\l,0);}
-\node[qa] (q) at (1.0,2.35) {\textbf{Q:} Color of\\the last car?};
+\fill[ink!88, rounded corners=1pt] (0.2,3.9) rectangle (7.3,4.75);
+\foreach \x in {0.28,0.48,...,7.2} {\fill[white] (\x,4.66) rectangle ++(0.1,0.05); \fill[white] (\x,3.94) rectangle ++(0.1,0.05);}
+\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.91+(\k-1)*1.42},4.325) {\includegraphics[width=1.2cm]{fig/frames/frame\k.jpg}};}
+\fill[txt!35, rounded corners=1pt] (0.2,3.63) rectangle (7.3,3.83);
+\foreach \x/\l in {0.5/1.0, 1.9/0.8, 3.1/1.2, 4.7/0.9, 6.0/0.9} {\draw[txt!85!black, line width=0.5pt] (\x,3.73) -- ++(\l,0);}
+\node[qa] (q) at (1.0,2.6) {\textbf{Q:} Color of\\the last car?};
 \node[cylinder, shape border rotate=90, aspect=0.28, fill=modelA, draw=modelD, line width=0.5pt, align=center,
-  minimum width=1.5cm, minimum height=1.15cm, inner sep=1pt, font=\sffamily\scriptsize, text=modelT] (db) at (3.0,2.35) {Frame\\database};
+  minimum width=1.5cm, minimum height=1.1cm, inner sep=1pt, font=\sffamily\scriptsize, text=modelT] (db) at (2.95,2.6) {Frame\\database};
 \draw[arr] (q.east) -- (q.east -| db.west);
-\draw[arr] (3.0,3.11) -- (db.north);
-\begin{scope}[shift={(4.4,1.98)}]
-  \draw[ax] (0,0) -- (2.95,0); \draw[ax] (0,0) -- (0,1.05);
-  \node[axl, anchor=west] at (0.06,0.98) {$r_i$};
-  \node[axl, anchor=north] at (1.45,-0.02) {frame \#};
-  \items{2.85}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
+\draw[arr] (2.95,3.61) -- (db.north);
+\begin{scope}[shift={(4.75,2.3)}]
+  \draw[ax] (0,0) -- (2.6,0); \draw[ax] (0,0) -- (0,1.2);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.58) {relevance};
+  \node[axl, anchor=north] at (1.3,-0.02) {time};
+  \items{2.5}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
+  \fill[frm] (0.95,1.0) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (1.09,1.07) {frame};
+  \fill[txt] (1.9,1.0) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.04,1.07) {text};
 \end{scope}
-\draw[arr] (2.35,2.35 -| db.east) -- (4.3,2.35);
+\draw[arr] (2.6,2.6 -| db.east) -- (4.3,2.6);
 
 % ---------------- (2) allocation ----------------
-\node[font=\sffamily\footnotesize] at (12.65,4.08) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)\qquad\text{s.t.}\ \ \sum_i b_i\le B$};
-\begin{scope}[shift={(8.4,1.98)}]
-  \draw[ax] (0,0) -- (3.7,0); \draw[ax] (0,0) -- (0,1.65);
-  \node[axl, anchor=west] at (0.06,1.56) {$v(b)$};
-  \node[axl, anchor=north] at (1.85,-0.02) {$b$};
-  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.43*\x}, {1.5*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.43*\x}, {1.4*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\scriptsize, text=txt!80!black, anchor=south west, inner sep=1pt] at (3.46,1.4) {$v_{\text{text}}$};
-  \node[font=\sffamily\scriptsize, text=frm, anchor=north west, inner sep=1pt] at (3.46,1.25) {$v_{\text{frame}}$};
+\node[font=\sffamily\footnotesize, align=center] at (12.65,4.42) {$\max\limits_{\mathbf b,\mathbf w}\ \sum_i r(f_i\mid q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_m r(u_m\mid q)\,v_{\text{text}}(w_m)$\\[1pt]$\text{s.t.}\ \ \sum_i b_i+\sum_m w_m\le B$};
+\begin{scope}[shift={(8.8,2.3)}]
+  \draw[ax] (0,0) -- (3.3,0); \draw[ax] (0,0) -- (0,1.5);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.75) {value};
+  \node[axl, anchor=north] at (1.65,-0.02) {tokens};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.4*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.3*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\footnotesize, text=txt!75!black, anchor=south west, inner sep=1pt] at (3.1,1.3) {$v_{\text{text}}$};
+  \node[font=\sffamily\footnotesize, text=frm, anchor=north west, inner sep=1pt] at (3.1,1.15) {$v_{\text{frame}}$};
 \end{scope}
-\draw[arr] (12.62,2.75) -- (13.17,2.75);
-\begin{scope}[shift={(13.45,1.98)}]
-  \draw[ax] (0,0) -- (3.75,0); \draw[ax] (0,0) -- (0,1.65);
-  \node[axl, anchor=west] at (0.06,1.56) {$b_i$};
-  \node[axl, anchor=north] at (1.85,-0.02) {frame \#};
-  \items{3.65}{2.0}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+\draw[arr] (12.85,3.0) -- (13.4,3.0);
+\begin{scope}[shift={(13.95,2.3)}]
+  \draw[ax] (0,0) -- (3.25,0); \draw[ax] (0,0) -- (0,1.5);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.75) {tokens};
+  \node[axl, anchor=north] at (1.6,-0.02) {time};
+  \items{3.15}{1.9}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
                    0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
 \end{scope}
 
 % ---------------- (3) inference ----------------
 % the frozen pruner is a container that holds its output: the frames at their token counts and the text events
-\node[model, minimum width=9.9cm, minimum height=0.96cm] (pr) at (7.4,0.65) {};
-\node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.3,0.65) {Token\\pruner};
-\snowflake{($(pr.south east)+(-0.22,0.22)$)}{0.12}
-\prunedframe{4.85,0.65}{frame1.jpg}{10}
-\txtchip{6.1,0.65}
-\prunedframe{7.35,0.65}{frame3.jpg}{22}
-\prunedframe{8.6,0.65}{frame4.jpg}{12}
-\txtchip{9.85,0.65}
-\prunedframe{11.1,0.65}{frame5.jpg}{32}
-\node[model, fill=chipF, minimum width=2.9cm, minimum height=0.96cm] (vlm) at (14.25,0.65) {};
-\nnet{14.25,0.65}{0.95}{0.33}
-\node[font=\sffamily\footnotesize, text=modelT] at (14.25,0.65) {VLM};
-\snowflake{($(vlm.south east)+(-0.22,0.22)$)}{0.12}
-\node[qa, inner sep=5pt] (ans) at (16.55,0.65) {\textbf{A:} Blue};
+\node[model, minimum width=9.9cm, minimum height=1.1cm] (pr) at (7.4,0.75) {};
+\node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.3,0.75) {Token\\pruner};
+\snowflake{($(pr.south east)+(-0.24,0.24)$)}{0.13}
+\prunedframe{4.85,0.75}{frame1.jpg}{10}
+\txtchip{6.1,0.75}
+\prunedframe{7.35,0.75}{frame3.jpg}{22}
+\prunedframe{8.6,0.75}{frame4.jpg}{12}
+\txtchip{9.85,0.75}
+\prunedframe{11.1,0.75}{frame5.jpg}{32}
+\node[model, fill=chipF, minimum width=2.9cm, minimum height=1.2cm] (vlm) at (14.25,0.75) {};
+\nnet{14.25,0.75}{0.78}{0.43}
+\node[font=\sffamily\small, text=modelT] at (14.25,0.75) {VLM};
+\snowflake{($(vlm.south east)+(-0.24,0.24)$)}{0.13}
+\node[qa, inner sep=5pt] (ans) at (16.55,0.75) {\textbf{A:} Blue};
 \draw[arr] (pr.east) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
