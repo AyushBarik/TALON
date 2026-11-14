@@ -104,12 +104,21 @@ that a method calls, summed over every call for that question.
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.} \TODO{} (\cref{fig:budget},
 \cref{tab:main})
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{fig/multiturn_curve.pdf}
-  \caption{\TODO{} multiturn figure (dataset still running)}
-  \label{fig:multiturn}
-\end{figure}
+  \begin{minipage}[t]{\columnwidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/tflops_curve.pdf}
+    \caption{\TODO{} single-turn figure}
+    \label{fig:tflops}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{\columnwidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/multiturn_curve.pdf}
+    \caption{\TODO{} multiturn figure (dataset still running)}
+    \label{fig:multiturn}
+  \end{minipage}
+\end{figure*}
 
 \paragraph{\name achieves the Pareto frontier across multi-turn conversations.} \TODO{} (\cref{fig:multiturn}, \cref{tab:multiturn})
 

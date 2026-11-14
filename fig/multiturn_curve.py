@@ -33,6 +33,8 @@ def main():
     use_style()
     rows = load(DATA)
     fig, ax = figure(width=COLUMN, ratio=0.72)
+    fig.set_layout_engine(None)
+    fig.subplots_adjust(left=0.13, right=0.97, bottom=0.17, top=0.97)  # same plot area as Figures 1, 3 and 4
 
     if rows:
         ax.set_xscale("log")  # compute spans a wide range; log keeps the cheap end readable
