@@ -33,7 +33,8 @@ def load(path):
 
 def main():
     """Broken x-axis: $1-8 for every method, and a narrow panel for QuoTA, whose 128 scorer calls per question put
-    it near $50 (log axes). Cost ($) = OpenRouter API bill (input + output) for all 2,174 MLVU questions."""
+    it near $50 (log axes). Cost = OpenRouter API bill (input + output) on the 2,174 MLVU questions, scaled to 1,000 queries (csv column
+    "tflops" holds these dollars)."""
     import matplotlib.pyplot as plt
     use_style()
     rows = load(DATA)
@@ -41,16 +42,16 @@ def main():
     gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
-    LEFT, RIGHT = (0.9, 8.5), (46.0, 56.0)
+    LEFT, RIGHT = (0.42, 4.0), (21.0, 26.0)
     for a in (ax, ax2):
         a.set_xscale("log")
         a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(*LEFT)
-    ax.set_xticks([1, 2, 4, 8])
-    ax.set_xticklabels(["1", "2", "4", "8"])
+    ax.set_xticks([0.5, 1, 2, 3.5])
+    ax.set_xticklabels(["0.5", "1", "2", "3.5"])
     ax2.set_xlim(*RIGHT)
-    ax2.set_xticks([48, 54])
-    ax2.set_xticklabels(["48", "54"])
+    ax2.set_xticks([22, 25])
+    ax2.set_xticklabels(["22", "25"])
     ax.set_ylim(60, 80)
     ax.set_yticks([60, 64, 68, 72, 76, 80])
     ax2.tick_params(labelleft=False, left=False)
@@ -61,11 +62,9 @@ def main():
     ax.plot((1 - d, 1 + d), (-d * 1.6, d * 1.6), transform=ax.transAxes, **kw)
     r = 5.0 / 1.25
     ax2.plot((-d * r, d * r), (-d * 1.6, d * 1.6), transform=ax2.transAxes, **kw)
-    # As in Table 1: "RAG" is a label only (no line), and each method below it is "+ method".
-    ax.plot([], [], " ", label="RAG")
     for method, (color, marker) in METHODS.items():
         pts = sorted(rows.get(method, []))
-        if method == "RAG" or not pts:
+        if not pts:
             continue
         ours = is_ours(method)
         style = dict(color=color, marker=marker, ms=4 if ours else 3.5, lw=1.6 if ours else 1.0, zorder=3 if ours else 2)
@@ -73,14 +72,14 @@ def main():
         right = [p for p in pts if p[0] >= RIGHT[0]]
         if left:
             x, y, _ = zip(*left)
-            ax.plot(x, y, label="+ " + method, **style)
+            ax.plot(x, y, label=method, **style)
         else:
-            ax.plot([], [], label="+ " + method, **style)
+            ax.plot([], [], label=method, **style)
         if right:
             x, y, _ = zip(*right)
             ax2.plot(x, y, **style)
     ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
-    ax.set_xlabel("Cost ($)")
+    ax.set_xlabel("Cost per 1k queries ($)")
     # one x label for both panels, centred under the whole axis
     l0, l1 = ax.get_position().x0, ax2.get_position().x1
     ax.xaxis.set_label_coords(((l0 + l1) / 2 - l0) / ax.get_position().width, -0.12)
