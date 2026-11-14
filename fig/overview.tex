@@ -6,14 +6,9 @@
 %     water-filling -> token plan b_i;
 % (3) inference: frozen pruner keeps each frame's top-ranked tokens, the frozen VLM answers.
 % Bar heights and the plan are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU (illustration only).
-\definecolor{ink}{HTML}{2E3440}
-\definecolor{arrowgray}{HTML}{6B7280}
-\definecolor{bandN}{HTML}{F1F2F4}
-\definecolor{accA}{HTML}{0072B2}% = orxblue, TALON's color in every figure and table
-\definecolor{frm}{HTML}{4A4F57}% frames: neutral dark grey
-\definecolor{txt}{HTML}{E69F00}% transcript: orxorange, the complement of blue
+\input{fig/overview_palette}% every color role: ink, arrowgray, bandA/B/C, edgeB, stepA/B/C, modelA/C/D/T, flake, chipF/D, frm, txt
 \newcommand{\snowflake}[2]{%
-  \begin{scope}[shift={#1}, line width=0.55pt, draw=black!45, line cap=round]
+  \begin{scope}[shift={#1}, line width=0.55pt, draw=flake, line cap=round]
     \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:#2);
       \draw (\a:0.55*#2) -- ++(\a+45:0.32*#2); \draw (\a:0.55*#2) -- ++(\a-45:0.32*#2);}
   \end{scope}}
@@ -32,8 +27,8 @@
         \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
         \fill[white, opacity=0.85] (\cx*0.1375,\cy*0.1547) rectangle ++(0.1375,0.1547);
       \fi}
-    \draw[black!30, line width=0.15pt, xstep=0.1375, ystep=0.1547] (0,0) grid (1.1,0.619);
-    \draw[black!45, line width=0.3pt] (0,0) rectangle (1.1,0.619);
+    \draw[ink!30, line width=0.15pt, xstep=0.1375, ystep=0.1547] (0,0) grid (1.1,0.619);
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.1,0.619);
   \end{scope}}
 \newcommand{\txtchip}[1]{% transcript event: a short text chip
   \fill[txt!18, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
@@ -45,34 +40,34 @@
   \node[font=\sffamily\small\bfseries, text=#5, anchor=west, inner sep=0pt] at (#1+0.5,#2) {#4};}
 
 \begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.6pt,
-  card/.style={fill=white, draw=black!18, line width=0.5pt, rounded corners=4pt, align=center, inner sep=3.5pt},
+  card/.style={fill=white, draw=ink!18, line width=0.5pt, rounded corners=4pt, align=center, inner sep=3.5pt},
   arr/.style={-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
-  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!55, line width=0.5pt},
-  axl/.style={font=\sffamily\scriptsize, text=black!70},
-  desc/.style={font=\sffamily\scriptsize, text=black!65, anchor=north west, inner sep=0pt, align=left},
-  elbl/.style={font=\sffamily\scriptsize, text=black!75, inner sep=1.5pt},
-  model/.style={fill=black!7, draw=black!38, line width=0.5pt, rounded corners=3pt, align=center,
+  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=ink!55, line width=0.5pt},
+  axl/.style={font=\sffamily\scriptsize, text=ink!70},
+  desc/.style={font=\sffamily\scriptsize, text=ink!65, anchor=north west, inner sep=0pt, align=left},
+  elbl/.style={font=\sffamily\scriptsize, text=ink!75, inner sep=1.5pt},
+  model/.style={fill=modelC, draw=modelD, text=modelT, line width=0.5pt, rounded corners=3pt, align=center,
     minimum height=0.62cm, inner xsep=5pt, font=\sffamily\footnotesize},
-  qa/.style={fill=white, draw=black!30, line width=0.5pt, rounded corners=3pt, align=left,
+  qa/.style={fill=chipF, draw=chipD, line width=0.5pt, rounded corners=3pt, align=left,
     inner sep=3pt, font=\sffamily\scriptsize}]
 
 % ---------------- bands ----------------
-\fill[rounded corners=6pt, bandN] (0,0) rectangle (4.65,3.85);
-\fill[rounded corners=6pt, accA!8] (4.8,0) rectangle (11.15,3.85);
-\draw[rounded corners=6pt, accA!55, line width=0.6pt] (4.8,0) rectangle (11.15,3.85);
-\fill[rounded corners=6pt, bandN] (11.3,0) rectangle (17.4,3.85);
-\stage{0.12}{3.55}{1}{Retrieval}{black!75}
-\stage{4.92}{3.55}{2}{Token Scheduler}{accA!85!black}
-\stage{11.42}{3.55}{3}{Inference}{black!75}
+\fill[rounded corners=6pt, bandA] (0,0) rectangle (4.65,3.85);
+\fill[rounded corners=6pt, bandB] (4.8,0) rectangle (11.15,3.85);
+\draw[rounded corners=6pt, edgeB, line width=0.6pt] (4.8,0) rectangle (11.15,3.85);
+\fill[rounded corners=6pt, bandC] (11.3,0) rectangle (17.4,3.85);
+\stage{0.12}{3.55}{1}{Retrieval}{stepA}
+\stage{4.92}{3.55}{2}{Token Scheduler}{stepB}
+\stage{11.42}{3.55}{3}{Inference}{stepC}
 
 % ---------------- (1) retrieval ----------------
 % film strip with a subtitle strip beneath it
-\fill[black!88, rounded corners=1pt] (0.2,2.47) rectangle (4.45,3.2);
+\fill[ink!88, rounded corners=1pt] (0.2,2.47) rectangle (4.45,3.2);
 \foreach \x in {0.27,0.47,...,4.35} {\fill[white] (\x,3.09) rectangle ++(0.1,0.06); \fill[white] (\x,2.52) rectangle ++(0.1,0.06);}
 \foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.635+(\k-1)*0.845},2.835) {\includegraphics[width=0.8cm]{fig/frames/frame\k.jpg}};}
 \fill[txt!18, rounded corners=1pt] (0.2,2.18) rectangle (4.45,2.4);
 \foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!85!black, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
-\node[model] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
+\node[model, fill=modelA] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
 \snowflake{($(ret.north east)+(-0.14,-0.14)$)}{0.075}
 \node[qa] (q) at (3.4,1.72) {\textbf{Q:} Color of\\the last car?};
 \draw[arr] (1.2,2.15) -- (ret.north);
