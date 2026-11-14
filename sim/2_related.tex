@@ -35,6 +35,5 @@ transcripts, and maintains it across the turns of a conversation.
 A complementary line of work reduces the tokens of a given input, by pruning~\cite{chen2024fastv,yang2024visionzip} or
 merging~\cite{bolya2023tome} visual tokens, by compressing video tokens across
 time~\cite{shen2024longvu,tao2024dycoke,wu2026marc}, or by evicting or retrieving entries of the KV
-cache~\cite{zhang2023h2o,xiao2024streamingllm,rekv2025}. These methods, however, compress each frame or cache
-independently. \name uses a pruner only to realize a token count, decides the counts jointly, and reuses cached
-tokens instead of evicting them.
+cache~\cite{zhang2023h2o,xiao2024streamingllm,rekv2025}. These methods compress each frame or cache
+independently, whereas \name decides the token counts jointly and reuses cached tokens.

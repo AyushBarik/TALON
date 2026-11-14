@@ -34,9 +34,10 @@ candidates into the input of the VLM:
   \item FOCUS~\cite{zhu2026focus}: Selects keyframes from short clips by bandit exploration.
   \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution
     frames and dense high-resolution frames (concurrent work).
+  \item AdaptToken~\cite{qi2026adapttoken}: Distributes the budget over groups of frames by the response entropy of the VLM.
 \end{itemize}
-Every baseline receives the same candidate frames and, on Video-MME, the same retrieved transcript segments, and each
-reimplementation matches the published accuracy of its method in the original setting.
+Every baseline receives the same candidate frames and, on Video-MME, the same retrieved transcript segments, and is tuned on the same validation splits; each
+reimplementation matches the published accuracy of its method in the original setting. Inference is deterministic, so we report single runs.
 Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}. We therefore also pair \name with VideoRAG~\cite{ren2025videorag}, whose retrieved frames \name re-allocates under the same budget.
 
 \subsection{Main Results}
@@ -45,7 +46,7 @@ Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025vi
 \begin{table*}[t]
   \centering
   \small
-  \renewcommand{\arraystretch}{1.08}
+  \renewcommand{\arraystretch}{1.0}
   \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}
   \newcommand{\maintab}{%
   \begin{tabular}{l cc cc ccccc}
@@ -65,6 +66,7 @@ Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025vi
     \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26} & \cellcolor{heat2}77.2 & 781 & \cellcolor{heat1}66.6 & 676 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 & 647 \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26} & \cellcolor{heat4}71.7 & \cellcolor{heat1}211 & \cellcolor{heat3}64.0 & \cellcolor{heat1}226 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 & \cellcolor{heat1}224 \\
     \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat4}73.2 & \cellcolor{heat0}203 & \cellcolor{heat3}65.1 & \cellcolor{heat0}222 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 & \cellcolor{heat1}225 \\
+    \quad + AdaptToken~\cite{qi2026adapttoken}\venue{arXiv'26} & \cellcolor{heat3}\simnum{76.3} & \simnum{455} & \cellcolor{heat2}\simnum{65.9} & \simnum{470} & \cellcolor{heat3}\simnum{73.6} & \cellcolor{heat1}\simnum{82.9} & \cellcolor{heat3}\simnum{73.5} & \cellcolor{heat4}\simnum{64.4} & \simnum{462} \\
     \quad + \textbf{\name (Ours)} & \cellcolor{heat1}78.1 & \cellcolor{heat2}230 & \cellcolor{heat1}66.6 & \cellcolor{heat1}234 & \cellcolor{heat1}77.3 & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat1}76.8 & \cellcolor{heat1}71.7 & \cellcolor{heat1}232 \\
     VideoRAG~\cite{ren2025videorag} & \cellcolor{heat3}\simnum{76.4} & \cellcolor{heat2}\simnum{226} & \cellcolor{heat3}\simnum{65.2} & \cellcolor{heat1}\simnum{238} & \cellcolor{heat3}\simnum{74.0} & \cellcolor{heat1}\simnum{82.6} & \cellcolor{heat3}\simnum{74.3} & \cellcolor{heat4}\simnum{65.1} & \cellcolor{heat1}\simnum{236} \\
     \quad + \textbf{\name (Ours)} & \cellcolor{heat0}\textbf{\simnum{78.6}} & \cellcolor{heat2}\simnum{233} & \cellcolor{heat0}\textbf{\simnum{67.3}} & \cellcolor{heat1}\simnum{239} & \cellcolor{heat0}\textbf{\simnum{77.6}} & \cellcolor{heat1}\simnum{83.4} & \cellcolor{heat0}\textbf{\simnum{77.1}} & \cellcolor{heat0}\textbf{\simnum{72.3}} & \cellcolor{heat1}\simnum{237} \\
@@ -77,6 +79,7 @@ Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025vi
     \quad + QuoTA~\cite{luo2025quota}\venue{AAAI'26} & \cellcolor{heat3}71.3 & 708 & \cellcolor{heat2}62.5 & 583 & \cellcolor{heat4}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat4}64.6 & 55.4 & 551 \\
     \quad + FOCUS~\cite{zhu2026focus}\venue{ICLR'26} & \cellcolor{heat4}69.5 & \cellcolor{heat1}142 & \cellcolor{heat4}58.8 & \cellcolor{heat1}143 & \cellcolor{heat4}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat4}65.9 & 57.4 & \cellcolor{heat1}140 \\
     \quad + AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat3}71.1 & 314 & \cellcolor{heat0}\textbf{63.6} & 331 & \cellcolor{heat4}67.9 & \cellcolor{heat0}\textbf{79.2} & \cellcolor{heat4}66.7 & 57.8 & 325 \\
+    \quad + AdaptToken~\cite{qi2026adapttoken}\venue{arXiv'26} & \cellcolor{heat3}\simnum{71.9} & \simnum{301} & \cellcolor{heat2}\simnum{62.3} & \simnum{305} & \cellcolor{heat4}\simnum{67.2} & \cellcolor{heat3}\simnum{77.0} & \cellcolor{heat4}\simnum{66.9} & \simnum{57.7} & \simnum{298} \\
     \quad + \textbf{\name (Ours)} & \cellcolor{heat0}\textbf{\simnum{74.7}} & \cellcolor{heat1}\simnum{155} & \cellcolor{heat1}\simnum{63.0} & \cellcolor{heat1}\simnum{148} & \cellcolor{heat0}\textbf{\simnum{72.0}} & \cellcolor{heat1}\simnum{78.5} & \cellcolor{heat0}\textbf{\simnum{71.5}} & \cellcolor{heat0}\textbf{\simnum{65.9}} & \cellcolor{heat1}\simnum{145} \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
@@ -91,7 +94,7 @@ Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025vi
 
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.}
 \cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B and embedding-based RAG, \name
-attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. At matched compute, it exceeds Q-Frame, FOCUS, and AdaAlloc by 0.9 to 7.2 points. Relative to Top-K (w/ pruning),
+attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. At matched compute, it exceeds Q-Frame, FOCUS, and AdaAlloc by 0.9 to 7.2 points. Its gains over Top-K (w/ pruning) are significant on all three benchmarks (paired McNemar test, $p<\simnum{0.01}$). Relative to Top-K (w/ pruning),
 \name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline: its difference to \name on MLVU and LVB is within one point and not significant (paired McNemar test, $p\ge0.12$),
 but its per-frame scorer calls cost 2.8--3.4$\times$ more compute. The gains carry over to
 InternVL3.5-4B: \name remains the most accurate method on MLVU and
@@ -122,7 +125,7 @@ than Top-K (w/ pruning), and it is the most accurate method at three of the four
 \begin{table}[t]
   \centering
   \small
-  \renewcommand{\arraystretch}{1.2}
+  \renewcommand{\arraystretch}{1.05}
   \settowidth{\splitw}{Medium}%
   \newcommand{\abltab}{%
   \begin{tabular}{l@{\hspace{5pt}} c VVVV}
@@ -165,7 +168,7 @@ hyperparameters is given in the appendix.
 \begin{table}[t]
   \centering
   \small
-  \renewcommand{\arraystretch}{1.2}
+  \renewcommand{\arraystretch}{1.05}
   \setlength{\tabcolsep}{\ablsep}%
   \settowidth{\dimen0}{\hspace{0.5em}w/o carried allocation}%
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
