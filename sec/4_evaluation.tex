@@ -7,7 +7,7 @@ all baselines in PyTorch, and run all experiments on two NVIDIA A100 GPUs. Unles
 from the same candidate frames, sampled from each video at 1 fps and kept at their native resolution, and receives the
 same budget of 12,288 tokens per question, the default video budget of Qwen3-VL. \name scores the relevance of each
 frame with SigLIP~2~\cite{siglip2} and of each transcript segment with BGE~\cite{bge}, using the question together with
-its answer options as the query. Further implementation details are provided in the appendix.
+its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, and keeps it fixed during evaluation. Further implementation details are provided in the appendix.
 
 \subsection{Experimental Setup}
 \label{sec:exp-setup}
@@ -153,7 +153,7 @@ its answer options as the query. Further implementation details are provided in 
   \label{tab:ablation}
 \end{table}
 
-\paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation}) The vision encoder adds 48 TFLOPs per question. A sensitivity analysis of the hyperparameters is provided in the appendix.
+\paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation}) The vision encoder runs once per video, at 48 TFLOPs, and its output is reused across questions and turns. A sensitivity analysis of the hyperparameters is provided in the appendix.
 
 \begin{table}[t]
   \centering
