@@ -45,7 +45,7 @@ def main():
     turns = [r for r in json.load(open(os.path.join(HERE, "overlap_turns.json"))) if r["turn"] >= 2]
     color = METHODS["TALON (Ours)"][0]
     cdf(bx, [100 * r["reused"] / r["need"] for r in turns], color=color, lw=1.0)
-    for a, xl, yl in ((ax, "Candidate frames shown (%)", "CDF of queries (%)"), (bx, "Tokens reused from previous turns (%)", "CDF of turns (%)")):
+    for a, xl, yl in ((ax, "Candidate frames\nshown (%)", "CDF of queries (%)"), (bx, "Tokens reused from\nprevious turns (%)", "CDF of turns (%)")):
         a.set_xlim(0, 100); a.set_ylim(0, 100); a.set_xticks(TICKS); a.set_yticks(TICKS)
         a.set_xlabel(xl); a.set_ylabel(yl, labelpad=1)
     order = [m for m in METHODS if m in handles]
