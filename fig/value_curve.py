@@ -41,7 +41,7 @@ def main():
     import matplotlib.pyplot as plt
     # Three quarters of a column wide (included at 0.75\linewidth), so it prints at this size.
     fig, ax = plt.subplots(figsize=(COLUMN * 0.75, COLUMN * 0.75 * 0.62))
-    fig.subplots_adjust(left=0.16, right=0.97, bottom=0.22, top=0.96)
+    fig.subplots_adjust(left=0.16, right=0.94, bottom=0.27, top=0.96)
     grid = np.exp(np.linspace(np.log(3.5), np.log(1000), 300))
     for name, (f, p0, color, ls) in FAMILIES.items():
         p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
