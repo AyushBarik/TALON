@@ -55,7 +55,7 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
   v(b)=\sigma\big(\log b-\log\tau\big)=\frac{b}{b+\tau} ,
   \label{eq:curve}
 \end{equation} \ayush{look into cdf func}
-fitting $\tau$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\cref{fig:value}), and updating it online from feedback on answered queries (e.g., accuracy, user feedback). Weighting the value of each frame by its relevance \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} gives the token-level objective
+fitting $\tau$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\cref{fig:value}), and updating it online from feedback on answered queries (e.g., accuracy, user feedback). Accuracy is modeled as an affine function of $v$; the allocation is invariant to the offset and scale of this map, so only $\tau$ matters. Weighting the value of each frame by its relevance \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
@@ -102,9 +102,9 @@ where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. T
   b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
   \label{eq:percost}
 \end{equation}
-where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the price at which the allocation spends $B$. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the fixed relevances even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
+where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the lowest price at which the allocation stays within $B$; tokens that remain unspent at this price are left unused. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the tokens it spends even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
 
-\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance} exactly. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations, which is thus no worse than the first on the full objective. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
@@ -138,13 +138,13 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
 
 
 \paragraph{Optimality over Prior Allocation Rules.}
-Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance} exactly, and thus achieves the highest objective among all allocations with the same token spend, including both rules. Moreover, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is strictly suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
+Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance}, and thus achieves the highest objective among all allocations that spend no more tokens. Moreover, over real-valued token counts, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
 
 \begin{proposition}
 \label{prop:proportional}
 % Mild assumptions, stated in the supplementary proof: N >= 3 frames, theta_1 > 0, real-valued token counts,
 % and 0 < r_i B < b_max for all i (no frame at zero or full tokens).
-Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then, under mild assumptions, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
+Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then, over real-valued token counts and under mild assumptions, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
 \end{proposition}
 
 \fan{``mind assumptions'' makes it flat.}
