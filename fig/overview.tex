@@ -50,7 +50,11 @@
   ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!55, line width=0.5pt},
   axl/.style={font=\sffamily\scriptsize, text=black!70},
   desc/.style={font=\sffamily\scriptsize, text=black!65, anchor=north west, inner sep=0pt, align=left},
-  elbl/.style={font=\sffamily\scriptsize, text=black!75, inner sep=1.5pt}]
+  elbl/.style={font=\sffamily\scriptsize, text=black!75, inner sep=1.5pt},
+  model/.style={fill=black!7, draw=black!38, line width=0.5pt, rounded corners=3pt, align=center,
+    minimum height=0.62cm, inner xsep=5pt, font=\sffamily\footnotesize},
+  bubble/.style={rectangle callout, fill=white, draw=black!30, line width=0.5pt, align=center,
+    inner sep=3pt, font=\sffamily\scriptsize\itshape}]
 
 % ---------------- bands ----------------
 \fill[rounded corners=6pt, bandN] (0,0) rectangle (4.65,4.1);
@@ -71,9 +75,10 @@
 \foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.635+(\k-1)*0.845},2.835) {\includegraphics[width=0.8cm]{fig/frames/frame\k.jpg}};}
 \fill[txt!14, rounded corners=1pt] (0.2,2.18) rectangle (4.45,2.4);
 \foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!70, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
-\node[card] (ret) at (1.45,1.72) {retriever};
-\node[card] (q) at (3.55,1.72) {query $q$};
-\draw[arr] (1.45,2.15) -- (ret.north);
+\node[model] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
+\snowflake{($(ret.north east)+(-0.14,-0.14)$)}{0.075}
+\node[bubble, callout relative pointer={(0.22,-0.36)}] (q) at (3.3,1.76) {Color of the\\last car?};
+\draw[arr] (1.2,2.15) -- (ret.north);
 \draw[arr] (q.west) -- (ret.east);
 % relevance over items in time order
 \begin{scope}[shift={(0.5,0.42)}]
@@ -83,7 +88,7 @@
   \items{3.8}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
 \end{scope}
-\draw[arr] (ret.south) -- (1.45,1.3);
+\draw[arr] (ret.south) -- (1.2,1.3);
 
 % ---------------- (2) token scheduler ----------------
 \node[font=\sffamily\scriptsize] at (7.975,2.98) {$\max\limits_{\mathbf b}\ \sum_i r_iv_i(b_i)-\eta\sum_{i\neq j}s_{ij}\,v_i(b_i)\,v_j(b_j)$};
@@ -111,21 +116,21 @@
 \draw[arr] (4.5,0.75) -- node[elbl, above] {$r_i$} (5.15,0.75);
 
 % ---------------- (3) inference ----------------
-\node[card, minimum width=1.6cm, minimum height=0.8cm] (pr) at (12.4,2.45) {Token\\pruner\hspace{0.18cm}};
-\snowflake{(12.98,2.67)}{0.09}
-\draw[arr] (11.0,2.45) -- node[elbl, above] {$b_i$} (pr.west);
-% frames at their token counts (top-ranked tokens kept), in time order
-\prunedframe{14.05,2.45}{frame3.jpg}{12}
-\txtchip{15.2,2.45}
-\prunedframe{16.35,2.45}{frame5.jpg}{30}
-\draw[arr] (pr.east) -- (13.45,2.45);
-\node[axl] at (15.2,2.98) {frames at $b_i$ tokens};
-% frozen VLM answers the query
-\node[card] (q2) at (12.4,1.0) {query $q$};
-\node[card, minimum width=1.6cm, minimum height=0.75cm] (vlm) at (14.6,1.0) {VLM\hspace{0.22cm}};
-\snowflake{(15.03,1.0)}{0.08}
-\node[card, minimum width=0.55cm, minimum height=0.65cm, font=\sffamily\small] (ans) at (16.55,1.0) {$\hat y$};
-\draw[arr] (15.2,2.1) -- (14.85,1.4);
+% top row: frozen pruner -> items at their token counts; bottom row: query -> frozen VLM -> answer.
+% Items sit directly above the VLM, so every arrow into it is vertical.
+\node[model, inner xsep=9pt] (pr) at (12.2,2.5) {Token\\pruner\hspace{0.12cm}};
+\snowflake{($(pr.north east)+(-0.14,-0.14)$)}{0.075}
+\draw[arr] (11.0,2.5) -- node[elbl, above] {$b_i$} (pr.west);
+\prunedframe{13.7,2.5}{frame3.jpg}{12}
+\txtchip{14.75,2.5}
+\prunedframe{15.8,2.5}{frame5.jpg}{30}
+\draw[arr] (pr.east) -- (13.1,2.5);
+\node[axl] at (14.75,3.03) {items at $b_i$ tokens};
+\node[model, minimum width=2.9cm] (vlm) at (14.65,1.1) {VLM};
+\snowflake{($(vlm.north east)+(-0.14,-0.14)$)}{0.075}
+\foreach \x in {13.7,14.75,15.8} {\draw[arr] (\x,2.17) -- (\x,1.41);}
+\node[bubble, callout relative pointer={(-0.22,-0.36)}] (q2) at (12.3,1.12) {Color of the\\last car?};
 \draw[arr] (q2.east) -- (vlm.west);
+\node[bubble, callout relative pointer={(0.18,-0.36)}] (ans) at (16.75,1.12) {Blue.};
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
