@@ -1,0 +1,70 @@
+% Overview figure (figure*, \textwidth = 17.46 cm), version 3, built from the shared OpenResearch TikZ scaffold
+% (relative positioning, one accent = the Token Scheduler, one left-to-right flow, quantities on the edges).
+% Per turn t: retriever relevance r_i -> Token Scheduler (water-filling at one price lambda, token value v(b) fitted
+% offline, attention a_i of the VLM on cached frames) -> token pruner prefills only the missing tokens
+% p_i = max(0, b_i - c_i) into the KV cache -> VLM. Thumbnails are illustrative (Video-MME video bepwr1-CNRU).
+% Earlier versions: fig/overview_v1.tex, fig/overview_v2.tex.
+\tikzset{
+  ovw/.style={font=\sffamily\footnotesize, >={Stealth[round, length=4pt, width=3pt]}, line width=0.5pt,
+              node distance=5mm and 9mm},
+  block/.style={draw=black!55, fill=white, rounded corners=1pt, minimum height=9mm, minimum width=17mm,
+                inner sep=3pt, align=center},
+  ours/.style={block, draw=orxblue, fill=orxblue!7, line width=0.8pt, minimum width=31mm},
+  muted/.style={block, draw=black!30, fill=black!3, text=black!65},
+  data/.style={draw=black!45, fill=black!4, trapezium, trapezium left angle=72, trapezium right angle=108,
+               trapezium stretches body, minimum height=8mm, inner sep=3pt, align=center},
+  flow/.style={->, draw=black!65},
+  backflow/.style={->, draw=orxorange, dashed},
+  edgelbl/.style={font=\sffamily\scriptsize, text=black!65, inner sep=1.5pt, fill=white},
+  stage/.style={draw=black!25, dashed, rounded corners=2pt, inner sep=4pt},
+  stagelbl/.style={font=\sffamily\scriptsize\itshape, text=black!55},
+}
+% \tokthumb{image}{kept of 32}: one frame as an 8x4 token grid with its top tokens kept (centre first)
+\newcommand{\tokthumb}[2]{%
+  \begin{tikzpicture}[x=0.11cm, y=0.12cm]
+    \node[inner sep=0pt, anchor=south west] at (0,0) {\includegraphics[width=0.88cm, height=0.48cm]{fig/frames/#1}};
+    \foreach \c [count=\k from 0] in {10,11,18,19,9,12,17,20,2,3,26,27,1,4,25,28,8,13,16,21,0,5,24,29,6,14,22,30,7,15,23,31} {
+      \ifnum\k<#2\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[white, opacity=0.92] (\cx,\cy) rectangle ++(1,1);
+      \fi}
+    \draw[black!40, line width=0.15pt, xstep=0.11cm, ystep=0.12cm] (0,0) grid (8,4);
+    \draw[black!50, line width=0.3pt] (0,0) rectangle (8,4);
+  \end{tikzpicture}}
+
+\begin{tikzpicture}[ovw]
+  % ---- main flow (one turn t) ----
+  \node[data] (vid) {video frames\\$f_1,\dots,f_N$};
+  \node[muted, right=of vid] (ret) {Retriever\\(SigLIP)};
+  \node[ours, right=of ret] (sched) {\textbf{Token Scheduler}\\water-filling at one price $\lambda$};
+  \node[block, right=of sched] (prune) {Token pruner\\top-$b_i$ tokens};
+  \node[block, right=of prune] (kv) {KV cache\\$c_i$ tokens / frame};
+  \node[block, right=of kv, minimum width=12mm] (vlm) {VLM};
+  \node[data, right=7mm of vlm, minimum width=9mm] (ans) {$\hat y_t$};
+
+  \draw[flow] (vid) -- (ret);
+  \draw[flow] (ret) -- node[edgelbl, above] {$r_i$} (sched);
+  \draw[flow] (sched) -- node[edgelbl, above] {$b_i$} (prune);
+  \draw[flow] (prune) -- node[edgelbl, above, align=center] {prefill\\$p_i$} (kv);
+  \draw[flow] (kv) -- node[edgelbl, above] {$+\,q_t$} (vlm);
+  \draw[flow] (vlm) -- (ans);
+
+  % ---- inputs from above ----
+  \node[data, above=6mm of ret] (q) {question $q_t$};
+  \draw[flow] (q) -- (ret);
+  \node[muted, above=6mm of sched, minimum height=7mm] (val) {token value $v(b)$, fitted offline};
+  \draw[flow, dashed] (val) -- (sched);
+
+  % ---- what the allocation looks like: each frame at its own resolution ----
+  \node[above=5mm of $(prune.north)!0.5!(kv.north)$, inner sep=0pt] (thumbs) {\tokthumb{frame2.jpg}{30}\hspace{1.2mm}\tokthumb{frame3.jpg}{14}\hspace{1.2mm}\tokthumb{frame5.jpg}{5}};
+  \node[stagelbl, above=0.5mm of thumbs] {each frame at its own token count $b_i$};
+
+  % ---- attention of the VLM back to the scheduler (cached frames) ----
+  \draw[backflow] (vlm.south) -- ++(0,-11mm) -| node[edgelbl, pos=0.25, below] {attention $a_i$ of the VLM on the cached frames} (sched.south);
+
+  % ---- stage: what persists across turns ----
+  \begin{scope}[on background layer]
+    \node[stage, fit=(prune)(kv)] (keep) {};
+  \end{scope}
+  \node[stagelbl, below=0.5mm of keep] {cache only grows: $c_i\leftarrow\max(c_i,b_i)$, $\textstyle\sum_t p_i^{(t)}\le b_{\max}$};
+\end{tikzpicture}

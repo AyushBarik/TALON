@@ -1,70 +1,98 @@
-% Overview figure (figure*, \textwidth = 17.46 cm), version 3, built from the shared OpenResearch TikZ scaffold
-% (relative positioning, one accent = the Token Scheduler, one left-to-right flow, quantities on the edges).
-% Per turn t: retriever relevance r_i -> Token Scheduler (water-filling at one price lambda, token value v(b) fitted
-% offline, attention a_i of the VLM on cached frames) -> token pruner prefills only the missing tokens
-% p_i = max(0, b_i - c_i) into the KV cache -> VLM. Thumbnails are illustrative (Video-MME video bepwr1-CNRU).
-% Earlier versions: fig/overview_v1.tex, fig/overview_v2.tex.
-\tikzset{
-  ovw/.style={font=\sffamily\footnotesize, >={Stealth[round, length=4pt, width=3pt]}, line width=0.5pt,
-              node distance=5mm and 9mm},
-  block/.style={draw=black!55, fill=white, rounded corners=1pt, minimum height=9mm, minimum width=17mm,
-                inner sep=3pt, align=center},
-  ours/.style={block, draw=orxblue, fill=orxblue!7, line width=0.8pt, minimum width=31mm},
-  muted/.style={block, draw=black!30, fill=black!3, text=black!65},
-  data/.style={draw=black!45, fill=black!4, trapezium, trapezium left angle=72, trapezium right angle=108,
-               trapezium stretches body, minimum height=8mm, inner sep=3pt, align=center},
-  flow/.style={->, draw=black!65},
-  backflow/.style={->, draw=orxorange, dashed},
-  edgelbl/.style={font=\sffamily\scriptsize, text=black!65, inner sep=1.5pt, fill=white},
-  stage/.style={draw=black!25, dashed, rounded corners=2pt, inner sep=4pt},
-  stagelbl/.style={font=\sffamily\scriptsize\itshape, text=black!55},
-}
-% \tokthumb{image}{kept of 32}: one frame as an 8x4 token grid with its top tokens kept (centre first)
-\newcommand{\tokthumb}[2]{%
-  \begin{tikzpicture}[x=0.11cm, y=0.12cm]
-    \node[inner sep=0pt, anchor=south west] at (0,0) {\includegraphics[width=0.88cm, height=0.48cm]{fig/frames/#1}};
-    \foreach \c [count=\k from 0] in {10,11,18,19,9,12,17,20,2,3,26,27,1,4,25,28,8,13,16,21,0,5,24,29,6,14,22,30,7,15,23,31} {
-      \ifnum\k<#2\relax\else
-        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
-        \fill[white, opacity=0.92] (\cx,\cy) rectangle ++(1,1);
-      \fi}
-    \draw[black!40, line width=0.15pt, xstep=0.11cm, ystep=0.12cm] (0,0) grid (8,4);
-    \draw[black!50, line width=0.3pt] (0,0) rectangle (8,4);
-  \end{tikzpicture}}
+% Overview figure (figure*, \textwidth = 17.46 cm), version 4, modelled on CVPR 2025 overview figures (AKS, DyCoke,
+% VisionZip, BOLT) and serving-scheduler timelines (Sarathi-Serve): real frames in, the VLM as a bottom-to-top stack of
+% soft blocks (frozen parts marked), the contribution as the one accented block, its mechanism in a zoom-in panel, and
+% multi-turn prefill as a per-method timeline. Relevance values, token counts and bar lengths are illustrative, not
+% measured. Frames: Video-MME video bepwr1-CNRU (illustration only). Earlier versions: fig/overview_v1..v3.tex.
+\definecolor{ink}{HTML}{2E3440}
+\definecolor{acc}{HTML}{0072B2}      % TALON / Token Scheduler (same blue as TALON in Fig. 1)
+\definecolor{vlmbg}{HTML}{DDEFE3}    % frozen VLM blocks
+\definecolor{encbg}{HTML}{FBE3D2}
+\definecolor{retbg}{HTML}{ECEEF2}
+\definecolor{tokF}{HTML}{0072B2}     % frame tokens
+\definecolor{tokT}{HTML}{CC79A7}     % transcript tokens
+\definecolor{tokQ}{HTML}{E69F00}     % question tokens
+\definecolor{reld}{HTML}{D55E00}     % relevance dots
+\newcommand{\frozen}{\tikz[baseline=-0.6ex]{\begin{scope}[line width=0.5pt, draw=orxsky!80!black, line cap=round]
+  \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:0.11); \draw (\a:0.06) -- ++(\a+45:0.035); \draw (\a:0.06) -- ++(\a-45:0.035);}\end{scope}}}
+\newcommand{\tok}[2]{\fill[#1, rounded corners=0.4pt] (#2) rectangle ++(0.17,0.17);}
+\newcommand{\film}[4]{% \film{x0}{y0}{x1}{y1}: film strip background with sprocket holes
+  \fill[black!85, rounded corners=1pt] (#1,#2) rectangle (#3,#4);
+  \pgfmathsetmacro{\fa}{#1+0.08}\pgfmathsetmacro{\fb}{#1+0.28}\pgfmathsetmacro{\fc}{#3-0.1}%
+  \pgfmathsetmacro{\ft}{#4-0.1}\pgfmathsetmacro{\fl}{#2+0.04}%
+  \foreach \x in {\fa, \fb, ..., \fc} {\fill[white] (\x,\ft) rectangle ++(0.1,0.06); \fill[white] (\x,\fl) rectangle ++(0.1,0.06);}}
 
-\begin{tikzpicture}[ovw]
-  % ---- main flow (one turn t) ----
-  \node[data] (vid) {video frames\\$f_1,\dots,f_N$};
-  \node[muted, right=of vid] (ret) {Retriever\\(SigLIP)};
-  \node[ours, right=of ret] (sched) {\textbf{Token Scheduler}\\water-filling at one price $\lambda$};
-  \node[block, right=of sched] (prune) {Token pruner\\top-$b_i$ tokens};
-  \node[block, right=of prune] (kv) {KV cache\\$c_i$ tokens / frame};
-  \node[block, right=of kv, minimum width=12mm] (vlm) {VLM};
-  \node[data, right=7mm of vlm, minimum width=9mm] (ans) {$\hat y_t$};
+\begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.5pt,
+  up/.style={-{Stealth[length=4.5pt, width=4pt]}, draw=black!45, line width=1.6pt},
+  thin/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!55, line width=0.6pt},
+  blk/.style={rounded corners=3pt, align=center, inner sep=2pt},
+  note/.style={font=\sffamily\scriptsize, text=black!65, inner sep=1pt},
+  bubble/.style={draw=black!35, fill=white, rounded corners=5pt, align=left, inner sep=3pt, font=\sffamily\scriptsize}]
 
-  \draw[flow] (vid) -- (ret);
-  \draw[flow] (ret) -- node[edgelbl, above] {$r_i$} (sched);
-  \draw[flow] (sched) -- node[edgelbl, above] {$b_i$} (prune);
-  \draw[flow] (prune) -- node[edgelbl, above, align=center] {prefill\\$p_i$} (kv);
-  \draw[flow] (kv) -- node[edgelbl, above] {$+\,q_t$} (vlm);
-  \draw[flow] (vlm) -- (ans);
+% ---------------- left: the framework, bottom to top ----------------
+% video
+\film{0.2}{0}{8.75}{0.98}
+\foreach \k in {1,...,6} {\node[inner sep=0pt] at ({0.95+(\k-1)*1.42},0.49) {\includegraphics[width=1.32cm]{fig/frames/frame\k.jpg}};}
+\node[bubble, anchor=west, text width=1.75cm] (q) at (8.95,0.49) {\textbf{Q:} 0--60\,mph time of the red Roadster?};
+% retriever + relevance over time
+\node[blk, fill=retbg, minimum width=1.75cm, minimum height=0.5cm] (ret) at (9.83,1.5) {Retriever};
+\draw[thin] (q.north) -- (ret.south);
+\begin{scope}[shift={(0.25,1.15)}]
+  \draw[black!50, line width=0.4pt] (0,0) -- (8.5,0);
+  \node[note, anchor=south west] at (0,0.42) {relevance $r_i$ over time};
+  \foreach \x in {0.15,0.4,...,8.4} {
+    \pgfmathsetmacro{\y}{0.05+0.6*exp(-((\x-7.8)/0.45)^2)+0.32*exp(-((\x-2.12)/0.42)^2)+0.17*exp(-((\x-6.38)/0.45)^2)+0.1*exp(-((\x-0.7)/0.45)^2)}
+    \fill[reld] (\x,\y) circle (1.15pt);}
+\end{scope}
+\draw[thin] (ret.west) -- (8.85,1.5);
+% token scheduler (the contribution)
+\node[blk, fill=acc!12, draw=acc, line width=0.9pt, minimum width=8.55cm, minimum height=0.62cm] (sch) at (4.475,2.48)
+  {\textbf{\textcolor{acc}{Token Scheduler}}\ \ \scriptsize water-filling: each frame and transcript event gets $b_i$ tokens at one price $\lambda$};
 
-  % ---- inputs from above ----
-  \node[data, above=6mm of ret] (q) {question $q_t$};
-  \draw[flow] (q) -- (ret);
-  \node[muted, above=6mm of sched, minimum height=7mm] (val) {token value $v(b)$, fitted offline};
-  \draw[flow, dashed] (val) -- (sched);
+% frames at their token counts (display width ~ sqrt(b_i / 880))
+\foreach \k/\w/\b in {1/0.45/100, 2/0.92/400, 3/0.29/40, 5/0.72/250, 6/1.32/880} {
+  \node[inner sep=0pt, anchor=south] (fr\k) at ({0.95+(\k-1)*1.42},3.0) {\includegraphics[width=\w cm]{fig/frames/frame\k.jpg}};
+  \node[note, anchor=south] at (fr\k.north) {$b_i{=}\b$};}
+\draw[black!35, dashed, line width=0.4pt] ({0.95+3*1.42-0.18},3.0) rectangle ++(0.36,0.2);
+\node[note, anchor=south] at ({0.95+3*1.42},3.22) {dropped};
+% frozen VLM: encoder + pruner -> tokens -> LLM -> answer
+\node[blk, fill=encbg, minimum width=8.55cm, minimum height=0.45cm] (enc) at (4.475,4.3) {Vision encoder + token pruner (top-$b_i$ tokens) \frozen};
+\foreach \y/\z in {1.62/2.15, 2.8/3.0, 4.0/4.07, 4.92/5.13} {\draw[up] (4.475,\y) -- (4.475,\z);}
+\begin{scope}[shift={(0.55,4.7)}]
+  \foreach \i in {0,1} {\tok{tokF}{\i*0.21,0}}
+  \foreach \i in {0,...,4} {\tok{tokF}{1.1+\i*0.21,0}}
+  \foreach \i in {0} {\tok{tokF}{2.85+\i*0.21,0}}
+  \foreach \i in {0,1} {\tok{tokT}{3.6+\i*0.21,0}}
+  \foreach \i in {0,...,3} {\tok{tokF}{4.35+\i*0.21,0}}
+  \foreach \i in {0,...,7} {\tok{tokF}{5.45+\i*0.21,0}}
+  \foreach \i in {0,1,2} {\tok{tokQ}{7.3+\i*0.21,0}}
+\end{scope}
+\node[blk, fill=vlmbg, minimum width=8.55cm, minimum height=0.55cm] (llm) at (4.475,5.42) {\small Large language model \frozen};
 
-  % ---- what the allocation looks like: each frame at its own resolution ----
-  \node[above=5mm of $(prune.north)!0.5!(kv.north)$, inner sep=0pt] (thumbs) {\tokthumb{frame2.jpg}{30}\hspace{1.2mm}\tokthumb{frame3.jpg}{14}\hspace{1.2mm}\tokthumb{frame5.jpg}{5}};
-  \node[stagelbl, above=0.5mm of thumbs] {each frame at its own token count $b_i$};
+\node[bubble, anchor=west] (ans) at (9.05,5.42) {\textbf{A:} 1.9\,s};
+\draw[thin] (llm.east) -- (ans.west);
+\node[note, anchor=west, align=left] at (9.0,4.45) {\tikz{\tok{tokF}{0,0}} frame\\\tikz{\tok{tokT}{0,0}} transcript\\\tikz{\tok{tokQ}{0,0}} question};
 
-  % ---- attention of the VLM back to the scheduler (cached frames) ----
-  \draw[backflow] (vlm.south) -- ++(0,-11mm) -| node[edgelbl, pos=0.25, below] {attention $a_i$ of the VLM on the cached frames} (sched.south);
-
-  % ---- stage: what persists across turns ----
-  \begin{scope}[on background layer]
-    \node[stage, fit=(prune)(kv)] (keep) {};
-  \end{scope}
-  \node[stagelbl, below=0.5mm of keep] {cache only grows: $c_i\leftarrow\max(c_i,b_i)$, $\textstyle\sum_t p_i^{(t)}\le b_{\max}$};
+% ---------------- right: zoom on the scheduler, and across turns ----------------
+\draw[black!35, dashed, rounded corners=4pt] (11.0,0) rectangle (17.4,5.75);
+\draw[acc!60, dashed, line width=0.6pt] (sch.east) -- (11.0,3.4);
+\node[font=\sffamily\small\bfseries, anchor=north west] at (11.15,5.65) {Same relevance, two allocations};
+% bars over the six frames: (a) top-K, (b) TALON
+\newcommand{\allocrow}[4]{% {y}{label}{colour}{six bar heights in [0,1]}
+  \node[note, anchor=west, text=black!80] at (11.15,#1+0.98) {#2};
+  \draw[black!45, line width=0.4pt] (11.2,#1) -- (17.2,#1);
+  \foreach \v [count=\k] in {#4} {\fill[#3] ({11.45+(\k-1)*0.95},#1) rectangle ++(0.5,{0.7*\v});}}
+\allocrow{4.05}{Top-$K$: keep or drop}{black!45}{0,1,0,0,1,1}
+\allocrow{2.75}{\name: water-filling}{acc}{0.18,0.55,0.08,0,0.42,0.8}
+\draw[black!40, densely dashed, line width=0.4pt] (11.2,{4.05+0.7}) -- (17.2,{4.05+0.7}) node[note, anchor=south east] {full frame, $b_{\max}$};
+\draw[reld, densely dotted, line width=0.6pt] (11.2,{2.75+0.56}) -- (17.2,{2.75+0.56}) node[note, anchor=south east, text=reld] {value saturates};
+% across turns: Sarathi-style timeline of prefilled tokens
+\node[font=\sffamily\small\bfseries, anchor=north west] at (11.15,2.3) {Across turns: tokens prefilled};
+\foreach \t in {1,2,3} {\node[note] at ({13.2+(\t-1)*1.5},1.58) {turn \t};}
+\node[note, anchor=west] at (11.15,1.18) {re-allocate};
+\foreach \t in {1,2,3} {\fill[black!30] ({12.65+(\t-1)*1.5},1.04) rectangle ++(1.1,0.28);}
+\node[note, anchor=west, text=acc] at (11.15,0.66) {\textbf{\name}};
+\fill[acc!75] (12.65,0.52) rectangle ++(1.1,0.28);
+\fill[acc!75] (14.15,0.52) rectangle ++(0.24,0.28);
+\fill[acc!75] (15.65,0.52) rectangle ++(0.14,0.28);
+\node[note, anchor=north west] at (12.6,0.43) {only missing tokens; attention re-ranks};
 \end{tikzpicture}
