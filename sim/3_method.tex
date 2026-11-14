@@ -32,7 +32,7 @@ At its core, \name carries the allocation across turns, reusing the KV cache and
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.75\linewidth]{fig/value_curve.pdf}
-  \caption{\textbf{Token value saturates.} Accuracy of the VLM on calibration questions when every frame is shown with the same number of tokens (dots), with four concave families fitted to the measurements. Accuracy rises steeply at low token counts and flattens well before the native token count of a frame. \name uses the rational form.}
+  \caption{\textbf{Token value saturates.} Accuracy of the VLM on calibration questions when every frame is shown with the same number of tokens (dots), with four saturating families fitted to the measurements. Accuracy rises steeply at low token counts and flattens well before the native token count of a frame. \name uses the rational form.}
   \label{fig:value}
 \end{figure}
 
@@ -49,7 +49,7 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
   v(b)=\sigma\big(\log b-\log\tau\big)=\frac{b}{b+\tau} ,
   \label{eq:curve}
 \end{equation}
-where $\tau$ is the token count at which a frame reaches half of its full value. \name fits $\tau$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\cref{fig:value}), and updates it online from feedback on answered queries (e.g., accuracy, user feedback). Accuracy is modeled as an affine function of $v$; the allocation is invariant to the offset and scale of this map, so only $\tau$ matters. Weighting the value of each frame by its relevance gives the token-level objective
+where $\tau$ is the token count at which a frame reaches half of its full value. \name fits $\tau$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\cref{fig:value}), and updates it online from feedback on answered queries (e.g., accuracy, user feedback). Accuracy is modeled as an affine function of $v$; the allocation of Eq.~\eqref{eq:relevance} is invariant to the offset and scale of this map, and $\eta$ absorbs the scale in Eq.~\eqref{eq:joint}. Weighting the value of each frame by its relevance gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
