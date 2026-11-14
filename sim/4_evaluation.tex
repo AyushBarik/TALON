@@ -23,7 +23,7 @@ from 3 minutes to over 2 hours; we use the 2,174 questions of its development se
 its validation set of 1,337 questions. Neither provides subtitles in our setting, so the input is visual only.
 Video-MME~\cite{fu2024videomme} contains 2,700 questions on short, medium, and long videos; we use its subtitled
 setting, in which subtitle tokens count toward the same budget. For the multi-turn setting, we use 200 conversations of
-MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge.
+MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge (Gemini~3.8 Flash); the judge prompt is given in the appendix.
 
 \paragraph{Metrics.} We report accuracy together with compute, measured in TFLOPs per question: the prefill compute
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,
@@ -33,7 +33,7 @@ we sum the compute over all turns. Offline indexing is not counted.
 candidates into the input of the VLM:
 \begin{itemize}
   \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each with the token
-    pruner of \name. It thus isolates the benefit of allocating tokens unevenly across frames.
+    pruner of \name. It thus differs from \name only in the allocation.
   \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance and shows them at three resolutions, with the most
     relevant frames at the highest. We replace its Long-CLIP scorer with SigLIP~2.
   \item QuoTA~\cite{luo2025quota}: Decouples the question with chain-of-thought reasoning, scores each frame with a
@@ -97,8 +97,8 @@ clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget a
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.}
 \cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B and embedding-based RAG, \name
 attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. Relative to Top-K (w/ pruning), which shares its retriever, pruner, and budget,
-\name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline, within one
-point of \name on MLVU and LVB, but its per-frame scorer calls cost 2.8--3.4$\times$ more compute. The gains carry over to
+\name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline: its difference to \name on MLVU and LVB is within one point and not significant (paired McNemar test, $p\ge0.12$),
+but its per-frame scorer calls cost 2.8--3.4$\times$ more compute. The gains carry over to
 InternVL3.5-4B: \name remains the most accurate method on MLVU and
 Video-MME, where it improves on the best baseline by \simnum{2.2} and \simnum{4.1} points, and is within
 \simnum{0.6} points of AdaAlloc on LVB at less than half of its compute. \name also transfers to graph-based retrieval: paired with VideoRAG, it gains
@@ -115,7 +115,7 @@ baselines show at most half of them.
   \centering
   \includegraphics[width=\linewidth]{fig/tflops_pair.pdf}
   \caption{\textbf{Accuracy against compute.} (a)~Single turn: MLVU accuracy against TFLOPs per query.
-    (b)~Multi turn: MT-Video-Bench accuracy (215 judged turns) against TFLOPs per conversation, summed over all turns. Each line traces
+    (b)~Multi turn: MT-Video-Bench accuracy (the first 100 conversations, 215 judged turns) against TFLOPs per conversation, summed over all turns. Each line traces
     one method across per-turn budgets of 1,536, 3,072, 6,144, and 12,288 tokens.}
   \label{fig:multiturn}
 \end{figure}
@@ -163,8 +163,7 @@ saving is substantial: a turn after the first finds a median of 81\% of the toke
 \paragraph{Performance breakdown.}
 \cref{tab:ablation} removes one component of the Token Scheduler at a time. Replacing water-filling with an
 allocation proportional to relevance, at matched compute, lowers accuracy by \simnum{2.5} points overall and by
-\simnum{6.8} points on long videos. Removing text allocation, so that subtitles no longer compete with frames for the
-budget, costs 3.6 points overall and 7.3 points on long videos, whose questions often hinge on speech. Removing the
+\simnum{6.8} points on long videos. Removing text allocation, so that each shown frame only brings its time-aligned subtitles, costs 3.6 points overall and 7.3 points on long videos, whose questions often hinge on speech. Removing the
 diversity term costs 0.7 points. The vision encoder runs once per video, at 48 TFLOPs, and its output is reused across questions and turns.
 
 \cref{tab:multiturn} ablates the two multi-turn components at 6,144 tokens per turn. Updating relevance with the
