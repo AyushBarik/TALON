@@ -21,16 +21,16 @@ from orx_figstyle import COLUMN, PALETTE, figure, save, use_style
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+# Concave families only (a concave token value makes water-filling exact). Ours is the sigmoid in log b with unit
+# slope, sigma(log b - log tau) = b / (b + tau); it is drawn on top.
 FAMILIES = {
-    "Sigmoid": (lambda b, a, c, k, m: a + c / (1 + np.exp(-k * (np.log(b) - m))), [20, 25, 1.5, 3.0],
-                PALETTE["blue"], "-"),
-    "Log": (lambda b, a, c: a + c * np.log(b), [15, 4], PALETTE["orange"], "-"),
+    r"Ours: $b/(b+\tau)$": (lambda b, a, c, t: a + c * b / (b + t), [20, 25, 30], PALETTE["blue"], "-"),
     "Exponential": (lambda b, a, c, t: a + c * (1 - np.exp(-b / t)), [20, 25, 50], PALETTE["green"], "-"),
-    "Rational": (lambda b, a, c, t: a + c * b / (b + t), [20, 25, 30], PALETTE["purple"], "-"),
+    "Log": (lambda b, a, c: a + c * np.log(b), [15, 4], PALETTE["orange"], "-"),
 }
 
-# Which line is drawn on top: Sigmoid, then Exponential, then Rational, then Log (the data points stay above all).
-ZORDER = {"Sigmoid": 2.4, "Exponential": 2.3, "Rational": 2.2, "Log": 2.1}
+# Lines are drawn in legend order, the first on top (the data points stay above all).
+ZORDER = {name: 2.4 - 0.1 * i for i, name in enumerate(FAMILIES)}
 
 
 def main():
