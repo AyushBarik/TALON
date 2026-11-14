@@ -43,22 +43,12 @@ that a method calls, summed over every call for that question.
 
 \paragraph{Baselines.} We compare \name against the following approaches:
 \begin{itemize}
-  \item RAG: Retrieves the top-$K$ frames by relevance at their native resolution, with $K$ set so that the
-    retrieved frames fill the token budget.
-  \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each, chosen by the same
-    token pruner as \name (\cref{sec:allocation}). It thus isolates the benefit of allocating tokens unevenly across
-    frames.
-  \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance with the Gumbel-max trick and shows them at three
-    resolutions, with the most relevant frames at the highest resolution. We replace its Long-CLIP scorer with
-    SigLIP~2, so that it shares the relevance of \name.
-  \item QuoTA~\cite{luo2025quota}: Decouples the question into the entities it asks about with chain-of-thought
-    reasoning, scores each frame against them, and assigns each frame a number of tokens that grows with its score. We
-    use its CLIP-based scoring variant with SigLIP~2.
-  \item FOCUS~\cite{zhu2026focus}: Treats short clips as the arms of a multi-armed bandit and selects keyframes by
-    exploring the clips with the highest upper confidence bounds, without scoring every frame.
-  \item AdaAlloc~\cite{an2026adaalloc}: Uses the VLM to plan how to split the budget between sparse low-resolution
-    frames across the whole video and dense high-resolution frames from segments localized by a temporal grounding
-    model.
+  \item RAG:
+  \item Top-K (w/ pruning):
+  \item Q-Frame~\cite{zhang2025qframe}:
+  \item QuoTA~\cite{luo2025quota}:
+  \item FOCUS~\cite{zhu2026focus}:
+  \item AdaAlloc~\cite{an2026adaalloc}:
 \end{itemize}
 
 \subsection{Main Results}
