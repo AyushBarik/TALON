@@ -3,8 +3,7 @@
 
 Unless
 stated otherwise, every method draws from the same candidate frames, sampled from each video at 1 fps and kept at
-their native resolution, and receives the same budget of 12,288 tokens per question, the default video budget of
-Qwen3-VL. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
+their native resolution, and receives the same budget of 12,288 tokens per question. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
 BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, with videos disjoint from the evaluation videos, and keeps it fixed during evaluation. All hyperparameters ($\tau$, $\eta$, $\beta$, $\gamma$, $L$, and the softmax temperature) are tuned on these splits; their values and further implementation details are given in the appendix.
 
 \subsection{Experimental Setup}
@@ -28,7 +27,7 @@ we sum the compute over all turns. Offline indexing is not counted. We focus on 
 candidates into the input of the VLM:
 \begin{itemize}
   \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each with the token
-    pruner of \name. It thus differs from \name only in the allocation.
+    pruner of \name. Its frame count is tuned on the validation splits (32 to 256 frames at the same budget), where accuracy varies by less than \simnum{1} point.
   \item Q-Frame~\cite{zhang2025qframe}: Shows frames at three resolutions by relevance rank. We replace its Long-CLIP scorer with SigLIP~2.
   \item QuoTA~\cite{luo2025quota}: Scores each frame with a small VLM after decoupling the question, and assigns
     each frame a number of tokens that grows with its score.
@@ -101,8 +100,7 @@ Video-MME, where it improves on the best baseline by \simnum{2.2} and \simnum{4.
 \simnum{2.2}, \simnum{2.1}, and \simnum{3.6} points on the three benchmarks at about the same compute.
 
 \cref{fig:budget} and \cref{fig:multiturn}(a) vary the budget from 1,536 to 12,288 tokens on MLVU. \name is the most
-accurate method at every budget, and its advantage grows as the budget shrinks: at 1,536 tokens it reaches 73.4\%,
-1.7 points above the next best method and 8.3 points above Top-K (w/ pruning). With 3,072 tokens (53 TFLOPs), it exceeds the accuracy of Q-Frame,
+accurate method at every budget, and its advantage grows as the budget shrinks: at 1,536 tokens it reaches 73.4\%, 8.3 points above Top-K (w/ pruning). With 3,072 tokens (53 TFLOPs), it exceeds the accuracy of Q-Frame,
 FOCUS, and AdaAlloc at 12,288 tokens (203--211 TFLOPs), a reduction of nearly 4$\times$.
 
 \begin{figure}[t]
@@ -155,7 +153,7 @@ than Top-K (w/ pruning), and it is the most accurate method at three of the four
 \paragraph{Performance breakdown.}
 \cref{tab:ablation} removes one component of the Token Scheduler at a time. Replacing water-filling with an
 allocation proportional to relevance, at matched compute, lowers accuracy by \simnum{2.5} points overall and by
-\simnum{6.8} points on long videos. Removing text allocation, so that each shown frame only brings its time-aligned subtitles, costs 3.6 points overall and 7.3 points on long videos, whose questions often hinge on speech. Removing the
+\simnum{6.8} points on long videos. Removing text allocation, so that each shown frame only brings its time-aligned subtitles, costs 3.6 points overall and 7.3 points on long videos. Removing the
 diversity term costs 0.7 points. The vision encoder runs once per video, at 48 TFLOPs, and its output is reused across questions and turns.
 
 \cref{tab:multiturn} ablates the two multi-turn components at 6,144 tokens per turn. Updating relevance with the
