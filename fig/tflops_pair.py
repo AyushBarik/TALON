@@ -51,6 +51,7 @@ def main():
         ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel, labelpad=1)
+        ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=6, integer=True))  # accuracy ticks are always integers
     order = [m for m in METHODS if m in handles]
     fig.legend([handles[m] for m in order], order, loc="outside upper center", ncol=4, frameon=False, fontsize=5.5,
                columnspacing=0.8, handlelength=1.6, handletextpad=0.4)
