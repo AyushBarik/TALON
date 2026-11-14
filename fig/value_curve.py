@@ -21,10 +21,11 @@ from orx_figstyle import COLUMN, PALETTE, figure, save, use_style
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Concave families only (a concave token value makes water-filling exact). Ours is the sigmoid in log b with unit
-# slope, sigma(log b - log tau) = b / (b + tau); it is drawn on top.
+# Four concave families (a concave token value makes water-filling exact). Rational, b / (b + tau), is the one the
+# paper uses (Eq. 3) and is drawn on top. Sigmoid is the unshifted sigmoid in b, 2 sigma(b / t) - 1 = tanh(b / 2t).
 FAMILIES = {
-    r"Ours: $b/(b+\tau)$": (lambda b, a, c, t: a + c * b / (b + t), [20, 25, 30], PALETTE["blue"], "-"),
+    "Rational": (lambda b, a, c, t: a + c * b / (b + t), [20, 25, 30], PALETTE["blue"], "-"),
+    "Sigmoid": (lambda b, a, c, t: a + c * np.tanh(b / (2 * t)), [20, 25, 30], PALETTE["purple"], "-"),
     "Exponential": (lambda b, a, c, t: a + c * (1 - np.exp(-b / t)), [20, 25, 50], PALETTE["green"], "-"),
     "Log": (lambda b, a, c: a + c * np.log(b), [15, 4], PALETTE["orange"], "-"),
 }
