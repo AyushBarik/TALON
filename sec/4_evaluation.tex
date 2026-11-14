@@ -28,6 +28,7 @@ its answer options as the query. Further implementation details are provided in 
 
 \paragraph{Baselines.} We compare \name against the following approaches:
 \begin{itemize}
+  \item Uniform sampling:
   \item RAG:
   \item Top-K (w/ pruning):
   \item Q-Frame~\cite{zhang2025qframe}:
@@ -58,6 +59,7 @@ its answer options as the query. Further implementation details are provided in 
       & TFLOPs~$\downarrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & & & & & & & & & \\
     \quad + Top-K (w/ pruning)                                  & \cellcolor{heat3}75.9 & \cellcolor{heat1}218 & \cellcolor{heat3}64.0 & \cellcolor{heat1}232 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 & \cellcolor{heat1}230 \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat3}74.7 & \cellcolor{heat1}209 & \cellcolor{heat1}65.7 & \cellcolor{heat1}225 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat0}218 \\
@@ -69,6 +71,7 @@ its answer options as the query. Further implementation details are provided in 
     \quad + \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
+    Uniform sampling                                         & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     RAG                                                      & & & & & & & & & \\
     \quad + Top-K (w/ pruning)                                  & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
