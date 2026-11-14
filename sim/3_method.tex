@@ -41,7 +41,7 @@ Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by
 \name answers both in its Token Scheduler, which computes the token allocation: the first with a token value function that is fitted offline and updated online and asynchronously to serving, and the second by conditioning relevance on the current allocation. We formulate both for frames and then extend them to the transcript of the video.
 
 \paragraph{Pruning Frames and Transcripts to a Token Count.}
-Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned in the same way.
+Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i$, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned analogously: \name passes each event through the text encoder once, ranks its tokens by the attention they receive, and keeps the top $w_m$, following attention-based token pruning for language models~\cite{goyal2020powerbert,kim2022ltp}.
 
 \paragraph{Capturing Token Value.}
 Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves. \name therefore learns a \textit{token value} function by logistic regression on the logarithm of the token count $b$ of a frame,
@@ -61,7 +61,7 @@ The objective above, however, scores every frame in isolation. Consecutive frame
   r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
-where $\eta$ sets the strength of the discount. The similarity reuses the frame embeddings that retrieval already computes, so the discount adds no model call. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
+where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
   \label{eq:p1}
@@ -97,7 +97,7 @@ clipped at zero, where the sum runs over frames, and a transcript event keeps $\
 \end{equation}
 where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the lowest price at which the allocation stays within $B$; tokens that remain unspent at this price are left unused. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the tokens it spends even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the appendix.
 
-\textit{Updating.} After the first allocation, each iteration moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations, which is thus no worse than the first on the full objective. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After the first allocation, each iteration moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations, which is thus no worse than the first on the full objective. The solver takes a few milliseconds per query. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}

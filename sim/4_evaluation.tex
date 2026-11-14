@@ -1,9 +1,7 @@
 \section{Evaluation}
 \label{sec:exp}
 
-We evaluate \name on three long-video question-answering benchmarks and one multi-turn dialogue benchmark with two
-VLMs of different architectures, and compare it against frame selection and token allocation methods under the same
-token budget. Unless
+Unless
 stated otherwise, every method draws from the same candidate frames, sampled from each video at 1 fps and kept at
 their native resolution, and receives the same budget of 12,288 tokens per question, the default video budget of
 Qwen3-VL. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
@@ -13,7 +11,7 @@ provided in the appendix.
 \subsection{Experimental Setup}
 \label{sec:exp-setup}
 
-\paragraph{Models.} We evaluate \name on two VLMs that differ in how they encode frames. Qwen3-VL-8B~\cite{bai2025qwen3vl}
+\paragraph{Models.} Qwen3-VL-8B~\cite{bai2025qwen3vl}
 encodes each frame at its native resolution, at one token per $32\times32$ pixels, whereas
 InternVL3.5-4B~\cite{wang2025internvl35} encodes each $448\times448$ image tile into 256 visual tokens.
 
@@ -115,8 +113,7 @@ baselines show at most half of them.
   \centering
   \includegraphics[width=\linewidth]{fig/tflops_pair.pdf}
   \caption{\textbf{Accuracy against compute.} (a)~Single turn: MLVU accuracy against TFLOPs per query.
-    (b)~Multi turn: MT-Video-Bench accuracy (the first 100 conversations, 215 judged turns) against TFLOPs per conversation, summed over all turns. Each line traces
-    one method across per-turn budgets of 1,536, 3,072, 6,144, and 12,288 tokens.}
+    (b)~Multi turn: MT-Video-Bench accuracy (the first 100 conversations, 215 judged turns) against TFLOPs per conversation, summed over all turns. Each line spans per-turn budgets from 1,536 to 12,288 tokens.}
   \label{fig:multiturn}
 \end{figure}
 

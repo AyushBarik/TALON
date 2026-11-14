@@ -3,11 +3,9 @@
 
 \paragraph{Video retrieval-augmented generation.}
 RAG grounds generation in retrieved evidence. For long videos, Video-RAG~\cite{luo2024videorag} augments a VLM with
-visually aligned auxiliary texts, such as speech transcripts, on-screen text, and detected objects, retrieved for each
-query, and \citet{jeong2025videorag} retrieve whole videos from a corpus as external knowledge. A second line
+visually aligned auxiliary texts retrieved for each query, and \citet{jeong2025videorag} retrieve whole videos from a corpus as external knowledge. A second line
 of work structures the index. VideoRAG~\cite{ren2025videorag} builds a graph-based knowledge index across videos,
-Vgent~\cite{shen2025vgent} represents a video as a graph of clips that preserves their semantic and temporal
-dependencies, followed by a structured reasoning step that filters retrieval noise, and AVA~\cite{yan2025ava} indexes a
+Vgent~\cite{shen2025vgent} represents a video as a graph of clips, and AVA~\cite{yan2025ava} indexes a
 video as an event knowledge graph that an agent searches; later systems build similar graph
 indexes~\cite{yang2026g2frag,chen2026memdreamer,yan2026ecrag}. Other systems add spatio-temporal
 structure~\cite{fu2026videostir} or temporal alignment~\cite{cao2025tvrag} to retrieval, and
