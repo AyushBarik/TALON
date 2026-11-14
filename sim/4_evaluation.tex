@@ -15,17 +15,15 @@ provided in the appendix.
 encodes each frame at its native resolution, at one token per $32\times32$ pixels, whereas
 InternVL3.5-4B~\cite{wang2025internvl35} encodes each $448\times448$ image tile into 256 visual tokens.
 
-\paragraph{Benchmarks.} We use three long-video multiple-choice benchmarks. MLVU~\cite{zhou2024mlvu} contains videos
-from 3 minutes to over 2 hours; we use the 2,174 questions of its development set. LongVideoBench
-(LVB)~\cite{wu2024longvideobench} contains videos of up to an hour whose questions refer to a specific moment; we use
-its validation set of 1,337 questions. Neither provides subtitles in our setting, so the input is visual only.
+\paragraph{Benchmarks.} We use three long-video multiple-choice benchmarks. For MLVU~\cite{zhou2024mlvu}, we use the 2,174 questions of its development set. For LongVideoBench
+(LVB)~\cite{wu2024longvideobench}, we use its validation set of 1,337 questions. Neither provides subtitles in our setting, so the input is visual only.
 Video-MME~\cite{fu2024videomme} contains 2,700 questions on short, medium, and long videos; we use its subtitled
 setting, in which subtitle tokens count toward the same budget. For the multi-turn setting, we use 200 conversations of
 MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge (Gemini~3.8 Flash); the judge prompt is given in the appendix.
 
 \paragraph{Metrics.} We report accuracy together with compute, measured in TFLOPs per question: the prefill compute
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,
-we sum the compute over all turns. Offline indexing is not counted.
+we sum the compute over all turns. Offline indexing is not counted. We focus on compute and cost rather than latency.
 
 \paragraph{Baselines.} All methods extend the same embedding-based RAG pipeline, and differ in how they turn its
 candidates into the input of the VLM:
@@ -34,8 +32,8 @@ candidates into the input of the VLM:
     pruner of \name. It thus differs from \name only in the allocation.
   \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance and shows them at three resolutions, with the most
     relevant frames at the highest. We replace its Long-CLIP scorer with SigLIP~2.
-  \item QuoTA~\cite{luo2025quota}: Decouples the question with chain-of-thought reasoning, scores each frame with a
-    small VLM, and assigns each frame a number of tokens that grows with its score.
+  \item QuoTA~\cite{luo2025quota}: Scores each frame with a small VLM after decoupling the question, and assigns
+    each frame a number of tokens that grows with its score.
   \item FOCUS~\cite{zhu2026focus}: Treats short clips as the arms of a bandit and selects keyframes from the clips
     with the highest upper confidence bounds.
   \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution
@@ -118,9 +116,9 @@ baselines show at most half of them.
 \end{figure}
 
 \paragraph{\name achieves the Pareto frontier across multi-turn conversations.}
-\cref{fig:multiturn}(b) reports accuracy against the compute of a whole conversation on MT-Video-Bench. The
-baselines append the frames selected for every question, so their context grows with every turn, whereas \name
-prefills only the tokens that the cache lacks. At the same
+\cref{fig:multiturn}(b) reports accuracy against the compute of a whole conversation on MT-Video-Bench. All methods keep the KV cache across turns, and a baseline skips a frame that the cache already holds at the selected
+resolution. The baselines still add the new frames of every question, whereas \name prefills only the tokens that the
+cache lacks. At the same
 per-turn budget, it consequently uses 2.2--5.2$\times$ less compute than Q-Frame and FOCUS and up to 4.6$\times$ less
 than Top-K (w/ pruning), and it is the most accurate method at three of the four budgets. The reuse behind this
 saving is substantial: a turn after the first finds a median of 81\% of the tokens it needs already in the cache
