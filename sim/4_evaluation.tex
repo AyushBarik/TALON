@@ -92,7 +92,7 @@ Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025vi
   \label{tab:main}
 \end{table*}
 
-\paragraph{\name achieves the Pareto frontier in single-turn question answering.}
+\paragraph{\name achieves the Pareto frontier across single-turn Q\&A.}
 \cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B and embedding-based RAG, \name
 attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. At matched compute, it exceeds Q-Frame, FOCUS, and AdaAlloc by 0.9 to 7.2 points. Its gains over Top-K (w/ pruning) are significant on all three benchmarks (paired McNemar test, $p<\simnum{0.01}$). Relative to Top-K (w/ pruning),
 \name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline: its difference to \name on MLVU and LVB is within one point and not significant (paired McNemar test, $p\ge0.12$),
@@ -114,7 +114,7 @@ FOCUS, and AdaAlloc at 12,288 tokens (203--211 TFLOPs), a reduction of nearly 4$
   \label{fig:multiturn}
 \end{figure}
 
-\paragraph{\name achieves the Pareto frontier across multi-turn conversations.}
+\paragraph{\name achieves the Pareto frontier across multi-turn Q\&A.}
 \cref{fig:multiturn}(b) reports accuracy against the compute of a whole conversation on MT-Video-Bench. All methods keep the KV cache across turns, and a baseline skips a frame that the cache already holds at the selected
 resolution. The baselines still add the new frames of every question, whereas \name prefills only the tokens that the
 cache lacks. At the same

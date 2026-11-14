@@ -55,6 +55,8 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
   v(b)=\sigma\big(\log b-\log\tau\big)=\frac{b}{b+\tau} ,
   \label{eq:curve}
 \end{equation} \ayush{look into cdf func}
+
+explain why waterfilling is the best thing to do
 fitting $\tau$ by maximum likelihood offline, on calibration video--query pairs with the tokens per frame varied uniformly (\cref{fig:value}), and updating it online from feedback on answered queries (e.g., accuracy, user feedback). Accuracy is modeled as an affine function of $v$; the allocation of Eq.~\eqref{eq:relevance} is invariant to the offset and scale of this map, and $\eta$ absorbs the scale in Eq.~\eqref{eq:joint}. Weighting the value of each frame by its relevance \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
