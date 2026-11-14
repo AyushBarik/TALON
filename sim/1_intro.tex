@@ -5,7 +5,7 @@
   \centering
   \includegraphics[width=\linewidth]{fig/budget_curve.pdf}
   \caption{\textbf{Accuracy against cost on MLVU} (Qwen3-VL-8B). Each line traces one method across token budgets
-    from 1,536 to 12,288. Cost is the API bill of 1,000 queries. \name is the most accurate method at every cost; the
+    from 1,536 to 12,288. Cost prices the input tokens of 1,000 queries at OpenRouter rates. \name is the most accurate method at every cost; the
     scorer calls of QuoTA place it beyond the axis break.}
   \label{fig:budget}
 \end{figure}
@@ -47,7 +47,7 @@ allocation rules of prior work. The second challenge arises in multi-turn conver
 for every question invalidates the KV cache that LLM serving systems reuse across
 turns~\cite{kwon2023vllm,zheng2024sglang}. \name instead carries the allocation across turns: it updates the
 relevance of cached frames with the attention of the VLM, and prefills only the tokens that the cache lacks, so that
-the cumulative prefill of a conversation provably stays bounded.
+the cumulative prefill of evidence tokens provably stays bounded.
 
 We evaluate \name on MLVU, LongVideoBench, and Video-MME with two VLMs, and on the multi-turn MT-Video-Bench. At the
 same budget of 12,288 tokens, \name improves the accuracy of Qwen3-VL-8B by 2.2 to 4.2 points over retrieval with
@@ -63,5 +63,5 @@ Our contributions are as follows:
   \item We design the Token Scheduler, which combines a learned token value with iterative water-filling, and prove
     that it attains a higher objective than the allocation rules of prior work.
   \item We extend token allocation to multi-turn conversations with KV-cache reuse and attention-updated
-    relevance, and prove that the cumulative prefill stays bounded.
+    relevance, and prove that the cumulative prefill of evidence tokens stays bounded.
 \end{itemize}

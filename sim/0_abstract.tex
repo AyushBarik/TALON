@@ -7,7 +7,7 @@ token count. We present \name, a plug-and-play token allocation framework that m
 segment, with a token value function fitted offline, and solves it by iterative water-filling, which attains a higher
 objective than the fixed allocation rules of prior work. In multi-turn conversations, \name carries the allocation
 across turns: it updates relevance with the attention of the VLM and prefills only the tokens that the KV cache lacks,
-so that the cumulative prefill of a conversation provably stays bounded. On MLVU, LongVideoBench, and Video-MME with
+so that the cumulative prefill of evidence tokens provably stays bounded. On MLVU, LongVideoBench, and Video-MME with
 two VLMs, \name is more accurate than every compute-matched baseline, by more than 4 points on Video-MME, and
 matches or exceeds the strongest prior method at roughly one third of its compute. On MT-Video-Bench,
 \name reduces the compute of a conversation by up to 5.2$\times$ at comparable accuracy.
