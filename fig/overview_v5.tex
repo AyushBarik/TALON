@@ -1,0 +1,90 @@
+% Overview figure (figure*, \textwidth = 17.46 cm), version 5: single-turn request flow in four numbered steps, in the
+% style of SoundWeaver Fig. 3 (one outlined system box, numbered black circles with short labels, one concrete
+% artifact per step) and CVPR 2025 overviews (real frames, relevance over time, frozen VLM). Multi-turn is left out.
+% Relevance values, token counts and the curve are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU.
+% Earlier versions: fig/overview_v1..v4.tex.
+\definecolor{ink}{HTML}{2E3440}
+\definecolor{acc}{HTML}{0072B2}
+\definecolor{vlmbg}{HTML}{DDEFE3}
+\definecolor{retbg}{HTML}{ECEEF2}
+\definecolor{reld}{HTML}{D55E00}
+\newcommand{\frozen}{\tikz[baseline=-0.6ex]{\begin{scope}[line width=0.5pt, draw=orxsky!80!black, line cap=round]
+  \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:0.11); \draw (\a:0.06) -- ++(\a+45:0.035); \draw (\a:0.06) -- ++(\a-45:0.035);}\end{scope}}}
+\newcommand{\step}[2]{\node[circle, fill=black, text=white, font=\sffamily\scriptsize\bfseries, inner sep=0.6pt, minimum size=0.36cm] at (#1) {#2};}
+
+\begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.5pt,
+  arr/.style={-{Stealth[length=5pt, width=4.5pt]}, draw=black, line width=0.9pt},
+  thin/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!60, line width=0.6pt},
+  blk/.style={rounded corners=3pt, align=center, inner sep=2.5pt, draw=black!50},
+  note/.style={font=\sffamily\scriptsize, text=black!70, inner sep=1pt, align=left},
+  bubble/.style={draw=black!45, fill=white, rounded corners=4pt, align=center, inner sep=3pt, font=\sffamily\scriptsize}]
+
+% ---------------- user and video ----------------
+\fill[black!65] (0.75,2.05) circle (0.25);
+\fill[black!65] (0.3,1.45) .. controls (0.3,1.85) and (1.2,1.85) .. (1.2,1.45) -- cycle;
+\node[bubble, text width=1.55cm] (q) at (0.85,3.05) {``0--60\,mph time of the red Roadster?''};
+\draw[black!45] (0.85,2.6) -- (0.8,2.38);
+% video: a short film strip
+\fill[black!85, rounded corners=1pt] (0.1,0.05) rectangle (1.62,1.08);
+\foreach \k/\y in {1/0.6, 6/0.12} {}
+\node[inner sep=0pt] at (0.86,0.82) {\includegraphics[width=1.25cm]{fig/frames/frame2.jpg}};
+\node[inner sep=0pt] at (0.86,0.33) {\includegraphics[width=1.25cm]{fig/frames/frame6.jpg}};
+\node[note, anchor=east] at (0.08,0.55) {};
+
+% ---------------- the system box ----------------
+\draw[acc, line width=1.1pt, rounded corners=6pt] (2.4,0) rectangle (17.4,3.75);
+\node[font=\sffamily\small\bfseries\itshape, text=acc, anchor=south east] at (17.25,0.08) {\name};
+\draw[arr] (1.65,2.0) -- (2.65,2.0);
+\step{2.0,2.33}{1}
+\node[note, anchor=north, align=center] at (2.0,1.9) {query};
+
+% ---- (2) score frames: relevance over time ----
+\node[blk, fill=retbg] (ret) at (4.15,3.2) {Retriever (\S\ref{sec:overview})};
+\begin{scope}[shift={(2.6,0.3)}]
+  \fill[black!85, rounded corners=1pt] (0,0) rectangle (4.3,0.58);
+  \foreach \k in {1,...,6} {\node[inner sep=0pt] at ({0.37+(\k-1)*0.71},0.29) {\includegraphics[width=0.67cm]{fig/frames/frame\k.jpg}};}
+  \draw[black!45, line width=0.4pt] (0,0.82) -- (4.3,0.82);
+  \foreach \x in {0.1,0.24,...,4.25} {
+    \pgfmathsetmacro{\y}{0.82+0.04+0.95*exp(-((\x-3.92)/0.26)^2)+0.5*exp(-((\x-1.08)/0.24)^2)+0.3*exp(-((\x-3.21)/0.28)^2)+0.14*exp(-((\x-0.37)/0.28)^2)}
+    \fill[reld] (\x,\y) circle (1.05pt);}
+  \node[note, anchor=south west] at (0,1.65) {relevance $r_i$};
+\end{scope}
+\draw[thin] (ret.south) -- (4.15,2.62);
+\step{2.75,3.2}{2}
+\node[note, anchor=west] at (2.78,3.2) {};
+
+% ---- (3) schedule tokens: value curve and one price ----
+\draw[arr] (7.1,1.4) -- (7.85,1.4);
+\step{7.47,1.78}{3}
+\node[note, anchor=north, align=center] at (7.47,1.3) {allocate\\tokens};
+\node[blk, fill=acc!10, draw=acc, line width=0.8pt] (sch) at (9.9,3.2) {\textbf{\textcolor{acc}{Token Scheduler}} (\S\ref{sec:allocation})};
+\node[font=\sffamily\scriptsize] at (9.9,2.72) {$\max_{\mathbf b}\ \sum_i r_i\,v(b_i)\ \ \text{s.t.}\ \sum_i b_i\le B$};
+\begin{scope}[shift={(8.35,0.35)}]
+  \draw[-{Stealth[length=3pt]}, black!60, line width=0.5pt] (0,0) -- (3.6,0) node[note, anchor=north east] {tokens $b$};
+  \draw[-{Stealth[length=3pt]}, black!60, line width=0.5pt] (0,0) -- (0,1.95);
+  \node[note, rotate=90, anchor=south] at (-0.02,0.95) {value $v(b)$};
+  \draw[acc, line width=1.2pt, domain=0:3.4, samples=60] plot (\x, {1.7/(1+exp(-2.1*(\x-1.0)))-1.7/(1+exp(2.1))});
+  % water-filling: each frame stops where r_i v'(b) = lambda (tangent of slope lambda / r_i)
+  \foreach \b/\lab/\an in {2.1/{high $r_i$}/south east, 1.35/{low $r_i$}/west} {
+    \pgfmathsetmacro{\v}{1.7/(1+exp(-2.1*(\b-1.0)))-1.7/(1+exp(2.1))}
+    \pgfmathsetmacro{\s}{1.7*2.1*exp(-2.1*(\b-1.0))/(1+exp(-2.1*(\b-1.0)))^2}
+    \draw[reld, densely dashed, line width=0.8pt] ({\b-0.55},{\v-0.55*\s}) -- ({\b+0.55},{\v+0.55*\s});
+    \fill[acc] (\b,\v) circle (1.6pt);
+    \draw[black!40, densely dotted] (\b,\v) -- (\b,0);
+    \node[note, anchor=\an] at ({\b+0.08},{\v-0.02}) {\lab};}
+  \node[note, text=reld, anchor=west] at (1.7,0.35) {tangent slope $=\lambda/r_i$};
+\end{scope}
+
+% ---- (4) answer: frames at their token counts -> frozen VLM ----
+\draw[arr] (11.95,1.4) -- (12.5,1.4);
+\step{12.22,1.78}{4}
+\node[note, anchor=north, align=center] at (12.22,1.3) {answer};
+\foreach \k/\w/\x in {2/0.62/12.95, 3/0.26/13.55, 5/0.48/14.05, 6/1.05/14.95} {
+  \node[inner sep=0pt, anchor=south] at (\x,0.4) {\includegraphics[width=\w cm]{fig/frames/frame\k.jpg}};}
+\node[note, anchor=north] at (13.95,0.36) {frames at $b_i$ tokens};
+\node[blk, fill=vlmbg, minimum width=2.6cm, minimum height=0.6cm] (vlm) at (14.0,2.05) {VLM \frozen};
+\draw[thin] (14.0,1.25) -- (vlm.south);
+\node[bubble] (ans) at (16.45,2.05) {``1.9\,s''};
+\draw[thin] (vlm.east) -- (ans.west);
+
+\end{tikzpicture}
