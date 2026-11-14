@@ -136,6 +136,7 @@ its answer options as the query. Further implementation details are provided in 
         \end{tabular}} \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \textbf{\name}                 & \cellcolor{heat1}232 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} \\
+    \hspace{0.5em}w/o water-filling        & \na & \na & \na & \na & \na \\
     \hspace{0.5em}w/o text allocation      & \cellcolor{heat0}226 & \cellcolor{heat3}73.7 & \cellcolor{heat2}81.9 & \cellcolor{heat2}74.9 & \cellcolor{heat4}64.4 \\
     \hspace{0.5em}w/o diversity            & \cellcolor{heat0}226 & \cellcolor{heat1}76.6 & \cellcolor{heat2}82.4 & \cellcolor{heat1}76.4 & \cellcolor{heat1}70.8 \\
     \bottomrule
@@ -149,7 +150,7 @@ its answer options as the query. Further implementation details are provided in 
   \label{tab:ablation}
 \end{table}
 
-\paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation}) The vision encoder adds 48 TFLOPs per question.
+\paragraph{Performance breakdown.} \TODO{} (\cref{tab:ablation}) The vision encoder adds 48 TFLOPs per question. A sensitivity analysis of the hyperparameters is provided in the appendix.
 
 \begin{table}[t]
   \centering
@@ -157,7 +158,7 @@ its answer options as the query. Further implementation details are provided in 
   \renewcommand{\arraystretch}{1.2}
   % Same side gap as Table 2 (\ablsep); the two number columns share the remaining width.
   \setlength{\tabcolsep}{\ablsep}%
-  \settowidth{\dimen0}{\hspace{0.5em}w/o attention}%
+  \settowidth{\dimen0}{\hspace{0.5em}w/o carried allocation}%
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
   \begin{tabular}{l@{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
     \toprule
@@ -165,6 +166,7 @@ its answer options as the query. Further implementation details are provided in 
     \midrule
     \textbf{\name}             & \cellcolor{heat0}275 & \cellcolor{heat0}\textbf{58.5} \\
     \hspace{0.5em}w/o attention        & \cellcolor{heat2}315 & \cellcolor{heat2}57.4 \\
+    \hspace{0.5em}w/o carried allocation & -- & -- \\
     \bottomrule
   \end{tabular}
   \caption{Multi-turn \name with and without attention-guided relevance on MT-Video-Bench (200 conversations,
