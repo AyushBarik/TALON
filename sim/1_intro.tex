@@ -60,8 +60,8 @@ Our contributions are as follows:
 \begin{itemize}
   \item We introduce \name, a plug-and-play framework that formulates video RAG as one budgeted token allocation
     over frames and transcript segments.
-  \item We design the Token Scheduler, which combines a learned token value with iterative water-filling, and prove
-    that it attains a higher objective than the allocation rules of prior work.
+  \item We design the Token Scheduler, which combines a learned token value with iterative water-filling, and derive
+    the optimal allocation of its objective, which the allocation rules of prior work do not attain.
   \item We extend token allocation to multi-turn conversations with KV-cache reuse and attention-updated
     relevance, and prove that the cumulative prefill of evidence tokens stays bounded.
 \end{itemize}

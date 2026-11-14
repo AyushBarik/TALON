@@ -5,7 +5,7 @@ Unless
 stated otherwise, every method draws from the same candidate frames, sampled from each video at 1 fps and kept at
 their native resolution, and receives the same budget of 12,288 tokens per question, the default video budget of
 Qwen3-VL. \name scores the relevance of each frame with SigLIP~2~\cite{siglip2} and of each transcript segment with
-BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, and keeps it fixed during evaluation. Further implementation details are
+BGE~\cite{bge}, using the question together with its answer options as the query. \name fits $\tau$ on a validation split of each benchmark, which we create when the benchmark provides none, with videos disjoint from the evaluation videos, and keeps it fixed during evaluation. Further implementation details are
 provided in the appendix.
 
 \subsection{Experimental Setup}
@@ -25,7 +25,7 @@ MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LL
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,
 we sum the compute over all turns. Offline indexing is not counted. We focus on compute and cost rather than latency.
 
-\paragraph{Baselines.} All methods extend the same embedding-based RAG pipeline, and differ in how they turn its
+\paragraph{Baselines.} Uniform sampling is the plain VLM with uniformly sampled frames at the same budget. All other methods extend the same embedding-based RAG pipeline, and differ in how they turn its
 candidates into the input of the VLM:
 \begin{itemize}
   \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each with the token
@@ -34,10 +34,9 @@ candidates into the input of the VLM:
     relevant frames at the highest. We replace its Long-CLIP scorer with SigLIP~2.
   \item QuoTA~\cite{luo2025quota}: Scores each frame with a small VLM after decoupling the question, and assigns
     each frame a number of tokens that grows with its score.
-  \item FOCUS~\cite{zhu2026focus}: Treats short clips as the arms of a bandit and selects keyframes from the clips
-    with the highest upper confidence bounds.
+  \item FOCUS~\cite{zhu2026focus}: Selects keyframes from short clips by bandit exploration.
   \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution
-    frames and dense high-resolution frames from localized segments (concurrent work).
+    frames and dense high-resolution frames (concurrent work).
 \end{itemize}
 Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}. We therefore also pair \name with VideoRAG~\cite{ren2025videorag}, which passes the frames of its retrieved
 clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget across them.
@@ -48,7 +47,7 @@ clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget a
 \begin{table*}[t]
   \centering
   \small
-  \renewcommand{\arraystretch}{1.2}
+  \renewcommand{\arraystretch}{1.08}
   \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}
   \newcommand{\maintab}{%
   \begin{tabular}{l cc cc ccccc}
@@ -61,6 +60,7 @@ clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget a
       & TFLOPs~$\downarrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
+    Uniform sampling & \cellcolor{heat4}\simnum{72.8} & \cellcolor{heat1}\simnum{216} & \cellcolor{heat4}\simnum{61.9} & \cellcolor{heat1}\simnum{231} & \cellcolor{heat4}\simnum{71.2} & \cellcolor{heat3}\simnum{80.9} & \cellcolor{heat4}\simnum{70.8} & \simnum{61.9} & \cellcolor{heat1}\simnum{229} \\
     RAG                                                      & & & & & & & & & \\
     \quad + Top-K (w/ pruning) & \cellcolor{heat3}75.9 & \cellcolor{heat1}218 & \cellcolor{heat3}64.0 & \cellcolor{heat1}232 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 & \cellcolor{heat1}230 \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25} & \cellcolor{heat3}74.7 & \cellcolor{heat1}209 & \cellcolor{heat2}65.7 & \cellcolor{heat1}225 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 & \cellcolor{heat0}218 \\
@@ -72,6 +72,7 @@ clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget a
     \quad + \textbf{\name (Ours)} & \cellcolor{heat0}\textbf{\simnum{78.6}} & \cellcolor{heat2}\simnum{233} & \cellcolor{heat0}\textbf{\simnum{67.3}} & \cellcolor{heat1}\simnum{239} & \cellcolor{heat0}\textbf{\simnum{77.6}} & \cellcolor{heat1}\simnum{83.4} & \cellcolor{heat0}\textbf{\simnum{77.1}} & \cellcolor{heat0}\textbf{\simnum{72.3}} & \cellcolor{heat1}\simnum{237} \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
+    Uniform sampling & \cellcolor{heat4}\simnum{69.8} & \cellcolor{heat1}\simnum{146} & \cellcolor{heat4}\simnum{58.6} & \cellcolor{heat1}\simnum{146} & \cellcolor{heat4}\simnum{65.6} & \cellcolor{heat3}\simnum{75.6} & \cellcolor{heat4}\simnum{65.3} & \simnum{55.9} & \cellcolor{heat1}\simnum{143} \\
     RAG                                                      & & & & & & & & & \\
     \quad + Top-K (w/ pruning) & \cellcolor{heat3}\simnum{72.5} & \cellcolor{heat1}\simnum{147} & \cellcolor{heat3}\simnum{60.4} & \cellcolor{heat1}\simnum{147} & \cellcolor{heat4}\simnum{67.7} & \cellcolor{heat2}\simnum{77.3} & \cellcolor{heat3}\simnum{68.1} & \simnum{57.8} & \cellcolor{heat1}\simnum{144} \\
     \quad + Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25} & \cellcolor{heat3}\simnum{71.3} & \cellcolor{heat0}\simnum{141} & \cellcolor{heat2}\simnum{62.1} & \cellcolor{heat0}\simnum{142} & \cellcolor{heat4}\simnum{65.7} & \cellcolor{heat4}\simnum{75.0} & \cellcolor{heat4}\simnum{65.0} & \simnum{57.2} & \cellcolor{heat0}\simnum{136} \\
@@ -163,8 +164,8 @@ diversity term costs 0.7 points. The vision encoder runs once per video, at 48 T
 
 \cref{tab:multiturn} ablates the two multi-turn components at 6,144 tokens per turn. Updating relevance with the
 attention of the VLM improves accuracy by 1.1 points and reduces compute by 13\%, since attention concentrates the
-allocation on frames that the cache already holds. Without the carried allocation, every turn prefills
-from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accuracy. A sensitivity analysis of the
+allocation on frames that the cache already holds. Without the carried allocation, every turn recomputes its evidence
+from scratch, which raises compute by \simnum{2.3}$\times$ with no gain in accuracy; appending tokens thus costs no accuracy. A sensitivity analysis of the
 hyperparameters is given in the appendix.
 
 \begin{table}[t]

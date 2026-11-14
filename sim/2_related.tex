@@ -16,10 +16,9 @@ retrievers.
 
 \paragraph{Keyframe selection.}
 Most VLMs sample frames uniformly and therefore often miss the content that a query needs. Query-aware methods instead
-select frames by jointly optimizing their relevance and temporal coverage~\cite{tang2025aks,peng2026qca}, by greedy
-marginal utility~\cite{shi2026markey}, by learning to query informative combinations of
-frames~\cite{yu2024framevoyager}, with the attention of a small VLM used as a selector~\cite{wang2026dafs}, or by
-exploring clips as the arms of a bandit~\cite{zhu2026focus}. All of these methods, however, return a subset of frames,
+select frames by relevance and temporal coverage~\cite{tang2025aks,peng2026qca}, by marginal
+utility~\cite{shi2026markey}, by learned frame queries~\cite{yu2024framevoyager}, by the attention of a small
+VLM~\cite{wang2026dafs}, or by bandit exploration~\cite{zhu2026focus}. All of these methods, however, return a subset of frames,
 each at the same token cost. \name instead treats the token count of each frame as a decision variable.
 
 \paragraph{Token allocation across frames.}

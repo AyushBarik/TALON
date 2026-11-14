@@ -58,7 +58,7 @@ where $\tau$ is the token count at which a frame reaches half of its full value.
 \paragraph{Incorporating Frame Diversity.}
 The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which $v$ credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity to every frame, weighted by the value of that frame:
 \begin{equation}
-  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j}\cos(f_i,f_j)\,v(b_j) ,
+  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\ne i}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
 where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
@@ -85,7 +85,7 @@ Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are cou
 
 \textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
 \begin{equation}
-  \tilde r_i=r_i-2\eta\sum_{j}\cos(f_i,f_j)\,\bar v_j ,
+  \tilde r_i=r_i-2\eta\sum_{j\ne i}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
 \end{equation}
 clipped at zero, where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
@@ -110,7 +110,7 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
 \State $\bar v_i\gets 0$ \Comment{current values}
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j}s_{ij}\bar v_j\big)$ \Comment{gradient}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\ne i}s_{ij}\bar v_j\big)$ \Comment{gradient}
   \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
@@ -125,7 +125,7 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
   \State $\bar v_i\gets v_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(\bar v_i+v_i(b_i^{(\ell)})\big)$
 \EndFor
 \State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
-\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i,j}s_{ij}v_i(b_i)v_j(b_j)$
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i\ne j}s_{ij}v_i(b_i)v_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
