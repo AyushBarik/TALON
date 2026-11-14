@@ -36,17 +36,19 @@ def main():
     acc = np.array([100 * float(r["accuracy"]) for r in rows])
 
     use_style()
+    import matplotlib
+    matplotlib.rcParams.update({"xtick.labelsize": 6, "ytick.labelsize": 6, "axes.labelsize": 7})
     import matplotlib.pyplot as plt
-    # Same printed size and plot-area margins as Figure 1 (budget_curve.py), so single-column figures line up.
-    fig, ax = plt.subplots(figsize=(COLUMN, COLUMN * 0.72))
-    fig.subplots_adjust(left=0.13, right=0.97, bottom=0.17, top=0.97)
+    # Three quarters of a column wide (included at 0.75\linewidth), so it prints at this size.
+    fig, ax = plt.subplots(figsize=(COLUMN * 0.75, COLUMN * 0.75 * 0.62))
+    fig.subplots_adjust(left=0.16, right=0.97, bottom=0.22, top=0.96)
     grid = np.exp(np.linspace(np.log(3.5), np.log(1000), 300))
     for name, (f, p0, color, ls) in FAMILIES.items():
         p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
         rmse = np.sqrt(np.mean((f(b, *p) - acc) ** 2))
         print(f"{name:12s} params={np.round(p, 3)} RMSE={rmse:.2f} pts")
         ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.1, label=name, zorder=2)
-    ax.plot(b, acc, "o", color="black", ms=3, zorder=3)
+    ax.plot(b, acc, "o", color="black", ms=2.5, zorder=3)
 
     ax.set_xscale("log")
     ax.set_xticks([2, 8, 32, 128, 512, 2048])
@@ -57,7 +59,7 @@ def main():
     ax.set_yticks([20, 30, 40, 50])
     ax.set_xlabel("Token budget")
     ax.set_ylabel("Accuracy (%)")
-    ax.legend(loc="lower right", frameon=False, fontsize=6)
+    ax.legend(loc="lower right", frameon=False, fontsize=5.5, labelspacing=0.25, handlelength=1.5)
     print(save(fig, os.path.join(HERE, "value_curve")))
 
 
