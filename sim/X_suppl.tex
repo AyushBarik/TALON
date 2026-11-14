@@ -1,0 +1,82 @@
+\clearpage
+\setcounter{page}{1}
+\maketitlesupplementary
+\appendix
+
+\section{Proofs}
+\label{app:proofs}
+
+Throughout, items $i\in[N+M]$ have fixed relevances $\tilde r_i\ge0$ and token values $v_i$, and $\mathcal B$ denotes
+the token counts that the pruner supports, including zero.
+
+\paragraph{Optimality of water-filling with discrete token counts.}
+For a price $\lambda\ge0$, let $b_i^*(\lambda)\in\argmax_{b\in\mathcal B}\,\tilde r_iv_i(b)-\lambda b$ for every item,
+and let $B^*=\sum_ib_i^*(\lambda)$ be the tokens that this allocation spends. We show that $\mathbf b^*(\lambda)$
+maximizes $\sum_i\tilde r_iv_i(b_i)$ among all allocations with $b_i\in\mathcal B$ and $\sum_ib_i\le B^*$. Let
+$\mathbf b$ be any such allocation. By the definition of $b_i^*(\lambda)$,
+\begin{equation*}
+  \tilde r_iv_i(b_i)-\lambda b_i\le\tilde r_iv_i\big(b_i^*(\lambda)\big)-\lambda b_i^*(\lambda)
+\end{equation*}
+for every item. Summing over the items gives
+\begin{equation*}
+  \sum_i\tilde r_iv_i(b_i)\le\sum_i\tilde r_iv_i\big(b_i^*(\lambda)\big)+\lambda\Big(\sum_ib_i-B^*\Big) ,
+\end{equation*}
+and the last term is not positive, since $\lambda\ge0$ and $\sum_ib_i\le B^*$. The argument uses neither the
+concavity of $v_i$ nor real-valued token counts. The bisection of \cref{alg:iwf} returns the allocation of a price at
+which at most $B$ tokens are spent, so this allocation is optimal for the tokens that it spends.
+
+\paragraph{Proof of Proposition~\ref{prop:proportional}.}
+Consider Eq.~\eqref{eq:relevance} with real-valued token counts and the token value $v(b)=b/(b+\tau)$, which is
+increasing and strictly concave, with $v'(b)=\tau/(b+\tau)^2$. Since $v$ is increasing, a maximizer spends the whole
+budget, and since the objective is concave and the constraint is linear, an allocation with $0<b_i<b_{\max}$ for
+every frame is a maximizer if and only if there is a price $\lambda>0$ with $r_iv'(b_i)=\lambda$ for every frame.
+Suppose that the proportional allocation $b_i=r_iB$ were a maximizer. By assumption it satisfies $0<b_i<b_{\max}$, so
+\begin{equation*}
+  \frac{r_i\,\tau}{(r_iB+\tau)^2}=\lambda\qquad\text{for every frame } i .
+\end{equation*}
+Every relevance $r_i$ would then be a root of the quadratic $\lambda(rB+\tau)^2-\tau r=0$ in $r$, which has at most
+two distinct roots. This contradicts the assumption that $N\ge3$ relevances are pairwise distinct. Hence the
+proportional allocation does not maximize Eq.~\eqref{eq:relevance}.
+
+The same argument shows when a proportional allocation is optimal. The condition $r_iv'(r_iB)=\lambda$ holds for
+every relevance only if $x\,v'(x)$ is constant, that is, only if $v(x)=a\log x+c$, a token value that never
+saturates.
+
+\paragraph{Proof of Proposition~\ref{prop:bound}.}
+Let $c_i^{(t)}$ be the tokens of frame $f_i$ in the cache after turn $t$, with $c_i^{(0)}=0$. By construction,
+$p_i^{(t)}=\max\big(0,b_i^{(t)}-c_i^{(t-1)}\big)$ and $c_i^{(t)}=\max\big(c_i^{(t-1)},b_i^{(t)}\big)$, so that
+$p_i^{(t)}=c_i^{(t)}-c_i^{(t-1)}$ at every turn. The sum over turns telescopes,
+\begin{equation*}
+  \sum_{t=1}^{T}p_i^{(t)}=c_i^{(T)}-c_i^{(0)}=\max_{t}\,b_i^{(t)}\le b_{\max} ,
+\end{equation*}
+where the second equality unrolls the update of $c_i^{(t)}$. The prefill is well defined because the pruner ranks the
+tokens of a frame once, independently of the query: the tokens that a later turn adds are exactly those ranked from
+$c_i^{(t-1)}+1$ to $b_i^{(t)}$, and no cached token is ever replaced.
+
+\section{Implementation Details}
+\label{app:impl}
+
+\paragraph{Candidates and relevance.} We implement \name and all baselines in PyTorch, and run all experiments on
+two NVIDIA A100 GPUs. Every method draws its candidates from frames sampled at 1 fps and kept at their
+native resolution. \name embeds frames with SigLIP~2 and transcript segments with BGE, and uses the question together
+with its answer options as the query. The softmax temperature of the relevance, the diversity weight $\eta$, and the
+text weight $\beta$ are tuned per benchmark.
+
+\paragraph{Token value.} The measurements of \cref{fig:value} use 280 questions of LVBench~\cite{wang2024lvbench},
+which is not among our evaluation benchmarks. For each question, the VLM answers from its eight most relevant frames
+with every frame shown at the same token count, at nine levels from 4 tokens to the native token count.
+
+\paragraph{Compute.} With $n$ prompt tokens, the prefill of a language model with $P$ parameters, $L$ layers, and
+hidden size $d$ costs $2Pn+2n^2dL$ floating-point operations, where the first term covers the weights and the second
+term covers attention. We sum this cost over every VLM call that a method makes for a question, including the
+planning calls of AdaAlloc and the chain-of-thought and scorer calls of QuoTA. The vision encoder is not included; it
+adds 48 TFLOPs per question for \name.
+
+\paragraph{Baselines.} Top-K (w/ pruning) keeps 192 tokens for each of the top-64 frames, which fills the budget of
+12,288 tokens. Q-Frame uses SigLIP~2 in place of its Long-CLIP scorer. For InternVL3.5-4B, whose frames have a
+fixed cost of 256 tokens, the budget of 12,288 tokens corresponds to 48 frames.
+
+\paragraph{Multi-turn evaluation.} We evaluate 200 conversations of MT-Video-Bench with 450 judged turns. The baselines
+run as standard multi-turn chat, in which the KV cache of the whole past conversation is kept and the frames selected
+for a new question are appended. The reuse statistics of \cref{fig:overlap}(b) replay the allocations of \name over
+300 conversations at 12,288 tokens per turn.

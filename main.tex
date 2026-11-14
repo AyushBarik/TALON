@@ -1,5 +1,16 @@
 % CVPR 2027 Paper Template; see https://github.com/cvpr-org/author-kit
 
+%%%%%%%%% SIMULATED PAPER SWITCH
+% \simulatedpaper builds the completed, evaluation-only paper from sim/. That version contains PROJECTED numbers
+% (each one is wrapped in \simnum{...} in the source). It is for automated paper-scoring tools only.
+% Without \simulatedpaper, the paper builds from sec/ exactly as before; nothing in sim/ is read.
+% \showsimulated (only with \simulatedpaper) prints every projected number in red.
+% After you change a switch, run: pdflatex, bibtex, pdflatex, pdflatex.
+\newif\ifsimulatedpaper \newcommand{\simulatedpaper}{\simulatedpapertrue}
+\newif\ifshowsimulated  \newcommand{\showsimulated}{\showsimulatedtrue}
+% \simulatedpaper
+% \showsimulated
+
 \documentclass[10pt,twocolumn,letterpaper]{article}
 
 %%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
@@ -9,6 +20,7 @@
 
 % Import additional packages in the preamble file, before hyperref
 \input{preamble}
+\ifsimulatedpaper\input{sim/preamble}\fi
 
 % It is strongly recommended to use hyperref, especially for the review version.
 % hyperref with option pagebackref eases the reviewers' job.
@@ -32,16 +44,29 @@
 
 \begin{document}
 \maketitle
+\ifsimulatedpaper
+\input{sim/0_abstract}
+\input{sim/1_intro}
+\input{sim/2_related}
+\input{sim/3_method}
+\input{sim/4_evaluation}
+\input{sim/5_conclusion}
+\else
 \input{sec/0_abstract}    
 \input{sec/1_intro}
 \input{sec/2_related}
 \input{sec/3_method}
 \input{sec/4_evaluation}
 \input{sec/5_conclusion}
+\fi
 {
     \small
     \bibliographystyle{ieeenat_fullname}
+    \ifsimulatedpaper
+    \bibliography{main,sim/sim}
+    \else
     \bibliography{main}
+    \fi
 }
 
 % WARNING: do not forget to delete the supplementary pages from your submission 
