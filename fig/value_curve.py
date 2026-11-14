@@ -49,11 +49,11 @@ def main():
     ax.plot(b, acc, "o", color="black", ms=3, zorder=3)
 
     ax.set_xscale("log")
-    ax.set_xticks([4, 16, 64, 256, 1024])
-    ax.set_xticklabels(["4", "16", "64", "256", "1024"])
+    ax.set_xticks([2, 8, 32, 128, 512, 2048])
+    ax.set_xticklabels(["2", "8", "32", "128", "512", "2048"])
     ax.minorticks_off()
-    ax.set_xlim(3, 1200)
-    ax.set_ylim(15, 55)
+    ax.set_xlim(2, 2048)  # every axis starts at its first tick and ends at its last tick
+    ax.set_ylim(20, 50)
     ax.set_yticks([20, 30, 40, 50])
     ax.set_xlabel("Token budget")
     ax.set_ylabel("Accuracy (%)")

@@ -42,13 +42,13 @@ def main():
     gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
-    LEFT, RIGHT = (0.42, 4.0), (21.0, 26.0)
+    LEFT, RIGHT = (0.4, 4.0), (22.0, 25.0)  # each axis starts and ends at a tick
     for a in (ax, ax2):
         a.set_xscale("log")
         a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(*LEFT)
-    ax.set_xticks([0.5, 1, 2, 3.5])
-    ax.set_xticklabels(["0.5", "1", "2", "3.5"])
+    ax.set_xticks([0.4, 1, 2, 4])
+    ax.set_xticklabels(["0.4", "1", "2", "4"])
     ax2.set_xlim(*RIGHT)
     ax2.set_xticks([22, 25])
     ax2.set_xticklabels(["22", "25"])

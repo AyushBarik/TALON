@@ -7,7 +7,6 @@ from orx_figstyle import BASELINE, PALETTE
 
 METHODS = {
     "Uniform sampling": (PALETTE["black"], "x"),
-    "Top-K": (BASELINE, "v"),  # top-K frames at native resolution, no pruner (multi-turn figure only)
     "Top-K (w/ pruning)": (PALETTE["cyan"], "P"),
     "Q-Frame": (PALETTE["orange"], "s"),
     "QuoTA": (PALETTE["green"], "D"),

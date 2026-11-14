@@ -31,10 +31,11 @@ def main():
     use_style()
     plt.rcParams.update({"xtick.labelsize": 5.5, "ytick.labelsize": 5.5, "axes.labelsize": 6.5})
     fig, axes = plt.subplots(1, 2, figsize=(COLUMN, COLUMN * 0.62), layout="constrained")
-    panels = [("tflops_curve.csv", "TFLOPs per query", "MLVU accuracy (%)", [10, 30, 100, 300, 800]),
-              ("multiturn_curve.csv", "TFLOPs per conversation", "MTVB accuracy (%)", [100, 300, 1000, 3000])]
+    # (file, x label, y label, x ticks, y ticks): every axis starts at its first tick and ends at its last tick
+    panels = [("tflops_curve.csv", "TFLOPs per query", "MLVU accuracy (%)", [10, 100, 1000], [64, 68, 72, 76, 80]),
+              ("multiturn_curve.csv", "TFLOPs per conversation", "MTVB accuracy (%)", [50, 500, 5000], [52, 54, 56, 58, 60, 62])]
     handles = {}
-    for ax, (name, xlabel, ylabel, ticks) in zip(axes, panels):
+    for ax, (name, xlabel, ylabel, ticks, yticks) in zip(axes, panels):
         rows = load(name)
         ax.set_xscale("log")
         for method, (color, marker) in METHODS.items():
@@ -51,7 +52,9 @@ def main():
         ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel, labelpad=1)
-        ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=6, integer=True))  # accuracy ticks are always integers
+        ax.set_xlim(ticks[0], ticks[-1])
+        ax.set_yticks(yticks)  # accuracy ticks are always integers
+        ax.set_ylim(yticks[0], yticks[-1])
     order = [m for m in METHODS if m in handles]
     fig.legend([handles[m] for m in order], order, loc="outside upper center", ncol=4, frameon=False, fontsize=5.5,
                columnspacing=0.8, handlelength=1.6, handletextpad=0.4)
