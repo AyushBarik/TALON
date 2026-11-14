@@ -29,6 +29,9 @@ FAMILIES = {
     "Rational": (lambda b, a, c, t: a + c * b / (b + t), [20, 25, 30], PALETTE["purple"], "-"),
 }
 
+# Which line is drawn on top: Sigmoid, then Exponential, then Rational, then Log (the data points stay above all).
+ZORDER = {"Sigmoid": 2.4, "Exponential": 2.3, "Rational": 2.2, "Log": 2.1}
+
 
 def main():
     rows = list(csv.DictReader(open(os.path.join(HERE, "value_curve.csv"))))
@@ -47,7 +50,7 @@ def main():
         p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
         rmse = np.sqrt(np.mean((f(b, *p) - acc) ** 2))
         print(f"{name:12s} params={np.round(p, 3)} RMSE={rmse:.2f} pts")
-        ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.1, label=name, zorder=2)
+        ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.1, label=name, zorder=ZORDER[name])
     ax.plot(b, acc, "o", color="black", ms=2.5, zorder=3)
 
     ax.set_xscale("log")
