@@ -9,18 +9,18 @@
 \definecolor{ink}{HTML}{2E3440}
 \definecolor{arrowgray}{HTML}{6B7280}
 \definecolor{bandN}{HTML}{F1F2F4}
-\definecolor{accA}{HTML}{4C72B0}
-\definecolor{frm}{HTML}{4C72B0}
-\definecolor{txt}{HTML}{B5589A}
+\definecolor{accA}{HTML}{0072B2}% = orxblue, TALON's color in every figure and table
+\definecolor{frm}{HTML}{4A4F57}% frames: neutral dark grey
+\definecolor{txt}{HTML}{E69F00}% transcript: orxorange, the complement of blue
 \newcommand{\snowflake}[2]{%
-  \begin{scope}[shift={#1}, line width=0.55pt, draw=orxsky!85!black, line cap=round]
+  \begin{scope}[shift={#1}, line width=0.55pt, draw=black!45, line cap=round]
     \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:#2);
       \draw (\a:0.55*#2) -- ++(\a+45:0.32*#2); \draw (\a:0.55*#2) -- ++(\a-45:0.32*#2);}
   \end{scope}}
 % \items{width}{height scale}{v1/t1,...,v20/t20}: 20 items on one time axis; t = 1 marks a transcript event (light bar)
 \newcommand{\items}[3]{%
   \foreach \v/\t [count=\i] in {#3} {
-    \ifnum\t=1 \fill[txt!55] ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2});
+    \ifnum\t=1 \fill[txt] ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2});
     \else      \fill[frm]    ({(\i-0.5)*#1/20-0.3*#1/20},0) rectangle ++({0.6*#1/20},{\v*#2}); \fi}}
 % \prunedframe{center}{image}{kept tokens out of 32}: a frame (1.1 cm) as an 8x4 token grid; dropped tokens greyed out.
 % The keep order is one fixed ranking (centre first), so a frame at b tokens holds its top b tokens.
@@ -36,9 +36,9 @@
     \draw[black!45, line width=0.3pt] (0,0) rectangle (1.1,0.619);
   \end{scope}}
 \newcommand{\txtchip}[1]{% transcript event: a short text chip
-  \fill[txt!14, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
-  \draw[txt!75, line width=0.5pt] ($(#1)+(-0.3,0.07)$) -- ++(0.6,0);
-  \draw[txt!75, line width=0.5pt] ($(#1)+(-0.3,-0.07)$) -- ++(0.4,0);}
+  \fill[txt!18, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
+  \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,0.07)$) -- ++(0.6,0);
+  \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,-0.07)$) -- ++(0.4,0);}
 % \stage{x}{y}{number}{title}{one-line description}: numbered stage heading
 \newcommand{\stage}[5]{%
   \node[circle, fill=#5, text=white, font=\sffamily\scriptsize\bfseries, inner sep=0pt, minimum size=0.4cm] at (#1+0.2,#2) {#3};
@@ -70,8 +70,8 @@
 \fill[black!88, rounded corners=1pt] (0.2,2.47) rectangle (4.45,3.2);
 \foreach \x in {0.27,0.47,...,4.35} {\fill[white] (\x,3.09) rectangle ++(0.1,0.06); \fill[white] (\x,2.52) rectangle ++(0.1,0.06);}
 \foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.635+(\k-1)*0.845},2.835) {\includegraphics[width=0.8cm]{fig/frames/frame\k.jpg}};}
-\fill[txt!14, rounded corners=1pt] (0.2,2.18) rectangle (4.45,2.4);
-\foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!70, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
+\fill[txt!18, rounded corners=1pt] (0.2,2.18) rectangle (4.45,2.4);
+\foreach \x/\l in {0.4/0.75, 1.35/0.6, 2.2/0.85, 3.3/0.7} {\draw[txt!85!black, line width=0.5pt] (\x,2.29) -- ++(\l,0);}
 \node[model] (ret) at (1.2,1.72) {Retriever\hspace{0.12cm}};
 \snowflake{($(ret.north east)+(-0.14,-0.14)$)}{0.075}
 \node[qa] (q) at (3.4,1.72) {\textbf{Q:} Color of\\the last car?};
@@ -96,9 +96,9 @@
   \node[axl, rotate=90, anchor=south] at (-0.04,1.15) {value $v(b)$};
   \node[axl, anchor=north] at (0.95,-0.02) {tokens $b$};
   \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.22*\x}, {1.7*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[black!70, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.22*\x}, {1.6*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\scriptsize, text=txt, anchor=south west, inner sep=1pt] at (1.78,1.6) {$v_{\text{text}}$};
-  \node[font=\sffamily\scriptsize, text=black!70, anchor=north west, inner sep=1pt] at (1.78,1.45) {$v_{\text{frame}}$};
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.22*\x}, {1.6*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\scriptsize, text=txt!80!black, anchor=south west, inner sep=1pt] at (1.78,1.6) {$v_{\text{text}}$};
+  \node[font=\sffamily\scriptsize, text=frm, anchor=north west, inner sep=1pt] at (1.78,1.45) {$v_{\text{frame}}$};
 \end{scope}
 % water-filling: relevance and value curves -> token plan
 \draw[arr] (7.9,1.0) -- node[elbl, above, align=center] {water-\\filling} node[elbl, below] {price $\lambda$} (8.75,1.0);
