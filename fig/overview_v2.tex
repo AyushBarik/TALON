@@ -1,0 +1,115 @@
+% Overview figure (figure*, \textwidth = 17.46 cm), version 2. Top left: frame-level RAG keeps or drops whole frames,
+% TALON gives every useful frame its own token count (resolution). Top right: the Token Scheduler prices every token at
+% one lambda (water-filling on the marginal value r_i v_i'(b)), then the storyboard goes to the VLM. Bottom: across
+% turns the KV cache only grows; TALON prefills only missing tokens, re-selection adds a new copy every turn.
+% Curves, token counts and bar lengths are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU.
+% (Version 1 of this figure: fig/overview_v1.tex.)
+\definecolor{ink}{HTML}{2E3440}
+\definecolor{arrowgray}{HTML}{6B7280}
+\definecolor{panel}{HTML}{F4F5F7}
+\definecolor{frm}{HTML}{0072B2}
+\definecolor{txt}{HTML}{CC79A7}
+\definecolor{price}{HTML}{D55E00}
+% \tokframe{center}{image}{kept of 32}: a frame as an 8x4 token grid (0.96 cm wide); dropped tokens are whited out.
+% One fixed ranking (centre first), so a frame at b tokens holds its top b tokens.
+\newcommand{\tokframe}[3]{%
+  \node[inner sep=0pt] at (#1) {\includegraphics[width=0.96cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+(-0.48,-0.27)$)}]
+    \foreach \c [count=\k from 0] in {10,11,18,19,9,12,17,20,2,3,26,27,1,4,25,28,8,13,16,21,0,5,24,29,6,14,22,30,7,15,23,31} {
+      \ifnum\k<#3\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[white, opacity=0.88] (\cx*0.12,\cy*0.135) rectangle ++(0.12,0.135);
+      \fi}
+    \draw[black!25, line width=0.12pt, xstep=0.12, ystep=0.135] (0,0) grid (0.96,0.54);
+    \draw[black!45, line width=0.3pt] (0,0) rectangle (0.96,0.54);
+  \end{scope}}
+% \fullframe{center}{image}{kept: 1 or 0}: a whole frame, kept (outlined) or dropped (faded and struck through)
+\newcommand{\fullframe}[3]{%
+  \ifnum#3=1
+    \node[inner sep=0pt] at (#1) {\includegraphics[width=0.96cm]{fig/frames/#2}};
+    \draw[frm, line width=0.7pt] ($(#1)+(-0.48,-0.27)$) rectangle ++(0.96,0.54);
+  \else
+    \node[inner sep=0pt, opacity=0.22] at (#1) {\includegraphics[width=0.96cm]{fig/frames/#2}};
+    \draw[black!35, line width=0.3pt] ($(#1)+(-0.48,-0.27)$) rectangle ++(0.96,0.54);
+    \draw[black!45, line width=0.6pt] ($(#1)+(-0.2,-0.14)$) -- ++(0.4,0.28) ($(#1)+(-0.2,0.14)$) -- ++(0.4,-0.28);
+  \fi}
+\newcommand{\txtchip}[1]{% transcript event
+  \fill[txt!16, rounded corners=1.5pt] ($(#1)+(-0.42,-0.27)$) rectangle ++(0.84,0.54);
+  \foreach \y/\l in {0.12/0.6, 0.0/0.48, -0.12/0.56} {\draw[txt!80, line width=0.6pt] ($(#1)+(-0.3,\y)$) -- ++(\l,0);}}
+
+\begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.6pt,
+  arr/.style={-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
+  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=black!60, line width=0.5pt},
+  ttl/.style={font=\sffamily\small\bfseries, anchor=west, inner sep=0pt},
+  rowl/.style={font=\sffamily\footnotesize\bfseries, anchor=west, inner sep=0pt, align=left},
+  note/.style={font=\sffamily\scriptsize, text=black!70, inner sep=1pt},
+  box/.style={fill=white, draw=black!25, line width=0.5pt, rounded corners=3pt, align=center, inner sep=3pt}]
+
+% ============ panel backgrounds ============
+\fill[panel, rounded corners=5pt] (0,1.75) rectangle (7.55,5.45);
+\fill[frm!6, rounded corners=5pt] (7.7,1.75) rectangle (17.4,5.45);
+\draw[frm!45, rounded corners=5pt, line width=0.6pt] (7.7,1.75) rectangle (17.4,5.45);
+\fill[panel, rounded corners=5pt] (0,0) rectangle (17.4,1.6);
+
+% ============ (a) frame-level vs token-level ============
+\node[ttl] at (0.2,5.15) {Which frames, and in how much detail?};
+\node[rowl] at (0.2,4.3) {Top-$K$\\RAG};
+\foreach \img/\keep [count=\k] in {frame1.jpg/0, frame2.jpg/1, frame3.jpg/1, frame4.jpg/0, frame5.jpg/1, frame6.jpg/0}
+  {\fullframe{{1.65+(\k-1)*1.07},4.3}{\img}{\keep}}
+\node[note, anchor=west] at (1.17,3.8) {keep or drop each frame: $K$ frames, all at full detail};
+\node[rowl] at (0.2,2.75) {\name};
+\foreach \img/\b [count=\k] in {frame1.jpg/6, frame2.jpg/24, frame3.jpg/32, frame4.jpg/12, frame5.jpg/28, frame6.jpg/4}
+  {\tokframe{{1.65+(\k-1)*1.07},2.75}{\img}{\b}}
+\node[note, anchor=west] at (1.17,2.25) {every useful frame at its own resolution: $b_i$ tokens};
+\draw[arr] (7.25,2.75) -- (7.95,2.75);
+
+% ============ (b) token scheduler ============
+\node[ttl, text=frm!85!black] at (7.95,5.15) {Token Scheduler};
+\node[font=\sffamily\footnotesize] at (10.15,4.66) {$\max\limits_{\mathbf b}\ \sum_i r_i\,v_i(b_i)\ \ \text{s.t.}\ \sum_i b_i\le B$};
+% marginal value r_i v_i'(b) of three items against one price lambda
+\begin{scope}[shift={(8.25,2.2)}]
+  \draw[ax] (0,0) -- (3.75,0); \draw[ax] (0,0) -- (0,1.95);
+  \node[note, rotate=90, anchor=south] at (-0.05,0.95) {value of next token};
+  \node[note, anchor=north] at (1.85,-0.03) {tokens $b$};
+  \draw[frm, line width=1.1pt, domain=0:3.6, samples=50] plot (\x, {1.6*exp(-\x/1.2)});
+  \draw[frm!55, line width=1.1pt, domain=0:3.6, samples=50] plot (\x, {0.8*exp(-\x/1.4)});
+  \draw[txt, line width=1.1pt, domain=0:3.6, samples=50] plot (\x, {0.9*exp(-\x/0.6)});
+  \draw[price, densely dashed, line width=0.9pt] (0,0.35) -- (3.6,0.35) node[anchor=south east, inner sep=1.5pt, font=\sffamily\scriptsize, text=price] {price $\lambda$};
+  \foreach \x/\c in {1.82/frm, 1.16/frm!55, 0.57/txt} {
+    \draw[\c, densely dotted, line width=0.6pt] (\x,0.35) -- (\x,0);
+    \fill[\c] (\x,0.35) circle (1.6pt);}
+  \foreach \y/\c/\l in {1.78/frm/{frame, high $r_i$}, 1.5/frm!55/{frame, lower $r_i$}, 1.22/txt/{transcript event}} {
+    \draw[\c, line width=1.1pt] (1.55,\y) -- ++(0.32,0);
+    \node[font=\sffamily\scriptsize, anchor=west, inner sep=1pt] at (1.91,\y) {\l};}
+\end{scope}
+\node[note, align=center] at (13.55,3.85) {one price $\lambda$ per token:\\each item buys tokens\\while the next one is\\worth more than $\lambda$};
+\draw[arr] (12.25,3.15) -- (14.75,3.15);
+% storyboard -> VLM -> answer
+\node[note] at (16.05,4.95) {storyboard, in time order};
+\tokframe{15.45,4.3}{frame2.jpg}{24}
+\tokframe{16.6,4.3}{frame3.jpg}{32}
+\txtchip{15.45,3.55}
+\tokframe{16.6,3.55}{frame5.jpg}{28}
+\node[box, minimum width=1.0cm] (vlm) at (15.45,2.45) {VLM};
+\node[box, minimum width=0.7cm] (ans) at (16.75,2.45) {answer};
+\draw[arr] (16.02,3.17) -- (15.62,2.73);
+\draw[arr] (vlm.east) -- (ans.west);
+
+% ============ (c) across turns ============
+\node[ttl] at (0.2,1.3) {Across turns};
+\node[note, anchor=west] at (2.5,1.3) {the KV cache only grows; attention re-ranks the cached frames};
+\node[rowl, font=\sffamily\scriptsize\bfseries] at (0.2,0.85) {Re-select every turn};
+\node[rowl, font=\sffamily\scriptsize\bfseries, text=frm!85!black] at (0.2,0.32) {\name};
+\begin{scope}[shift={(3.0,0)}]
+  % baseline: a new copy of B tokens every turn (labelled by turn)
+  \foreach \t/\x in {1/0, 2/3.0, 3/6.0} {\fill[black!30] (\x,0.7) rectangle ++(2.7,0.3);
+    \node[font=\sffamily\scriptsize, text=white, inner sep=0pt] at (\x+1.35,0.85) {turn \t\ ($q_\t$)};}
+  \node[note, anchor=west] at (8.8,0.85) {$+B$ tokens per turn: grows};
+  % TALON: B once, then only the missing tokens
+  \fill[frm!70] (0,0.17) rectangle ++(2.7,0.3);
+  \fill[frm!70] (3.0,0.17) rectangle ++(0.55,0.3);
+  \fill[frm!70] (6.0,0.17) rectangle ++(0.3,0.3);
+  \node[note, anchor=west] at (3.6,0.32) {only missing tokens};
+  \node[note, anchor=west, text=frm!85!black] at (8.8,0.32) {prefill bounded: $\sum_t p_i^{(t)}\le b_{\max}$};
+\end{scope}
+\end{tikzpicture}
