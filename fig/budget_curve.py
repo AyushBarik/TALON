@@ -52,6 +52,8 @@ def main():
     ax2.set_xlim(*RIGHT)
     ax2.set_xticks([22, 25])
     ax2.set_xticklabels(["22", "25"])
+    ax.get_xticklabels()[-1].set_ha("right")  # keep "4" and "22" apart at the axis break
+    ax2.get_xticklabels()[0].set_ha("left")
     ax.set_ylim(60, 80)
     ax.set_yticks([60, 64, 68, 72, 76, 80])
     ax2.tick_params(labelleft=False, left=False)

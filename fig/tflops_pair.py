@@ -56,7 +56,7 @@ def main():
         ax.set_yticks(yticks)  # accuracy ticks are always integers
         ax.set_ylim(yticks[0], yticks[-1])
     order = [m for m in METHODS if m in handles]
-    fig.legend([handles[m] for m in order], order, loc="outside upper center", ncol=4, frameon=False, fontsize=5.5,
+    fig.legend([handles[m] for m in order], order, loc="outside upper center", ncol=3, frameon=False, fontsize=5.5,
                columnspacing=0.8, handlelength=1.6, handletextpad=0.4)
     panel_labels(axes)
     print(save(fig, os.path.join(HERE, "tflops_pair")))
