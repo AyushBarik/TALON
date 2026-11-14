@@ -25,7 +25,7 @@ where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$, and
   \label{eq:rel}
 \end{equation}
 % Code: z-scored cosines with a softmax temperature; state in implementation details.
-is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that defines \textit{how} tokens should be valued, and prove that our solution strictly outperforms prior token allocation rules on it (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{kwon2023vllm,zheng2024sglang}, a standard feature of LLM inference. 
+is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that defines \textit{how} tokens should be valued, and prove that our allocation is optimal for the relevance-weighted objective, which the allocation rules of prior work do not attain (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{kwon2023vllm,zheng2024sglang}, a standard feature of LLM inference. 
 
 At its core, \name carries the allocation across turns, reusing the KV cache and updating relevance with the attention of the VLM. This improves both efficiency and accuracy, and we prove that the cumulative prefill of evidence tokens stays bounded however long the conversation lasts, owing to the design of our token pruner (\cref{sec:multiturn}).
 
@@ -65,7 +65,7 @@ fitting $\tau$ by maximum likelihood offline, on calibration video--query pairs 
 The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which $v$ credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.} to every frame, weighted by the value of that frame:
 % Fix A (2026-11-13): the sum includes j = i and uses the raw cosine, so the similarity matrix is PSD. The code still uses j != i and max(0, cos): update it and rerun before submission.
 \begin{equation}
-  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j}\cos(f_i,f_j)\,v(b_j) ,
+  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\ne i}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
 where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
@@ -92,7 +92,7 @@ Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are cou
 
 \textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
 \begin{equation}
-  \tilde r_i=r_i-2\eta\sum_{j}\cos(f_i,f_j)\,\bar v_j ,
+  \tilde r_i=r_i-2\eta\sum_{j\ne i}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
 \end{equation}
 where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
@@ -117,7 +117,7 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
 \State $\bar v_i\gets 0$ \Comment{current values}
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j}s_{ij}\bar v_j\big)$ \Comment{gradient}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\ne i}s_{ij}\bar v_j\big)$ \Comment{gradient}
   \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
@@ -132,7 +132,7 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
   \State $\bar v_i\gets v_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(\bar v_i+v_i(b_i^{(\ell)})\big)$
 \EndFor
 \State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
-\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i,j}s_{ij}v_i(b_i)v_j(b_j)$
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i\ne j}s_{ij}v_i(b_i)v_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
@@ -172,7 +172,7 @@ Once a frame is cached, the VLM has already read it, and its attention to the fr
 for cached frames, and keeps $r_i^{(t)}=r(f_i\mid q_t)$ for the others. Here, $\gamma\in[0,1]$ sets the trust in attention, from retrieval alone at $\gamma=0$ to attention alone at $\gamma=1$. We tune $\gamma$ to maximize the hypervolume of the accuracy--TFLOPs Pareto frontier, following standard multi-objective optimization~\cite{karl2023multiobjective,daulton2020qehvi}. The cached frames are then rescaled to keep their total relevance, so attention only re-ranks the frames the VLM has already seen and cannot take relevance from frames it has not seen.
 
 \paragraph{Allocating and Prefilling.}
-\name then solves Eq.~\eqref{eq:joint} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the RoPE of the VLM~\cite{bai2025qwen25vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
+\name then solves Eq.~\eqref{eq:joint} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the multimodal RoPE of the VLM~\cite{bai2025qwen3vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
 
 \paragraph{Bounded Prefill.}
 \name designs its pruner to rank the tokens of each frame once, independently of the query, so that every turn only extends the nested token sequence of a frame, and each rank is prefilled at most once. The evidence prefill of a conversation is therefore bounded, however many turns it lasts:
