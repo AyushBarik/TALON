@@ -30,7 +30,7 @@ that most tokens of a frame are better spent on other frames. Token
 compression~\cite{chen2024fastv,yang2024visionzip,shen2024longvu} mitigates this issue, but compresses every frame
 independently, and recent query-aware methods vary the token count of frames only with fixed rules, such as
 resolution tiers~\cite{zhang2025qframe} or shares proportional to relevance~\cite{luo2025quota}. None of these
-methods asks how a global token budget should be divided across frames, although a different division could reveal
+methods solves for the division of a global token budget across frames, although a different division could reveal
 useful evidence in other frames.
 
 These limitations motivate us to move video RAG from frames to tokens. We present \name, a plug-and-play

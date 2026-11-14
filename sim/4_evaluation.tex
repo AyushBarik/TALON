@@ -17,7 +17,7 @@ InternVL3.5-4B~\cite{wang2025internvl35} encodes each $448\times448$ image tile 
 (LVB)~\cite{wu2024longvideobench}, we use its validation set of 1,337 questions. Neither provides subtitles in our setting, so the input is visual only.
 Video-MME~\cite{fu2024videomme} contains 2,700 questions on short, medium, and long videos; we use its subtitled
 setting, in which subtitle tokens count toward the same budget. For the multi-turn setting, we use 200 conversations of
-MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge (Gemini~3.8 Flash); the judge prompt is given in the appendix.
+MT-Video-Bench (MTVB)~\cite{mtvideobench2025}, whose answers are scored by an LLM judge (Gemini~3.8 Flash), which agrees with our manual labels on \simnum{93}\% of 200 sampled turns; the judge prompt is given in the appendix.
 
 \paragraph{Metrics.} We report accuracy together with compute, measured in TFLOPs per question: the prefill compute
 of the language models of all VLMs that a method calls, summed over every call for that question. For conversations,

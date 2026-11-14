@@ -4,8 +4,8 @@ to a vision-language model (VLM). Existing systems, however, operate at the fram
 the VLM at the same token cost, although frames differ widely in relevance and the value of a frame saturates with its
 token count. We present \name, a plug-and-play token allocation framework that moves video RAG from frames to tokens.
 \name formulates evidence selection as a budgeted optimization over the token count of every frame and transcript
-segment, with a token value function fitted offline, and solves it by iterative water-filling, which attains a higher
-objective than the fixed allocation rules of prior work. In multi-turn conversations, \name carries the allocation
+segment, with a token value function fitted offline, and solves it by iterative water-filling, whose optimum the
+fixed allocation rules of prior work do not attain. In multi-turn conversations, \name carries the allocation
 across turns: it updates relevance with the attention of the VLM and prefills only the tokens that the KV cache lacks,
 so that the cumulative prefill of evidence tokens provably stays bounded. On MLVU, LongVideoBench, and Video-MME with
 two VLMs, \name is more accurate than every compute-matched baseline, by more than 4 points on Video-MME, and
