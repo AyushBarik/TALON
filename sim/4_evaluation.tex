@@ -30,16 +30,16 @@ candidates into the input of the VLM:
 \begin{itemize}
   \item Top-K (w/ pruning): Retrieves the top-64 frames by relevance and keeps 192 tokens of each with the token
     pruner of \name. It thus differs from \name only in the allocation.
-  \item Q-Frame~\cite{zhang2025qframe}: Samples frames by relevance and shows them at three resolutions, with the most
-    relevant frames at the highest. We replace its Long-CLIP scorer with SigLIP~2.
+  \item Q-Frame~\cite{zhang2025qframe}: Shows frames at three resolutions by relevance rank. We replace its Long-CLIP scorer with SigLIP~2.
   \item QuoTA~\cite{luo2025quota}: Scores each frame with a small VLM after decoupling the question, and assigns
     each frame a number of tokens that grows with its score.
   \item FOCUS~\cite{zhu2026focus}: Selects keyframes from short clips by bandit exploration.
   \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution
     frames and dense high-resolution frames (concurrent work).
 \end{itemize}
-Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}. We therefore also pair \name with VideoRAG~\cite{ren2025videorag}, which passes the frames of its retrieved
-clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget across them.
+Every baseline receives the same candidate frames and, on Video-MME, the same retrieved transcript segments, and each
+reimplementation matches the published accuracy of its method in the original setting.
+Graph-based RAG is also prevalent in video understanding systems~\cite{ren2025videorag,shen2025vgent,yan2025ava,yang2026g2frag,chen2026memdreamer,yan2026ecrag}. We therefore also pair \name with VideoRAG~\cite{ren2025videorag}, whose retrieved frames \name re-allocates under the same budget.
 
 \subsection{Main Results}
 \label{sec:exp-main}
@@ -93,7 +93,7 @@ clips to the VLM at a uniform cost; VideoRAG + \name allocates the same budget a
 
 \paragraph{\name achieves the Pareto frontier in single-turn question answering.}
 \cref{tab:main} compares all methods at the budget of 12,288 tokens. With Qwen3-VL-8B and embedding-based RAG, \name
-attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. Relative to Top-K (w/ pruning), which shares its retriever, pruner, and budget,
+attains the highest accuracy on all three benchmarks, tied with QuoTA on LVB. At matched compute, it exceeds Q-Frame, FOCUS, and AdaAlloc by 0.9 to 7.2 points. Relative to Top-K (w/ pruning),
 \name gains 2.2, 2.6, and 4.2 points on MLVU, LVB, and Video-MME. The gain is largest on the long videos of Video-MME (8.1 points), where the relevant evidence is sparse. QuoTA is the closest baseline: its difference to \name on MLVU and LVB is within one point and not significant (paired McNemar test, $p\ge0.12$),
 but its per-frame scorer calls cost 2.8--3.4$\times$ more compute. The gains carry over to
 InternVL3.5-4B: \name remains the most accurate method on MLVU and
@@ -121,8 +121,7 @@ baselines show at most half of them.
 resolution. The baselines still add the new frames of every question, whereas \name prefills only the tokens that the
 cache lacks. At the same
 per-turn budget, it consequently uses 2.2--5.2$\times$ less compute than Q-Frame and FOCUS and up to 4.6$\times$ less
-than Top-K (w/ pruning), and it is the most accurate method at three of the four budgets. The reuse behind this
-saving is substantial: a turn after the first finds a median of 81\% of the tokens it needs already in the cache
+than Top-K (w/ pruning), and it is the most accurate method at three of the four budgets. A turn after the first finds a median of 81\% of its tokens already in the cache
 (\cref{fig:overlap}(b)).
 
 \begin{table}[t]
