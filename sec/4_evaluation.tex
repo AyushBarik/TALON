@@ -1,54 +1,23 @@
 \section{Evaluation}
 \label{sec:exp}
 
-We evaluate \name across VLM architectures and long-video benchmarks, in both single-turn and multi-turn Q\&A. We
-sample candidate frames at 0.5 fps and compare all methods at matched compute (TFLOPs) by default, and perform studies
-on different compute budgets (\cref{sec:exp-main}). \name scores the relevance of frames with SigLIP~2~\cite{siglip2} and of transcripts
-with BGE~\cite{bge}. All experiments were done on NVIDIA A100 GPUs. Additional implementation details are provided in
-the appendix.
+To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, with Qwen3-VL-8B serving as the default backbone unless stated otherwise. ~\name is combined with a plain RAG system that stores paired video frames and subtitles sampled at 0.5 FPS, before semantically scoring frames with SigLIP~2~\cite{siglip2} and subtitles with BGE~\cite{bge}. We also add a graph based RAG method due to its popularity in video understanding building atop VideoRAG ~\cite{luo2024videorag}. As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
 
-\subsection{Experimental Setup}
-\label{sec:exp-setup}
-
-\paragraph{Models.} We evaluate \name on two VLMs that differ in how they encode frames:
+\paragraph{Benchmarks.} We evaluate on the three most popular video understanding benchmarks, however as they only cover single-turn multiple-choice Q\&A, we also include a multi-turn, open-ended benchmark:
 \begin{itemize}
-  \item Qwen3-VL-8B~\cite{bai2025qwen3vl}: Encodes each frame at its native resolution, so the number of tokens
-    grows with the frame size.
-  \item InternVL3.5-4B~\cite{wang2025internvl35}: Splits each frame into fixed-size tiles and encodes every tile into
-    the same number of tokens.
+\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours spanning topic reasoning, anomaly recognition, needle QA, ego reasoning, plot QA, action order, and action count.
+\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour covering 17 perception (e.g. single-scene events, objects, attributes) and relation (e.g. cross-scene order, tracking, attribute changes) tasks.
+\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos split into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets, spanning 12 tasks across perception, reasoning, OCR, counting, and synopsis.
+\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes covering object reference, memory recall, content summary, answer refusal, topic shifting, and proactive interaction. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
 \end{itemize}
 
-\paragraph{Benchmarks.} We evaluate on three long-video multiple-choice benchmarks and one multi-turn benchmark:
+\paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
 \begin{itemize}
-  \item MLVU~\cite{zhou2024mlvu}: Multi-task understanding of videos that last from minutes to hours. We use the
-    multiple-choice questions of its development set.
-  \item LongVideoBench (LVB)~\cite{wu2024longvideobench}: Referring reasoning over videos up to an hour long. We use
-    its validation set.
-  \item Video-MME~\cite{fu2024videomme}: Questions on short, medium, and long videos. We use its subtitled setting.
-  \item MT-Video-Bench (MTVB)~\cite{mtvideobench2025}: Multi-turn dialogues about a video, with open-ended answers.
-\end{itemize}
-
-\paragraph{Baselines.} We compare \name against the following approaches:
-\begin{itemize}
-  \item Uniform sampling: Standard VLM inference on frames sampled uniformly in time.
-  \item RAG: Retrieves the frames and transcripts most similar to the query as the input of the VLM. The following
-    methods extend this pipeline.
-  \item Top-K (w/ pruning): Keeps the top-$K$ frames by relevance and prunes each frame to the same number of tokens.
-  \item Q-Frame~\cite{zhang2025qframe}: Ranks frames by relevance and shows each rank tier at a different resolution.
-  \item QuoTA~\cite{luo2025quota}: Scores each frame with a VLM on the decoupled query and assigns tokens in
-    proportion to the scores.
-  \item FOCUS~\cite{zhu2026focus}: Selects keyframes by bandit exploration over temporal clips.
-  \item AdaAlloc~\cite{an2026adaalloc}: Lets the VLM plan how to split the budget between sparse low-resolution frames
-    and dense high-resolution frames (concurrent work).
-  \item VideoRAG~\cite{ren2025videorag}: Retrieves clips through a knowledge graph built over the video. We pair it
-    with \name to evaluate graph-based RAG.
-\end{itemize}
-
-\paragraph{Metrics.} We evaluate answer quality and compute:
-\begin{itemize}
-  \item Accuracy: Fraction of multiple-choice questions answered correctly. For the open-ended answers of MTVB, we use
-    Gemini~3.8 Flash as the judge.
-  \item TFLOPs: Prefill compute of the language model per question, summed over all VLM calls that a method makes.
+  \item Top-K: Keeps the top K frames with the highest semantic similarity scores.
+  \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips.
+  \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers at a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution.
+  \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it.
+  \item AdaAlloc~\cite{an2026adaalloc}: Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier.
 \end{itemize}
 
 \subsection{Main Results}
@@ -117,23 +86,25 @@ the appendix.
 
 \paragraph{\name achieves the Pareto frontier across multi-turn Q\&A.} \TODO{} (\cref{fig:multiturn}, \cref{tab:multiturn})
 
-% \paragraph{Qualitative analysis.} \TODO{Seems moderately useless; perhaps remove if space constrained.}
-% (\cref{fig:radar,fig:case})
 
 
-% \begin{figure}[t]
-%   \centering
-%   \includegraphics[width=\linewidth]{fig/videomme_radar.pdf}
-%   \caption{\TODO{}}
-%   \label{fig:radar}
-% \end{figure}
+\paragraph{Qualitative analysis.} \TODO{Seems moderately useless; perhaps remove if space constrained.}
+(\cref{fig:radar,fig:case})
 
-% \begin{figure}[t]
-%   \centering
-%   \includegraphics[width=\linewidth]{fig/case_study.pdf}
-%   \caption{\TODO{}}
-%   \label{fig:case}
-% \end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/videomme_radar.pdf}
+  \caption{\TODO{}}
+  \label{fig:radar}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/case_study.pdf}
+  \caption{\TODO{}}
+  \label{fig:case}
+\end{figure}
 
 \begin{table}[t]
   \centering
