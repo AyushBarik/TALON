@@ -8,6 +8,13 @@
   \label{fig:budget}
 \end{figure}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/case_study.pdf}
+  \caption{\TODO{}}
+  \label{fig:case}
+\end{figure}
+
 \fyy{It turns out token compression is a popular method for video understanding (e.g., \href{https://arxiv.org/pdf/2510.07915}{retrieve-then-compress} and \href{https://arxiv.org/abs/2410.17434}{adaptive compression}). See my Teams message.}
 
 \fyy{Therefore, a safer and better title and narrative should be
@@ -58,15 +65,33 @@ Challenge 2 / solution 2 is multi-turn conversations.
 \end{enumerate}
 }
 
-paragraph 1: introduce video understanding
+% --- earlier outline notes, kept for reference ---
+% paragraph 1: introduce video understanding
+%
+% paragraph 2: highlight the problem of long context video understanding, introduce RAG methods for video understanding
+%
+% paragraph 3: prior work is frame level, admits every frame at equal cost, however, relevant frames vary in relevance point to Fig X (x axis: frames, y axis relevance score). motivate token level design.
+%
+% paragraph 4: highlight unique challenges,  characteristics we want from a strong design. 
+%
+% paragraph 5: We introduce a plug-and-play \name framework. quick pass through the framework, should demonstrate points in paragraph 4 are addressed.
 
-paragraph 2: highlight the problem of long context video understanding, introduce RAG methods for video understanding
+Vision-Language Models (VLMs) have become the foundation of multimodal video understanding, enabling strong reasoning across tasks ranging from action recognition to fine-grained visual question answering~\cite{bai2025qwen3vl,wang2025internvl35}. However, scaling these models to hour-long videos---such as egocentric recordings, sports broadcasts, and surveillance streams---remains fundamentally constrained by context-window limits and prefill latency. To circumvent these costs, existing systems rely on Video Retrieval-Augmented Generation (Video RAG) to isolate query-relevant visual and textual evidence prior to inference~\cite{luo2024videorag,ren2025videorag,shen2025vgent}.
 
-paragraph 3: prior work is frame level, admits every frame at equal cost, however, relevant frames vary in relevance point to Fig X (x axis: frames, y axis relevance score). motivate token level design.
+Most existing Video RAG systems treat evidence selection at the coarse granularity of whole frames or graph nodes. Embedding-based retrievers select the top-$K$ frames by query similarity and pass every admitted frame to the VLM at its full, uniform token cost. Graph-based RAG pipelines improve multi-hop coverage through entity and event indexing, yet incur heavy offline ingestion overhead that is largely wasted when users ask sporadic queries, while still feeding uniform node representations at inference. Recent adaptive methods vary token counts across frames, but they rely on heuristic rules---such as binning frames into arbitrary resolution tiers~\cite{zhang2025qframe}, allocating tokens linearly in proportion to relevance~\cite{luo2025quota}, or routing via agentic search~\cite{an2026adaalloc}---and compress retrieved frames independently. Without accounting for how token utility saturates or how visually redundant frames overlap, these approaches misallocate a fixed compute budget.
 
-paragraph 4: highlight unique challenges,  characteristics we want from a strong design. 
+The central difficulty is that retrieved frames do not contribute equally to answering a query, nor does a single frame's utility grow linearly with its token count. Intuitively, a frame's token count acts as its effective resolution: a handful of tokens suffices to convey coarse scene layout, whereas dense tokens are needed only when the query hinges on fine-grained cues such as on-screen text or small object attributes. Beyond a modest threshold, adding more tokens to an already clear frame yields steep diminishing returns, while spending tokens on near-duplicate adjacent frames wastes budget that could reveal complementary evidence elsewhere in the video (\cref{fig:value}). Furthermore, real-world video assistants operate over multi-turn conversations, where naively re-allocating token counts at every turn invalidates the VLM's prefix KV cache~\cite{kwon2023vllm,zheng2024sglang} and causes prefill compute to grow linearly with dialogue length.
 
-paragraph 5: We introduce a plug-and-play \name framework. quick pass through the framework, should demonstrate points in paragraph 4 are addressed.
+We introduce \name, a plug-and-play framework that formulates Video RAG as a constrained, multimodal token allocation problem (\cref{fig:overview}). Rather than deciding \emph{which} frames to retrieve, \name sits downstream of any standard or graph-based retriever and jointly allocates a global token budget across visual frames and transcript segments. To capture diminishing returns, \name models token utility with a learned, saturating value curve fitted offline and refined online, while discounting frame relevance by pairwise cosine similarity to prevent redundant allocations. Because this diversity term couples decisions across frames, \name solves the resulting objective via an \textbf{Iterative Water-Filling} algorithm. In milliseconds, this solver prices tokens globally across frames and transcripts, provably dominating proportional and tier-based allocation heuristics.
+
+Extending token allocation to multi-turn conversations introduces a second challenge: updating evidence without breaking KV-cache reuse. Recomputing allocations from scratch changes the token count of frames already in context, invalidating subsequent cache entries. \name resolves this by carrying allocations across turns. Leveraging query-independent attention ranking within the vision encoder, our token pruner ensures that expanding a frame's allocation simply appends nested, higher-ranked tokens to the end of the sequence, preserving multimodal RoPE positions and prior KV states. At each turn, \name re-weights cached frames using VLM cross-attention and prefills strictly the incremental token deficit, guaranteeing that cumulative evidence prefill remains mathematically bounded regardless of conversation length. Across Qwen3-VL-8B and InternVL3.5-4B on MLVU, LongVideoBench, Video-MME, and the multi-turn MT-Video-Bench, \name establishes a new accuracy--compute Pareto frontier (\cref{fig:budget})---reaching 78.1\% on MLVU and 77.3\% on Video-MME at $\sim$232--234 TFLOPs per query while requiring roughly 3$\times$ fewer TFLOPs than QuoTA.
+
+\paragraph{Contributions.} Overall, we make three key contributions:
+\begin{itemize}
+  \item \textbf{Principled Multimodal Token Allocation:} We reformulate Video RAG from binary frame selection to continuous token allocation under a fixed budget, combining a learned saturating token value function with pairwise similarity discounting to jointly allocate capacity across frames and transcripts (\cref{sec:overview,sec:allocation}).
+  \item \textbf{Iterative Water-Filling \& Multi-Turn Cache Preservation:} We introduce an iterative water-filling solver that provably outperforms heuristic allocation rules, alongside an incremental, attention-guided multi-turn scheduler that preserves KV caches and guarantees bounded prefill compute over arbitrary dialogue lengths (\cref{sec:allocation,sec:multiturn}).
+  \item \textbf{Pareto-Optimal Efficiency Across Single- and Multi-Turn Benchmarks:} Extensive evaluations across embedding- and graph-based Video RAG pipelines show that \name acts as a drop-in enhancement, consistently achieving higher QA accuracy at lower TFLOP budgets across MLVU, LongVideoBench, Video-MME, and MT-Video-Bench (\cref{sec:exp}).
+\end{itemize}
 
 % Our contributions are as follows:
 % \begin{itemize}
@@ -74,6 +99,4 @@ paragraph 5: We introduce a plug-and-play \name framework. quick pass through th
 %   \item We design a low-cost token scheduling algorithm from a principled optimization perspective, which jointly allocates tokens across frames and transcripts, using each modality for what it does best, and composes the resulting evidence into a temporally ordered storyboard. It improves on prior keyframe selection and token allocation methods both theoretically and empirically.
 %   \item We extend token scheduling to multi-turn conversations, where the attention of the VLM updates the allocation of frames it has already seen, and new tokens are appended to the KV cache so that the total prefill stays bounded however long the conversation lasts.
 %\end{itemize}
-Across multiple VideoRAG backbones, \name achieves \todo{[TODO: A--B]}$\times$ higher accuracy than conventional frame retrieval and prior keyframe selection methods at matched compute budgets.
-
-
+% Across multiple VideoRAG backbones, \name achieves \todo{[TODO: A--B]}$\times$ higher accuracy than conventional frame retrieval and prior keyframe selection methods at matched compute budgets.

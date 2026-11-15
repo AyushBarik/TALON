@@ -1,14 +1,14 @@
-"""Case study (one column): the frames RAG and TALON show the VLM for one question, at the same token budget.
+"""Case study (one column): the frames RAG and Lembas show the VLM for one question, at the same token budget.
 
 Source: Video-MME question 378-1 (video WOGaS19VZ8Q, medium), subtitled setting, Qwen3-VL-8B, budget 12,288 tokens.
 fig/case/records.jsonl holds the two logged per-question records (frames, tokens per frame, prediction):
   naive        bench_runs/naive/videomme_sub.jsonl
-  talon_nodiv  bench_runs/abl_talon_nodiv/videomme_sub.jsonl   (TALON without the diversity term; DRAFT stand-in,
-               regenerate from the final TALON run before submission)
+  talon_nodiv  bench_runs/abl_talon_nodiv/videomme_sub.jsonl   (Lembas without the diversity term; DRAFT stand-in,
+               regenerate from the final Lembas run before submission)
 fig/case/frames/<index>.jpg are the frames shown (640x360).
 
-RAG shows 8 of the frames it sent, hand-picked so that none shows the air gun (RAG_FRAMES). TALON shows 12: its two highest-allocated frames plus
-frames evenly spaced over the rest, in time order. Frames are crisp; a TALON frame that received fewer tokens is
+RAG shows 8 of the frames it sent, hand-picked so that none shows the air gun (RAG_FRAMES). Lembas shows 12: its two highest-allocated frames plus
+frames evenly spaced over the rest, in time order. Frames are crisp; a Lembas frame that received fewer tokens is
 pixelated in visibly distinct levels (BLOCKS), coarser for fewer tokens.
 
 Regenerate:  uv run --no-project --with matplotlib --with numpy --with pillow python fig/case_study.py
@@ -29,11 +29,11 @@ CASE = os.path.join(HERE, "case")
 QUESTION = "What is the color of the pneumatic air gun?"
 OPTIONS = ["A. Green", "B. Red", "C. Blue", "D. Orange"]
 GOLD = "C"
-ROWS = [("naive", "RAG", 4), ("talon_nodiv", "TALON", 6)]  # (record, header, frames per row)
+ROWS = [("naive", "RAG", 4), ("talon_nodiv", "Lembas", 6)]  # (record, header, frames per row)
 RAG_FRAMES = [1, 14, 47, 77, 86, 91, 109, 111]  # all among the frames RAG sent; none shows the air gun
-N_TOP = 2  # TALON's highest-allocated frames always shown
+N_TOP = 2  # Lembas's highest-allocated frames always shown
 # (minimum tokens, block size in px of a 640x360 frame): sharp, slight, moderate, strong, very strong
-BLOCKS = [(160, 1), (128, 6), (64, 12), (32, 22), (0, 40)]
+BLOCKS = [(160, 1), (128, 12), (64, 16), (32, 24), (0, 40)]
 FRAME_W, FRAME_H = 640, 360
 INK, GRAY, RULE = "#111111", "#6B6B6B", "#4D4D4D"
 BAND = "#EFEFEF"

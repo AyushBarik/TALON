@@ -1,7 +1,7 @@
 method,budget,tflops,accuracy
-Top-K (w/ pruning),1536,0.490,65.04
-Top-K (w/ pruning),3072,1.267,69.64
-Top-K (w/ pruning),6144,2.810,72.77
+Top-K,1536,0.490,65.04
+Top-K,3072,1.267,69.64
+Top-K,6144,2.810,72.77
 Q-Frame,1536,0.510,71.67
 Q-Frame,3072,0.883,73.09
 Q-Frame,6144,1.563,74.15
@@ -18,8 +18,8 @@ AdaAlloc,1536,1.106,66.56
 AdaAlloc,3072,1.408,69.32
 AdaAlloc,6144,2.106,70.84
 AdaAlloc,12288,3.432,73.23
-TALON (Ours),1536,0.464,73.37
-TALON (Ours),3072,0.894,75.62
-TALON (Ours),6144,1.728,76.22
-TALON (Ours),12288,3.240,78.1
-Top-K (w/ pruning),12288,3.326,74.01
+Lembas (Ours),1536,0.464,73.37
+Lembas (Ours),3072,0.894,75.62
+Lembas (Ours),6144,1.728,76.22
+Lembas (Ours),12288,3.240,78.1
+Top-K,12288,3.326,74.01

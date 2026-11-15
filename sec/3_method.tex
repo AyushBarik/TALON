@@ -36,9 +36,18 @@ At its core, \name carries the allocation across turns, reusing the KV cache and
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.75\linewidth]{fig/value_curve.pdf}
-  \caption{\TODO{}}
-  \label{fig:value}
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/value_half.pdf}
+    \caption{\TODO{}}
+    \label{fig:value}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.53\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
+    \caption{\TODO{}}
+    \label{fig:alloc}
+  \end{minipage}
 \end{figure}
 
 Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by the number of tokens $b_i$ allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. This formulation, however, raises two key questions: (i) how much is a frame worth at a given token count, and (ii) \fan{which tokens we should retain collectively in selecting across frames} how should the relevance of a frame change once similar frames already receive tokens? 
@@ -64,10 +73,10 @@ fitting $\tau$ by maximum likelihood offline, on calibration video--query pairs 
 \end{equation}
 
 \paragraph{Incorporating Frame Diversity.}
-The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which $v$ credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.} to every frame, weighted by the value of that frame:
-% Fix A (2026-11-13): the sum includes j = i and uses the raw cosine, so the similarity matrix is PSD. The code still uses j != i and max(0, cos): update it and rerun before submission.
+The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which $v$ credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.} to every frame, itself included, weighted by the value of that frame:
+% Fix A (applied in the text 2026-11-15): the sum includes j = i and uses the raw cosine, so the similarity matrix is PSD; step 2/(l+1); averaged allocation (Proposition prop:convergence). The reported numbers still come from the old solver (j != i, max(0, cos), halfway step, best iterate): update the code and rerun before submission.
 \begin{equation}
-  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j\ne i}\cos(f_i,f_j)\,v(b_j) ,
+  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j}\cos(f_i,f_j)\,v(b_j) ,
   \label{eq:cond}
 \end{equation}
 where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
@@ -94,7 +103,7 @@ Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are cou
 
 \textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
 \begin{equation}
-  \tilde r_i=r_i-2\eta\sum_{j\ne i}\cos(f_i,f_j)\,\bar v_j ,
+  \tilde r_i=r_i-2\eta\sum_{j}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
 \end{equation}
 where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
@@ -106,7 +115,18 @@ where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. T
 \end{equation}
 where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the lowest price at which the allocation stays within $B$; tokens that remain unspent at this price are left unused. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the tokens it spends even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
 
-\textit{Updating.} After each allocation, the Token Scheduler moves the token values halfway toward the new allocation, $\bar v_i\leftarrow\frac12\big(\bar v_i+v_i(b_i^*)\big)$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. Since later iterations are not guaranteed to reach the global optimum, the Token Scheduler returns the best allocation across iterations, which is thus no worse than the first on the full objective. The solver takes a few milliseconds per query. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\textit{Updating.} After each allocation, the Token Scheduler moves the token values toward the new allocation with a decreasing step, $\bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v_i(b_i^*)$ with $\gamma_\ell=2/(\ell+1)$ at iteration $\ell$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. The averaged token values correspond to the allocation $b_i=v_i^{-1}(\bar v_i)$, which stays within the budget because every $v_i$ is concave. This allocation converges to the global optimum of the full objective:
+
+\begin{proposition}
+\label{prop:convergence}
+Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:joint} and $J^\star$ its maximum. Suppose every token value $v_i$ is increasing and concave. Then, over real-valued token counts, the averaged allocation $\hat{\mathbf b}^{(\ell)}$ after $\ell$ iterations of \cref{alg:iwf} satisfies
+\begin{equation}
+  J^\star-J\big(\hat{\mathbf b}^{(\ell)}\big)\le\frac{4\,\eta\,\lambda_{\max}D^2}{\ell+2} ,
+\end{equation}
+where $\lambda_{\max}$ is the largest eigenvalue of the matrix of cosine similarities between frames, and $D$ is the largest distance between the token values of two allocations within the budget.
+\end{proposition}
+
+\noindent Proposition~\ref{prop:convergence} shows that the gap to the optimal allocation shrinks as $O(1/\ell)$ despite the coupling between frames. It relies on the diversity term of Eq.~\eqref{eq:cond} including every frame: the cosine similarities then form a positive semidefinite matrix, so the objective is concave in the token values. A detailed proof is provided in the supplementary material. In practice, the Token Scheduler rounds the averaged allocation down to the token counts that the pruner supports, and returns it unless a single iteration attains a higher objective. The solver takes a few milliseconds per query. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
@@ -119,7 +139,7 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
 \State $\bar v_i\gets 0$ \Comment{current values}
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j\ne i}s_{ij}\bar v_j\big)$ \Comment{gradient}
+  \State $\tilde r_i\gets\max\!\big(0,\;r_i-2\eta\textstyle\sum_{j}s_{ij}\bar v_j\big)$ \Comment{gradient}
   \State $\lambda_{\mathrm{lo}}\gets 0,\;\lambda_{\mathrm{hi}}\gets\max_i\tilde r_i$ \Comment{price bracket}
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
@@ -131,10 +151,11 @@ where $b$ ranges over the token counts that the pruner supports, including zero.
       \State $\lambda_{\mathrm{hi}}\gets\lambda$,\; $b_i^{(\ell)}\gets b_i$ \Comment{feasible}
     \EndIf
   \EndWhile
-  \State $\bar v_i\gets v_i(b_i^{(\ell)})$ if $\ell=1$, else $\tfrac12\big(\bar v_i+v_i(b_i^{(\ell)})\big)$
+  \State $\bar v_i\gets(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v_i(b_i^{(\ell)})$,\; $\gamma_\ell=\tfrac{2}{\ell+1}$ \Comment{average}
 \EndFor
-\State \Return $\mathbf{b}^{(\ell^\star)}$ with $\ell^\star=\argmax_{\ell}\,J(\mathbf{b}^{(\ell)})$, where
-\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i\ne j}s_{ij}v_i(b_i)v_j(b_j)$
+\State $\hat b_i\gets v_i^{-1}(\bar v_i)$ \Comment{averaged allocation}
+\State \Return the best of $\hat{\mathbf b},\mathbf b^{(1)},\dots,\mathbf b^{(L)}$ under $J$, where
+\Statex \hspace{\algorithmicindent}$J(\mathbf{b})=\sum_i r_iv_i(b_i)-\eta\sum_{i,j}s_{ij}v_i(b_i)v_j(b_j)$
 \end{algorithmic}
 \end{algorithm}
 
@@ -163,7 +184,7 @@ Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then
 %   \label{fig:overlap}
 % \end{figure}
 
-In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the KV cache of the conversation is kept between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence (\cref{fig:overlap}). \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:joint} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
+In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the KV cache of the conversation is kept between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:joint} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:joint} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
 
 \paragraph{Updating Relevance with Attention.}
 Once a frame is cached, the VLM has already read it, and its attention to the frame indicates how much the frame matters for the new question. \name prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads~\cite{rekv2025}. With $a_i$ the share of this attention per cached token of frame $f_i$, \name combines it with the retrieval relevance as

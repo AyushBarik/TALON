@@ -1,0 +1,15 @@
+method,turn,accuracy,judged_turns
+Lembas (Ours),1,54.07,27
+Lembas (Ours),2,57.71,70
+Lembas (Ours),3,49.23,78
+Lembas (Ours),4,61.52,92
+Lembas (Ours),5,60.74,108
+Lembas (Ours),6,66.25,64
+Lembas (Ours),7,45.45,11
+w/o carried allocation,1,51.85,27
+w/o carried allocation,2,59.43,70
+w/o carried allocation,3,47.69,78
+w/o carried allocation,4,63.26,92
+w/o carried allocation,5,62.04,108
+w/o carried allocation,6,67.19,64
+w/o carried allocation,7,45.45,11
