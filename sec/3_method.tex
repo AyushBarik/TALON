@@ -14,20 +14,18 @@
 
 \fan{we should have overview/workflow figure to see how \name works in the lifecycle. e.g., we assume given retrieved frames?}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a budget of $K$ frames, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a frame budget, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
 \end{equation}
-where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$, and
+where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$ subject to a maximum of $K$ frames, and
 \begin{equation}
   r(f_i\mid q)=\operatorname{softmax}_i\big(\cos(f_i,q)\big)
   \label{eq:rel}
 \end{equation}
 % Code: z-scored cosines with a softmax temperature; state in implementation details.
-is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that defines \textit{how} tokens should be valued, and prove that our allocation is optimal for the relevance-weighted objective, which the allocation rules of prior work do not attain (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient and breaks prefix caching~\cite{kwon2023vllm,zheng2024sglang}, a standard feature of LLM inference. 
-
-At its core, \name carries the allocation across turns, reusing the KV cache and updating relevance with the attention of the VLM. This improves both efficiency and accuracy, and we prove that the cumulative prefill of evidence tokens stays bounded however long the conversation lasts, owing to the design of our token pruner (\cref{sec:multiturn}).
+is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., using CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that carefully defines \textit{how} tokens should be valued serving as a strong proxy for token importance, and then prove that our solver is theoretically more optimal compared to prior works. In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient especially when later turns may reference evidence available in the KV cache from previous turns therefore we extend \name to enable incremental allocations across turns while additionally demonstrating theoretical evidence prefill boundedness across turns (\cref{sec:multiturn}).
 
 
 % ---------------------------------------------------------------------------------------------------------------------
