@@ -93,7 +93,7 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 % where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
 \paragraph{Iterative Water-Filling.}
-The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b)$, and tokens $b_i$.
+The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b_i)$, and tokens $b_i$.
 Eq.~\eqref{eq:p1} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
 If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
 The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
@@ -116,10 +116,10 @@ With the discounted relevances fixed, the items no longer depend on each other, 
 Water-filling sets one price $\lambda$ per token for all items.
 Each item then takes the token count that maximizes its value minus its cost:
 \begin{equation}
-  b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
+  b_i^*(\lambda)=\argmax_{b_i}\ \tilde r_iv_i(b_i)-\lambda b_i ,
   \label{eq:percost}
 \end{equation}
-where $b$ ranges over the token counts that the pruner supports, including zero.
+where $b_i$ ranges over the token counts that the pruner supports, including zero.
 A higher price lowers every token count, so a bisection on $\lambda$ finds the lowest price at which the allocation fits within $B$.
 Tokens that remain unspent at this price are left unused.
 Because frames and transcript events pay the same price, they compete for one budget.
@@ -165,7 +165,7 @@ Finally, \name merges the selected frames and events in time order, each precede
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require relevances $r_i$, token values $v_i(b)$ for $b\le b_{\max}$ \ayush{too many symbols? fix later}
+\Require relevances $r_i$, token values $v_i(b_i)$ for $b_i\le b_{\max}$ \ayush{too many symbols? fix later}
 \Require similarities $s_{ij}=\cos(f_i,f_j)$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
 \Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
@@ -176,7 +176,7 @@ Finally, \name merges the selected frames and events in time order, each precede
   \State $b_i^{(\ell)}\gets 0$ \Comment{feasible at $\lambda_{\mathrm{hi}}$}
   \While{$\lambda_{\mathrm{hi}}-\lambda_{\mathrm{lo}}>\epsilon$} \Comment{bisect on price}
     \State $\lambda\gets(\lambda_{\mathrm{lo}}+\lambda_{\mathrm{hi}})/2$
-    \State $b_i\gets\argmax_{b}\;\tilde r_iv_i(b)-\lambda b$ \Comment{best response}
+    \State $b_i\gets\argmax_{b_i}\;\tilde r_iv_i(b_i)-\lambda b_i$ \Comment{best response}
     \If{$\sum_i b_i>B$}
       \State $\lambda_{\mathrm{lo}}\gets\lambda$ \Comment{over budget}
     \Else
