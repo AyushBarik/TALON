@@ -99,24 +99,53 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 % \end{equation}
 % where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
-\paragraph{Iterative Water-Filling.} 
-Maximizing Eq.~\eqref{eq:joint} directly is difficult because the frames are coupled: the optimal token count of a frame depends on the token counts of the frames similar to it. Once the token values of the other frames are fixed, however, the problem separates across items and admits an exact solution. The Token Scheduler therefore alternates between fixing the relevances and allocating the tokens~\cite{frank1956,jaggi2013}, as summarized in \cref{alg:iwf}. 
+\paragraph{Iterative Water-Filling.}
+Eq.~\eqref{eq:joint} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
+If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
+The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
+It discounts the relevance of each frame by its similarity to the frames that already hold tokens, allocates the budget exactly under the discounted relevances, and averages the result into a running estimate.
 
-\textit{Fixing the relevances.} Given the current token values $\bar v_j$, the Token Scheduler replaces the relevance of each item by the gradient of the objective with respect to its value,
+\textit{Step 1: Discount the relevances.}
+Let $\bar v_j$ be the current token value of frame $j$.
+The Token Scheduler lowers the relevance of each frame by the value that its similar frames already carry:
 \begin{equation}
   \tilde r_i=r_i-2\eta\sum_{j}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
 \end{equation}
-where the sum runs over frames, and a transcript event keeps $\tilde r_i=r_i$. The factor of two arises because every pair of similar frames appears twice in Eq.~\eqref{eq:joint}, once in the relevance of each frame.
+where the sum runs over frames.
+A transcript event has no diversity term and keeps $\tilde r_i=r_i$.
+The discounted relevance $\tilde r_i$ is the gradient of Eq.~\eqref{eq:joint} with respect to the value of item $i$, that is, the gain in the objective per unit of value added to item $i$.
+The factor of two appears because Eq.~\eqref{eq:joint} counts every pair of frames twice.
 
-\textit{Allocating the tokens.} With fixed relevances, the items no longer depend on each other, and the Token Scheduler allocates the budget exactly by water-filling~\cite{boyd2004}. Water-filling sets a single price $\lambda$ per token, and each item receives tokens until the value of an additional token falls below this price:
+\textit{Step 2: Allocate by water-filling.}
+With the discounted relevances fixed, the items no longer depend on each other, and water-filling~\cite{boyd2004} allocates the budget exactly.
+Water-filling sets one price $\lambda$ per token for all items.
+Each item then takes the token count that maximizes its value minus its cost:
 \begin{equation}
   b_i^*(\lambda)=\argmax_{b}\ \tilde r_iv_i(b)-\lambda b ,
   \label{eq:percost}
 \end{equation}
-where $b$ ranges over the token counts that the pruner supports, including zero. A bisection on $\lambda$ finds the lowest price at which the allocation stays within $B$; tokens that remain unspent at this price are left unused. Frames and transcript events thus compete for tokens at the same price, and the allocation is optimal for the tokens it spends even though token counts are discrete~\cite{everett1963}. Exact derivations are given in the supplementary material.
+where $b$ ranges over the token counts that the pruner supports, including zero.
+A higher price lowers every token count, so a bisection on $\lambda$ finds the lowest price at which the allocation fits within $B$.
+Tokens that remain unspent at this price are left unused.
+Because frames and transcript events pay the same price, they compete for one budget.
+Although token counts are discrete, no allocation that spends the same number of tokens or fewer attains a higher value~\cite{everett1963}.
+Exact derivations are given in the supplementary material.
 
-\textit{Updating.} After each allocation, the Token Scheduler moves the token values toward the new allocation with a decreasing step, $\bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v_i(b_i^*)$ with $\gamma_\ell=2/(\ell+1)$ at iteration $\ell$, which prevents similar frames from exchanging tokens between iterations. The first iteration starts from $\bar v=0$ and therefore solves Eq.~\eqref{eq:relevance}. The averaged token values correspond to the allocation $b_i=v_i^{-1}(\bar v_i)$, which stays within the budget because every $v_i$ is concave. This allocation converges to the global optimum of the full objective:
+\textit{Step 3: Average.}
+If the Token Scheduler adopted each new allocation outright, two similar frames would pass the same tokens back and forth between iterations.
+It therefore moves the token values only part of the way toward the new allocation,
+\begin{equation}
+  \bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v_i(b_i^*),\qquad \gamma_\ell=\frac{2}{\ell+1},
+  \label{eq:average}
+\end{equation}
+with a step $\gamma_\ell$ that decreases with the iteration $\ell$.
+The first iteration starts from $\bar v=0$ and takes a full step, so it solves Eq.~\eqref{eq:relevance}.
+After the last iteration, the Token Scheduler converts the averaged token values back to token counts, $\hat b_i=v_i^{-1}(\bar v_i)$.
+This averaged allocation stays within the budget because every $v_i$ is concave.
+
+Each iteration solves only a simplified problem.
+Nevertheless, the averaged allocation converges to the global optimum of Eq.~\eqref{eq:joint}, and the gap shrinks in inverse proportion to the number of iterations:
 
 \begin{proposition}
 \label{prop:convergence}
@@ -127,7 +156,15 @@ Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:joint} and $J^\star$ its ma
 where $\lambda_{\max}$ is the largest eigenvalue of the matrix of cosine similarities between frames, and $D$ is the largest distance between the token values of two allocations within the budget.
 \end{proposition}
 
-\noindent Proposition~\ref{prop:convergence} shows that the gap to the optimal allocation shrinks as $O(1/\ell)$ despite the coupling between frames. It relies on the diversity term of Eq.~\eqref{eq:cond} including every frame: the cosine similarities then form a positive semidefinite matrix, so the objective is concave in the token values. A detailed proof is provided in the supplementary material. In practice, the Token Scheduler rounds the averaged allocation down to the token counts that the pruner supports, and returns it unless a single iteration attains a higher objective. The solver takes a few milliseconds per query. Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
+\noindent Proposition~\ref{prop:convergence} states that the gap to the optimal allocation falls as $O(1/\ell)$.
+Ten times more iterations make the bound ten times smaller: after $\ell=100$ iterations, the gap is at most about one hundredth of the constant $4\eta\lambda_{\max}D^2$.
+The guarantee holds because the diversity term of Eq.~\eqref{eq:cond} includes every frame.
+The cosine similarities then form a positive semidefinite matrix, so the objective is concave in the token values and has no local optimum other than the global one.
+A detailed proof is provided in the supplementary material.
+
+In practice, the Token Scheduler rounds the averaged allocation down to the token counts that the pruner supports, and returns it unless a single iteration attains a higher objective.
+The solver takes a few milliseconds per query.
+Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling Token Allocation}
@@ -162,17 +199,28 @@ where $\lambda_{\max}$ is the largest eigenvalue of the matrix of cosine similar
 
 
 \paragraph{Optimality over Prior Allocation Rules.}
-Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but allocate tokens with a fixed rule instead of optimizing. Q-Frame~\cite{zhang2025qframe} assigns a fixed token count to each tier of relevance ranks, and QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$. Neither rule accounts for how the value of a frame saturates with its token count. In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance}, and thus achieves the highest objective among all allocations that spend no more tokens. Moreover, over real-valued token counts, the optimal allocation gives frames of different relevance different token counts, so Q-Frame is suboptimal whenever a tier contains frames of different relevance. For QuoTA, the closest prior work, Proposition~\ref{prop:proportional} establishes the same whenever frames differ in relevance, as they do in practice; a detailed proof is provided in the supplementary material.
+Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but they allocate tokens by a fixed rule instead of by optimization.
+Q-Frame~\cite{zhang2025qframe} assigns one fixed token count to each tier of relevance ranks.
+QuoTA~\cite{luo2025quota} allocates tokens in proportion to relevance, $b_i=r_iB$.
+Neither rule accounts for saturation: each additional token adds less value to a frame than the token before it.
+In contrast, the first iteration of \cref{alg:iwf} solves Eq.~\eqref{eq:relevance} exactly, so no allocation that spends the same number of tokens or fewer attains a higher objective.
+
+Both fixed rules fall short of this optimum.
+Over real-valued token counts, the optimal allocation gives frames of different relevance different token counts.
+Q-Frame gives every frame in a tier the same token count, so it is suboptimal whenever a tier contains frames of different relevance.
+QuoTA, the closest prior work, is suboptimal whenever the frames differ in relevance, as they do in practice:
 
 \begin{proposition}
 \label{prop:proportional}
-% Mild assumptions, stated in the supplementary proof: N >= 3 frames, theta_1 > 0, real-valued token counts,
-% and 0 < r_i B < b_max for all i (no frame at zero or full tokens).
-Suppose the relevances $r_1,\dots,r_N$ of the frames are pairwise distinct. Then, over real-valued token counts and under mild assumptions, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
+% Further assumptions, stated in the supplementary proof: theta_1 > 0, real-valued token counts.
+Let $N\ge 3$ frames have pairwise distinct relevances $r_1,\dots,r_N$, and let $0<r_iB<b_{\max}$ for every frame, so that the proportional allocation leaves no frame at zero or at full tokens. Then, over real-valued token counts, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
 \end{proposition}
 
 \fan{``mind assumptions'' makes it flat.}
-\noindent Intuitively, proportional allocation is optimal only for a logarithmic value function, which never saturates. Since the learned token value saturates, QuoTA keeps adding tokens to the most relevant frames after their value has saturated, at the expense of less relevant frames that would still benefit from them.
+\noindent Intuitively, proportional allocation is optimal only for a logarithmic token value, and a logarithm never saturates.
+The learned token value does saturate.
+QuoTA therefore keeps adding tokens to the most relevant frames after their value has saturated, and takes these tokens from less relevant frames that would still benefit.
+A detailed proof is provided in the supplementary material.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Scheduling across Multi-Turn Conversations}
