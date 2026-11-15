@@ -1,6 +1,8 @@
 \section{Related Work}
 \label{sec:related}
 
+\ayush{too short, update later}
+
 \paragraph{Video retrieval-augmented generation.}
 To overcome context-window limits and efficiency issues in long-video understanding~\cite{lewis2020retrieval}, video RAG systems retrieve some query-relevant evidence, either via textual surrogates and hierarchical indexing~\cite{ma2024drvideo,wang2024videotree,jeong2025videorag}, visually aligned auxiliary texts and streaming segments~\cite{luo2024videorag,xie2026streamrag}, or entity- and event-centric graphs with agentic reasoning~\cite{ren2025videorag,shen2025vgent,yan2025ava}. However, these methods focus exclusively on \emph{what} to index and retrieve, passing every selected item to the VLM at its full, uniform token cost. \name instead addresses \emph{how many} tokens each retrieved item should receive, operating as a plug-and-play module downstream of these retrievers.
 
