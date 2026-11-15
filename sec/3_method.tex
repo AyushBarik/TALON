@@ -63,11 +63,11 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
 
 
 \begin{equation}
-  v()=\frac{$b_i$}{$b_i$+\tau} ,
+  v(b_i)=\frac{b_i}{b_i+\tau} ,
   \label{eq:curve}
 \end{equation} 
 
-where $b$ represents a token count and $\tau$ is fitted via maximum likelihood offline, and updated online using feedback on answered queries (e.g., accuracy, user feedback). \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} gives the token-level objective
+where $b_i$ represents a token count and $\tau$ is fitted via maximum likelihood offline, and updated online using feedback on answered queries (e.g., accuracy, user feedback). \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} gives the token-level objective
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
