@@ -84,12 +84,15 @@ The token value captures the fraction of an item's relevance retained when it is
 where $\tau_{\text{frame}}$ and $\tau_{\text{text}}$ are single fitted parameters, shared across all frames and all subtitles, respectively. Both parameters are calibrated offline and refined online via feedback from answered queries. Both functions are strictly increasing and concave, a property that the Token Scheduler relies on (\cref{sec:allocation}).
 
 \paragraph{Item Relevance.}
-The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of a frame by its similarity to the frames that already hold tokens, weighted by their token values:
+The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of an item by its similarity to the items of the same modality that already hold tokens, weighted by their token values:
 \begin{equation}
-  r_i(q,\mathbf b)=r_i(q)-\eta\sum_{j\in\mathcal F}\cos(f_i,f_j)\,v_{\text{frame}}(b_j),
-  \label{eq:cond}
+\begin{aligned}
+  r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal F}s_{ij}\,v_{\text{frame}}(b_j), & i&\in\mathcal F,\\
+  r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal S}s_{ij}\,v_{\text{text}}(b_j), & i&\in\mathcal S,
+\end{aligned}
+\label{eq:cond}
 \end{equation}
-where $i\in\mathcal F$ is a frame and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). Subtitles are discounted analogously over $\mathcal S$ with $v_{\text{text}}$. A frame that resembles frames shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped frames keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
+where $s_{ij}$ is the cosine similarity between the embeddings of items $i$ and $j$, and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). An item that resembles items shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped items keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
 
 \begin{comment}
 % Previous Sec. 3.2 text with its comments, kept for reference (not printed).
