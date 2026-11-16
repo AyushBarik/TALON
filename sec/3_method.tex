@@ -62,13 +62,25 @@ However, this formulation exposes three fundamental questions: \circnum{1}~how s
   \end{minipage}
 \end{figure}
 
+% Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
+\fan{maybe merge it into the next paragraph as it is not new and short.}
+\fyy{Fig. 4 is a key result. We should explain where these ``short videos'' come from, which VLM is used, and any relevant experimental setup for this curve fitting. Ideally we can say we repeat this experiment across various settings, and the rational function wins consistently.}
+\fyy{What about text/transcript? This paragraph focuses on frames only.}
+\fyy{Why is this $v_i$ instead of just $v$?}
+\fyy{Didn't explain the important takeaway: diminishing returns / concave, and how this property will become useful later.}
+\fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.}
+\fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.}
+\fyy{This weighting shouldn't be taken for granted; it's a design choice. Why does it approximate accuracy?}
+\fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.}
+\fan{shall we cut down this part? 1. it's not new; 2. introduce other knobs.}
+
 \paragraph{Token Value.}
-The token value captures the fraction of an item's relevance retained when it is represented with $b_i$ tokens. To represent an item at an arbitrary count $b_i$, \name ranks its tokens once and retains the top $b_i$, using attention scores from the vision encoder for frames~\cite{yang2024visionzip,chen2024fastv} and from the text encoder for subtitles~\cite{goyal2020powerbert,kim2022ltp}. Intuitively, the token count governs how coarsely an item is represented: a small number of tokens already conveys the coarse semantics that suffice for most queries, whereas additional tokens recover fine-grained details, such as on-screen text, that only a few queries need (e.g., needle queries). Consequently, the token value exhibits diminishing marginal returns, with each additional token retaining less relevance than the last. To obtain the token value function, we take short- and medium-length videos from the held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, sweep the token count of all of their frames, and measure the retained relevance through the accuracy that the VLM retains at each count, normalized across counts (\cref{fig:value}). We then fit several candidate function families to these measurements by least squares. A rational curve provides the tightest fit, motivating
+The token value captures the fraction of an item's relevance retained when it is represented with $b_i$ tokens. \name ranks the tokens of each item once by the attention scores of its encoder~\cite{yang2024visionzip,chen2024fastv,goyal2020powerbert,kim2022ltp} and retains the top $b_i$. Intuitively, a few tokens already convey the coarse semantics that suffice for most queries, whereas additional tokens recover fine-grained details that only a few queries need (e.g., needle queries). The token value therefore exhibits diminishing returns. To obtain it, we sweep the token count of the frames of short- and medium-length videos from the held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, and measure the normalized accuracy that the VLM retains at each count (\cref{fig:value}). Among candidate function families fitted by least squares, a rational curve provides the tightest fit, motivating
 \begin{equation}
   v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},
   \label{eq:curve}
 \end{equation}
-where $\tau_{\text{frame}}$ is a single fitted parameter shared across all frames, and subtitles follow an analogous form $v_{\text{text}}(b_i)$ parameterized by $\tau_{\text{text}}$. We calibrate both parameters offline on these measurements and refine them online via feedback from answered queries. Both functions are strictly increasing and concave, which reflects the diminishing returns above. The Token Scheduler relies on this concavity (\cref{sec:allocation}).
+where $\tau_{\text{frame}}$ is a single fitted parameter shared across all frames, and subtitles follow an analogous form $v_{\text{text}}(b_i)$ parameterized by $\tau_{\text{text}}$. Both parameters are calibrated offline and refined online via feedback from answered queries. Both functions are strictly increasing and concave, a property that the Token Scheduler relies on (\cref{sec:allocation}).
 
 \paragraph{Item Relevance.}
 The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of a frame by its similarity to the frames that already hold tokens, weighted by their token values:
