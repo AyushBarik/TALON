@@ -13,11 +13,11 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
 
 \paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
 \begin{itemize}
-  \item Top-K: Keeps the top K frames with the highest semantic similarity scores.
-  \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips.
-  \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers at a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution.
-  \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it.
-  \item AdaAlloc~\cite{an2026adaalloc}: Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier.
+  \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
+  \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips. Similar to Top-K it skips prefilling already seen frames across turns.
+  \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers in a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution. We modify it to skip prefilling of already seen frames of the same exact resolution.
+  \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it. As it downsamples from the entire token set, it cannot skip prefilling of any frames across turns.
+  \item AdaAlloc~\cite{an2026adaalloc} (contemporary): Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier. We modify it to skip prefilling of frames that exactly match the resolution tier.
 \end{itemize}
 
 \subsection{Main Results}
@@ -69,13 +69,12 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
   \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
   \maintab
-  \caption{\TODO{Main results.} Accuracy (\%) on MLVU, LongVideoBench (LVB) and Video-MME with subtitles, with the
-    compute (TFLOPs per question) of each method on each benchmark.}
+  \caption{Accuracy in matched compute settings across state-of-the-art video understanding benchmarks and a multi-turn benchmark across diverse baselines and backbones.\fan{let's drop the color? hard to read}}
   \label{tab:main}
 \end{table*}
 
-\paragraph{\name achieves the Pareto frontier across single-turn Q\&A.} \TODO{} (\cref{fig:budget},
-\cref{tab:main})
+\paragraph{\name achieves the Pareto frontier across single-turn video understanding} \TODO{} (\cref{fig:budget},
+\cref{tab:main}) short paragraph reference the right figures.
 
 \begin{figure}[t]
   \centering
@@ -84,12 +83,10 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \label{fig:multiturn}
 \end{figure}
 
-\paragraph{\name achieves the Pareto frontier across multi-turn Q\&A.} \TODO{} (\cref{fig:multiturn}, \cref{tab:multiturn})
+\paragraph{\name achieves the Pareto frontier across multi-turn video understanding} \TODO{} (\cref{fig:multiturn}, \cref{tab:multiturn}) short paragraph reference the right figures.
 
 
-
-\paragraph{Qualitative analysis.} \TODO{Seems moderately useless; perhaps remove if space constrained.}
-(\cref{fig:case})
+\paragraph{\name introduces negligible overhead} (one line stat, frame an subtitle scoring takes X ms and \~0 TFLOPs, waterfilling across dozens of iterations takes X ms, token pruning takes ...)
 
 
 % \begin{figure}[t]
@@ -119,7 +116,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \textbf{\name}                 & \cellcolor{heat1}232 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} \\
     \hspace{0.5em}w/o text allocation      & \cellcolor{heat0}226 & \cellcolor{heat3}73.7 & \cellcolor{heat2}81.9 & \cellcolor{heat2}74.9 & \cellcolor{heat4}64.4 \\
-    \hspace{0.5em}w/o diversity            & \cellcolor{heat0}226 & \cellcolor{heat1}76.6 & \cellcolor{heat2}82.4 & \cellcolor{heat1}76.4 & \cellcolor{heat1}70.8 \\
+    \hspace{0.5em}w/o diversity term            & \cellcolor{heat0}226 & \cellcolor{heat1}76.6 & \cellcolor{heat2}82.4 & \cellcolor{heat1}76.4 & \cellcolor{heat1}70.8 \\
     \bottomrule
   \end{tabular}}%
   % Equal gaps that make the table exactly \columnwidth (12 column sides).
@@ -127,7 +124,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/11\relax}%
   \xdef\ablsep{\the\tabcolsep}% Table 3 reuses this gap, so both tables start at the same indent
   \abltab
-  \caption{\TODO{}}
+  \caption{Ablation studies across single-turn Q \& A}
   \label{tab:ablation}
 \end{table}
 
@@ -146,12 +143,11 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
     Method & TFLOPs $\downarrow$ & MTVB (w/o subtitles) $\uparrow$ \\
     \midrule
     \textbf{\name}             & \cellcolor{heat0}275 & \cellcolor{heat0}\textbf{58.5} \\
-    \hspace{0.5em}w/o attention        & \cellcolor{heat2}315 & \cellcolor{heat2}57.4 \\
+    \hspace{0.5em}w/o attention refinement       & \cellcolor{heat2}315 & \cellcolor{heat2}57.4 \\
     \hspace{0.5em}w/o incremental allocation & 687 & 59.1 \\
     \bottomrule
   \end{tabular}
-  \caption{Multi-turn \name with and without attention-guided relevance on MT-Video-Bench (200 conversations,
-    450 judged turns; 6{,}144 visual tokens per turn). TFLOPs are summed over all turns of a conversation.}
+  \caption{Ablation studies across multi-turn Q\&A. }
   \label{tab:multiturn}
 \end{table}
 
