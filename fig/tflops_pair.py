@@ -34,14 +34,13 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(COLUMN, COLUMN * 0.62), layout="constrained")
     # (file, x label, y label, x limits, y ticks): every axis starts at its first tick and ends at its last tick
     panels = [("tflops_curve.csv", "TFLOPs per query", "MLVU accuracy (%)", (10, 1000), [64, 68, 72, 76, 80]),
-              ("multiturn_curve.csv", "TFLOPs per conversation", "MTVB accuracy (%)", (50, 1000), [54, 56, 58, 60])]
-    multi_turn = ("Top-K", "Lembas")  # panel (b) compares only the two methods with a defined reuse (author decision)
+              ("multiturn_curve.csv", "TFLOPs per conversation", "MTVB accuracy (%)", (50, 5000), [54, 56, 58, 60])]
     handles = {}
     for ax, (name, xlabel, ylabel, ticks, yticks) in zip(axes, panels):
         rows = load(name)
         for method, (color, marker) in METHODS.items():
             pts = sorted(rows.get(method, []))
-            if not pts or (name == "multiturn_curve.csv" and method not in multi_turn):
+            if not pts:  # panel (b) shows every method (author decision, 2026-11-16)
                 continue
             ours = is_ours(method)
             x, y = zip(*pts)
