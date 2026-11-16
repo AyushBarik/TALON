@@ -174,28 +174,23 @@
 \draw[arr] (15.55,4.12) -- (15.55,3.64);
 \end{scope}
 % ---------------- (3) inference ----------------
-% Attention-ranked pruning, left to right, as the text of Sec. 3 states it: the retrieved frames -> the vision encoder
-% of the VLM (frozen) -> the attention each token receives in the encoder, as a map over the frame -> the tokens
-% sorted by that attention; the budget b_i from Allocation sets the cut -> the kept tokens -> the VLM answers.
-% Each picture has one label that names it; "tokens" and "attention" are no longer bare labels.
+% Attention-ranked pruning, left to right: the retrieved frames -> the attention each token receives, as a map over
+% the frame -> the tokens sorted by that attention; the budget b_i from Allocation sets the cut -> the kept tokens ->
+% the VLM answers. Each picture has one label that names it.
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.42,0.78) {\includegraphics[width=1.6cm]{fig/frames/frame2.jpg}};
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.26,0.67) {\includegraphics[width=1.6cm]{fig/frames/frame3.jpg}};
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.10,0.56) {\includegraphics[width=1.6cm]{fig/frames/frame4.jpg}};
 \node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.26,1.24) {frames};
-\node[model, fill=chipF, minimum width=1.6cm, minimum height=1.15cm] (enc) at (3.4,0.62) {};
-\nnet{3.4,0.62}{0.6}{0.4}
-\node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.4,0.62) {Vision\\[-1pt]encoder};
-\snowflake{($(enc.south east)+(-0.19,0.19)$)}{0.11}
-\bigattn{5.4,0.62}{frame4.jpg}
-\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (5.4,1.1) {attention map};
-\node[model, fill=chipF, minimum width=4.75cm, minimum height=1.5cm] (rk) at (8.925,0.78) {};
-\rankbars{7.05,0.3}{3.9}{12}
-\draw[ink, densely dashed, line width=0.6pt] ({7.05+12*3.9/32},0.3) -- ++(0,1.0);
-\node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({7.05+12*3.9/32},0.3) {$b_i$};
-\node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (7.05,0.8) {attention};
+\bigattn{4.0,0.62}{frame4.jpg}
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (4.0,1.1) {attention map};
+\node[model, fill=chipF, minimum width=5.25cm, minimum height=1.5cm] (rk) at (8.775,0.78) {};
+\rankbars{6.7,0.3}{4.3}{12}
+\draw[ink, densely dashed, line width=0.6pt] ({6.7+12*4.3/32},0.3) -- ++(0,1.0);
+\node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({6.7+12*4.3/32},0.3) {$b_i$};
+\node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (6.7,0.8) {attention};
 \node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (11.15,0.3) {token rank};
-\node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (7.65,0.95) {kept};
-\node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (8.8,0.62) {dropped};
+\node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (7.35,0.95) {kept};
+\node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (8.55,0.62) {dropped};
 \bigframe{12.6,0.62}{frame4.jpg}{12}
 \node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (12.6,1.1) {top $b_i$ tokens};
 \node[model, fill=chipF, minimum width=1.9cm, minimum height=1.15cm] (vlm) at (14.9,0.62) {};
@@ -203,10 +198,9 @@
 \node[font=\sffamily\small, text=modelT] at (14.9,0.62) {VLM};
 \snowflake{($(vlm.south east)+(-0.19,0.19)$)}{0.11}
 \node[qa, inner sep=4pt] (ans) at (16.7,0.62) {\textbf{A:} Blue};
-\draw[arr] (2.27,0.62) -- (enc.west);
-\draw[arr] (enc.east) -- (4.57,0.62);
-\draw[arr] (6.23,0.62) -- (6.23,0.62 -| rk.west);
-\draw[arr] (11.3,0.62) -- (11.78,0.62);
+\draw[arr] (2.3,0.62) -- (3.15,0.62);
+\draw[arr] (4.85,0.62) -- (6.15,0.62);
+\draw[arr] (11.4,0.62) -- (11.78,0.62);
 \draw[arr] (13.45,0.62) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
