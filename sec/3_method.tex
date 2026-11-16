@@ -8,7 +8,7 @@
   \label{fig:overview}
 \end{figure*}
 
-\fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of candidate frames and transcript events. We use these scores in a token scheduler to decide which items (frames and events) to retain and how many tokens each receives, accounting for diminishing returns and redundant visual content. Then, we prune each item to its assigned token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
+\fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of evidence items such as candidate frames and transcript events. We use these scores in a token scheduler to decide which items to retain and how many tokens to allocate to each item, accounting for the diminishing value of additional tokens. Following this allocation, we prune each item to its allocated token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Problem Formulation}
@@ -41,13 +41,13 @@ is the cosine similarity between the image embedding of $f_i$ and the text embed
   \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
-    \caption{\textbf{Token value.} Accuracy against tokens per frame (dots), with four fitted value functions.}
+    \caption{The token value curve is best fit with a rational function.}
     \label{fig:value}
   \end{minipage}\hfill
-  \begin{minipage}[t]{0.53\linewidth}
+  \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
-    \caption{\textbf{Example allocation.} Tokens that \name allocates to the frames and transcript events of one video at a budget of 12{,}288 tokens.}
+    \caption{An example allocation from ~\name}
     \label{fig:alloc}
   \end{minipage}
 \end{figure}
@@ -240,13 +240,13 @@ A detailed proof is provided in the supplementary material.
   \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/turn_seen.pdf}
-    \caption{\textbf{Reuse across turns.} Share of the frames that a turn retrieves and that an earlier turn of the same conversation already retrieved (300 MT-Video-Bench conversations, 12{,}288 tokens per turn).}
+    \caption{Later turns often reference frames already prefilled in prior turns.}
     \label{fig:reuse}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
-    \caption{\textbf{Prefill per turn.} Tokens prefilled per turn, in the same setting as \cref{fig:reuse}.}
+    \caption{Incremental allocation allows ~\name to recover a large amount of the available reuse opportunities.}
     \label{fig:prefill}
   \end{minipage}
 \end{figure}
