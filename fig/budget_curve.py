@@ -93,10 +93,22 @@ def main():
                         fancybox=False, fontsize=6, ncol=2, columnspacing=0.8, borderaxespad=0.5)
     legend.get_frame().set_linewidth(0.6)
     legend.set_zorder(5)
-    # "Better" arrow towards the good corner: lower cost, higher accuracy.
-    ax.annotate("", xy=(0.04, 0.96), xytext=(0.16, 0.84), xycoords="axes fraction",
-                arrowprops=dict(arrowstyle="-|>", color="black", lw=1.0, mutation_scale=9))
-    ax.text(0.17, 0.84, "Better", transform=ax.transAxes, fontsize=7, ha="left", va="center")
+    # "Better" arrow towards the good corner: lower cost, higher accuracy. It is drawn at 45 degrees on the page
+    # (offsets in points, not data units), with the word centred on the arrow.
+    if os.environ.get("BETTER_STYLE", "block") == "block":
+        # block arrow with the word inside it
+        ax.annotate("Better", xy=(0.03, 0.975), xycoords="axes fraction", xytext=(15, -15),
+                    textcoords="offset points", ha="center", va="center", rotation=-45, fontsize=7,
+                    bbox=dict(boxstyle="larrow,pad=0.3", fc="white", ec="black", lw=0.8))
+    else:
+        # line arrow with the word along the middle of the shaft
+        L = 25
+        ax.annotate("", xy=(0.035, 0.965), xycoords="axes fraction", xytext=(L, -L), textcoords="offset points",
+                    arrowprops=dict(arrowstyle="-|>,head_length=0.7,head_width=0.3", color="black", lw=1.3,
+                                    shrinkA=0, shrinkB=0, mutation_scale=9))
+        ax.annotate("Better", xy=(0.035, 0.965), xycoords="axes fraction", xytext=(L / 2 + 4.5, -L / 2 + 4.5),
+                    textcoords="offset points", ha="center", va="center", rotation=-45, rotation_mode="anchor",
+                    fontsize=7)
     ax.set_xlabel("Cost per 1k queries ($)")
     # one x label for both panels, centred under the whole axis
     l0, l1 = ax.get_position().x0, ax2.get_position().x1
