@@ -4,13 +4,15 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{An illustration of ~\name' workflow}
+  \caption{An illustration of ~\name' workflow
+  \fyy{Don't forget to update the notations in this figure. If time permits, prettify it further at the end.}
+  }
   \label{fig:overview}
 \end{figure*}
 
 \fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of evidence items such as candidate frames and transcript events. We use these scores in a token scheduler to decide which items to retain and how many tokens to allocate to each item, accounting for the diminishing value of additional tokens. Following this allocation, we prune each item to its allocated token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
 
-\name is a video RAG framework that formulates token allocation as constrained optimization. \Cref{fig:overview} illustrates its workflow. Given a query, \name first scores the relevance of each frame and subtitle. The Token Scheduler then maximizes an allocation objective under the token budget, which determines the items to retain and the number of tokens each one receives. \name prunes each item to its allocated token count and passes the retained items to the VLM in time order. In multi-turn conversations, incremental allocation prefills only the allocation difference compared to previous turns, while attention refinement updates the relevance of cached items.
+\name is a video RAG framework that formulates token allocation as a constrained optimization problem. \Cref{fig:overview} illustrates its core workflow. Given a query, \name first scores the relevance of each frame and subtitle. The Token Scheduler then maximizes an allocation objective under the token budget, which determines the items to retain and the number of tokens each one receives. \name prunes each item to its allocated token count and passes the retained items to the VLM in time order. In multi-turn conversations, incremental allocation prefills only the allocation difference compared to previous turns, while attention refinement updates the relevance of cached items.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Problem Formulation}
@@ -40,7 +42,7 @@ where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivial
 \end{aligned}
   \label{eq:allocation}
 \end{equation}
-where $b_i^{\max}$ is the full token count of item $i$. However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value functions $v_{\text{frame}}$ and $v_{\text{text}}$ and the relevance of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
+where $b_i^{\max}$ is the full token count of item $i$. However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value functions $v_{\text{frame}}$ and $v_{\text{text}}$ and the relevance $r_i$ of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve the stated objective? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
 % ---------------------------------------------------------------------------------------------------------------------
 
 \subsection{Allocation Objective}
@@ -48,21 +50,24 @@ where $b_i^{\max}$ is the full token count of item $i$. However, this formulatio
 
 \begin{figure}[t]
   \centering
-  \begin{minipage}[t]{0.47\linewidth}
+  \begin{minipage}[t]{0.485\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
-    \caption{The token value curve is best fit with a rational function.}
+    \caption{The token value curve is best fit with a rational function.
+    \fyy{Legend text looks too small. Go through all figures to make sure text is readable in the paper. Also explain black dots are raw/measured data points in the caption or add a legend label.}}
     \label{fig:value}
   \end{minipage}\hfill
-  \begin{minipage}[t]{0.47\linewidth}
+  \begin{minipage}[t]{0.485\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
-    \caption{An example token allocation from ~\name}
+    \caption{An example token allocation from ~\name
+    \fyy{Setup is unclear. Looks more like an evaluation result that belongs to section 4?}
+    }
     \label{fig:alloc}
   \end{minipage}
 \end{figure}
 
-% Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
+
 \fan{maybe merge it into the next paragraph as it is not new and short.}
 \fyy{Fig. 4 is a key result. We should explain where these ``short videos'' come from, which VLM is used, and any relevant experimental setup for this curve fitting. Ideally we can say we repeat this experiment across various settings, and the rational function wins consistently.}
 \fyy{What about text/transcript? This paragraph focuses on frames only.}
@@ -75,16 +80,16 @@ where $b_i^{\max}$ is the full token count of item $i$. However, this formulatio
 \fan{shall we cut down this part? 1. it's not new; 2. introduce other knobs.}
 
 \paragraph{Token Value.}
-The token value captures the fraction of an item's relevance retained when it is represented with $b_i$ tokens. \name ranks the tokens of each item once by the attention scores of its encoder~\cite{yang2024visionzip,chen2024fastv,goyal2020powerbert,kim2022ltp} and retains the top $b_i$. Intuitively, a few tokens already convey the coarse semantics that suffice for most queries, whereas additional tokens recover fine-grained details that only a few queries need (e.g., needle queries). The token value therefore exhibits diminishing returns. To obtain it, we sweep the token count of the frames of short- and medium-length videos from the held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, and measure the normalized accuracy that the VLM retains at each count (\cref{fig:value}). Among candidate function families fitted by least squares, a rational curve provides the tightest fit, motivating
+\name can represent an item with any number of tokens $b_i$ by ranking the tokens of each item via the attention scores of its encoder, following prior token pruners~\cite{yang2024visionzip,chen2024fastv,goyal2020powerbert,kim2022ltp}, and retaining the top $b_i$ tokens. Intuitively, Fewer tokens cost less compute but imply a coarser representation possibly leading to lower accuracy contributions. Additional tokens typically improve accuracy at the cost of compute, but with diminishing returns. Our token value function $v(b_i)\in[0,1]$ captures this trade-off as the fraction of an item's relevance that survives at $b_i$ tokens, so that an item contributes its relevance scaled by its token value. We profile this function offline by sweeping the token count of the frames of short- and medium-length videos from partitioned validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, and measure the normalized accuracy against VLM backbones. Across various functions, we observe a rational function to have the tightest fit against the measured data \cref{fig:value}, formulated as such:
 \begin{equation}
   v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},\quad
   v_{\text{text}}(b_i)=\frac{b_i}{b_i+\tau_{\text{text}}},
   \label{eq:curve}
 \end{equation}
-where $\tau_{\text{frame}}$ and $\tau_{\text{text}}$ are single fitted parameters, shared across all frames and all subtitles, respectively. Both parameters are calibrated offline and refined online via feedback from answered queries. Both functions are strictly increasing and concave, a property that the Token Scheduler relies on (\cref{sec:allocation}).
+where $\tau_{\text{frame}}$ and $\tau_{\text{text}}$ are single parameters shared across all frames and all subtitles, respectively, calibrated offline via least squares and refined online via feedback from answered queries (e.g. accuracy).
 
 \paragraph{Item Relevance.}
-The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of an item by its similarity to the items of the same modality that already hold tokens, weighted by their token values:
+The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so two items that may show similar content receive the same scores and thus allocations, instead we should focus on the marginal gain in information with every token, by discounting duplicate evidence. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of an item by its similarity to the items of the same modality that already hold tokens, weighted by their token values:
 \begin{equation}
 \begin{aligned}
   r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal F}s_{ij}\,v_{\text{frame}}(b_j), & i&\in\mathcal F,\\
@@ -92,7 +97,7 @@ The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its
 \end{aligned}
 \label{eq:cond}
 \end{equation}
-where $s_{ij}$ is the cosine similarity between the embeddings of items $i$ and $j$, and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). An item that resembles items shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped items keeps it. We measure similarity with the cosine because the matrix of all $s_{ij}$, which we call the similarity matrix, is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
+where $s_{ij}$ is the cosine similarity between the embeddings of items $i$ and $j$, and $\eta$ sets the strength of the discount. Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
 
 \begin{comment}
 % Previous Sec. 3.2 text with its comments, kept for reference (not printed).
