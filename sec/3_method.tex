@@ -8,15 +8,18 @@
   \label{fig:overview}
 \end{figure*}
 
-In this section, we present \name, a video RAG framework that allocates tokens under a limited budget. As \cref{fig:overview} shows, \name begins by scoring the relevance of candidate frames and transcript events to the query. We use these scores in a Token Scheduler that decides which items (frames or events) to retain and how many tokens each receives, accounting for diminishing returns and redundant visual content. Next, we prune each item to its assigned token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend this process to reuse cached evidence, so each turn prefills only missing tokens.
+\fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of candidate frames and transcript events. We use these scores in a token scheduler to decide which items (frames and events) to retain and how many tokens each receives, accounting for diminishing returns and redundant visual content. Then, we prune each item to its assigned token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
 
 % ---------------------------------------------------------------------------------------------------------------------
-\subsection{Overview and Problem Formulation}
+\subsection{Problem Formulation}
 \label{sec:overview}
 
 \fan{we should have overview/workflow figure to see how \name works in the lifecycle. e.g., we assume given retrieved frames?}
 
 Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{tang2025aks,yu2024framevoyager}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a frame budget, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
+\fyy{Make it clear that this equation has straightforward solutions,
+which correspond to the top-K. We formulate this only to extend it
+into our own token-based formulation.}
 \begin{equation}
   \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
@@ -49,6 +52,11 @@ is the cosine similarity between the image embedding of $f_i$ and the text embed
   \end{minipage}
 \end{figure}
 
+\fyy{Move this paragraph to 3.1 as we shouldn't end it
+at a problem formulation of the baselines. It should be focused on
+\textit{our own} problem formulation, including Eq. (4)
+and the challenges in solving it.
+Otherwise, 3.1 is not complete by itself.}
 Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by the number of tokens $b_i$ allocated to frame $f_i$, and the frame budget $K$ by a token budget $B$. This formulation, however, raises three key questions: (i) how much is a token worth based on the query, (ii) \fan{which tokens we should retain collectively in selecting across frames} how much is it worth given our current allocation, and (iii) how do we allocate tokens based on a token budget? \name answers them through a dedicated Token Scheduler.
 
 \paragraph{Pruning Frames and Transcripts to a Token Count.}
@@ -234,7 +242,9 @@ A detailed proof is provided in the supplementary material.
   \label{fig:reuse}
 \end{figure}
 
-In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the KV cache of the conversation is kept between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence (\cref{fig:reuse}a). \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:p1} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
+Within a conversation, a user may ask several questions $q_1,\dots,q_T$ about a video. These questions are inherently correlated and later turns often reference frames and tokens referenced by prior turns, as shown in \cref{fig:reuse}a.
+
+Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, . Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:p1} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
 
 \paragraph{Updating Relevance with Attention.}
 Once a frame is cached, the VLM has already read it, and its attention to the frame indicates how much the frame matters for the new question. \name prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads~\cite{rekv2025}. With $a_i$ the share of this attention per cached token of frame $f_i$ and $r_i$ its retrieval relevance to $q_t$ (Eq.~\eqref{eq:rel}), \name combines them as
