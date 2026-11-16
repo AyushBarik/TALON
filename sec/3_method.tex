@@ -76,7 +76,7 @@ The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its
   r_i(q,\mathbf b)=r_i(q)-\eta\sum_{j\in\mathcal F}\cos(f_i,f_j)\,v_{\text{frame}}(b_j),
   \label{eq:cond}
 \end{equation}
-where $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). Subtitles are discounted analogously over $\mathcal S$ with $v_{\text{text}}$. A frame that resembles frames shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped frames keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
+where $i\in\mathcal F$ is a frame and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). Subtitles are discounted analogously over $\mathcal S$ with $v_{\text{text}}$. A frame that resembles frames shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped frames keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
 
 \begin{comment}
 % Previous Sec. 3.2 text with its comments, kept for reference (not printed).
