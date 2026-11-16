@@ -157,7 +157,6 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 % Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
 \fyy{Explain the rationale behind this method, and how it's applied.}
 \fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
-\ayush{too many symbols? fix later}
 
 \paragraph{Water-Filling.}
 We first solve Eq.~\eqref{eq:allocation} with the relevance fixed to $r_i(q)$, so that it no longer depends on the allocation. Let the marginal gain of an item be the increase in the objective from one more token. At the optimum, all items that hold some but not all of their tokens must have the same marginal gain, which we denote by $\lambda$; otherwise, moving a token from an item with a lower marginal gain to one with a higher one would improve the objective. Because the token value functions are concave, the problem is convex, so this condition is not only necessary but also sufficient for optimality~\cite{boyd2004}. For our token value functions, the marginal gain of item $i$ is the derivative $r_i\tau/(b_i+\tau)^2$. Setting it to $\lambda$ and solving for $b_i$ yields
