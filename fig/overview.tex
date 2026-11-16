@@ -152,7 +152,7 @@
 
 % ---------------- (2) allocation ----------------
 % Equation on top; below it the two things it names: the token value curves (left) and the solution (right).
-\node[font=\sffamily\footnotesize, align=center] at (12.65,4.4) {$\max\limits_{\mathbf b}\ \sum_{i\in\mathcal F} r_i(q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_{i\in\mathcal S} r_i(q)\,v_{\text{text}}(b_i)$\\[1pt]$\text{s.t.}\ \ \sum_{i\in\mathcal F\cup\mathcal S} b_i\le B$};
+\node[font=\sffamily\footnotesize, align=center] at (12.65,4.4) {$\max\limits_{\mathbf b}\ \sum_{i\in\mathcal F} r_i(q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_{i\in\mathcal S} r_i(q,\mathbf b)\,v_{\text{text}}(b_i)$\\[1pt]$\text{s.t.}\ \ \sum_{i\in\mathcal F\cup\mathcal S} b_i\le B$};
 \begin{scope}[shift={(8.8,2.2)}]
   \draw[ax] (0,0) -- (3.3,0); \draw[ax] (0,0) -- (0,1.35);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.68) {accuracy};
