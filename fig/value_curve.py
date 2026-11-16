@@ -43,6 +43,7 @@ def main():
     import matplotlib
     matplotlib.rcParams.update({"xtick.labelsize": 6, "ytick.labelsize": 6, "axes.labelsize": 7})
     import matplotlib.pyplot as plt
+    import matplotlib.ticker
     # Three quarters of a column wide (included at 0.75\linewidth), so it prints at this size.
     fig, ax = plt.subplots(figsize=(COLUMN * 0.75, COLUMN * 0.75 * 0.62))
     fig.subplots_adjust(left=0.16, right=0.94, bottom=0.27, top=0.96)
@@ -57,7 +58,9 @@ def main():
     ax.set_xscale("log")
     ax.set_xticks([2, 8, 32, 128, 512, 2048])
     ax.set_xticklabels(["2", "8", "32", "128", "512", "2048"])
-    ax.minorticks_off()
+    # base-2 scale: labels at every second power of two, short unlabelled ticks at the powers between them
+    ax.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([4, 16, 64, 256, 1024]))
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(2, 2048)  # every axis starts at its first tick and ends at its last tick
     ax.set_ylim(20, 50)
     ax.set_yticks([20, 30, 40, 50])

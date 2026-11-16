@@ -17,6 +17,7 @@ import json
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -46,7 +47,9 @@ def main():
     ax.set_xscale("log")
     ax.set_xticks([2, 8, 32, 128, 512, 2048])
     ax.set_xticklabels(["2", "8", "32", "128", "512", "2048"])
-    ax.minorticks_off()
+    # base-2 scale: labels at every second power of two, short unlabelled ticks at the powers between them
+    ax.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([4, 16, 64, 256, 1024]))
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(2, 2048); ax.set_ylim(20, 50); ax.set_yticks([20, 30, 40, 50])
     ax.set_xlabel("Tokens per frame"); ax.set_ylabel("Accuracy (%)", labelpad=1)
     ax.legend(loc="lower right", frameon=False, fontsize=5, labelspacing=0.2, handlelength=1.3, borderaxespad=0.2)

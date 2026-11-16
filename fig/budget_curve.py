@@ -13,6 +13,7 @@ import matplotlib.ticker
 import os
 from collections import defaultdict
 
+from logaxis import log_axis
 from methods import METHODS, is_ours
 from orx_figstyle import COLUMN, figure, save, use_style
 
@@ -42,16 +43,16 @@ def main():
     gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
-    LEFT, RIGHT = (0.4, 4.0), (22.0, 25.0)  # each axis starts and ends at a tick
-    for a in (ax, ax2):
-        a.set_xscale("log")
-        a.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-    ax.set_xlim(*LEFT)
-    ax.set_xticks([0.4, 1, 2, 4])
-    ax.set_xticklabels(["0.4", "1", "2", "4"])
+    LEFT, RIGHT = (0.2, 5.0), (22.0, 25.0)  # each axis starts and ends at a labelled tick
+    log_axis(ax, *LEFT)  # 1-2-5 labels, complete minor ticks (fig/logaxis.py)
+    # The right panel is a cut-out of the same log scale around QuoTA: it spans less than one 1-2-5 step, so its two
+    # end ticks are labelled and the integers between them get the short ticks.
+    ax2.set_xscale("log")
     ax2.set_xlim(*RIGHT)
-    ax2.set_xticks([22, 25])
-    ax2.set_xticklabels(["22", "25"])
+    ax2.xaxis.set_major_locator(matplotlib.ticker.FixedLocator([22, 25]))
+    ax2.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax2.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([23, 24]))
+    ax2.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.get_xticklabels()[-1].set_ha("right")  # keep "4" and "22" apart at the axis break
     ax2.get_xticklabels()[0].set_ha("left")
     ax.set_ylim(60, 80)
