@@ -96,8 +96,15 @@
 \newcolumntype{V}{>{\centering\arraybackslash}p{\splitw}}
 \newcommand{\venue}[1]{\textsubscript{\,#1}}   % venue under a baseline name, e.g. Q-Frame [x]_{ICCV'25}
 \usepackage{tikz}
-% white bold digit in a black circle, as tall as a capital letter of the surrounding text
-\newcommand{\circnum}[1]{\tikz[baseline=(c.base)]\node[circle,fill=black,text=white,inner sep=0pt,minimum size=1.08em,font=\sffamily\bfseries\footnotesize](c){#1};}
+% \circnum{n}: white bold digit in a black circle. The circle is centred on the capital letters of the surrounding
+% text and scales with its font size; the digit 1 is shifted slightly right, since its ink sits left of its box.
+\makeatletter
+\newlength{\circnum@cap}
+\newcommand{\circnum}[1]{\settoheight{\circnum@cap}{H}%
+  \raisebox{\dimexpr0.5\circnum@cap-0.475em\relax}{\tikz\node[circle,fill=black,text=white,inner sep=0pt,minimum size=0.95em,
+    font=\sffamily\bfseries\fontsize{\dimexpr0.7\dimexpr\f@size pt\relax\relax}{\dimexpr0.7\dimexpr\f@size pt\relax\relax}\selectfont]%
+    {\ifnum#1=1 \kern0.07em\fi#1};}}
+\makeatother
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}   % no "end for"/"end if" lines (DDPM / CLRS style)
 \algrenewcommand\algorithmicrequire{\textbf{Input:}}
