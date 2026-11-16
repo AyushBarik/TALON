@@ -92,7 +92,7 @@ The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its
 \end{aligned}
 \label{eq:cond}
 \end{equation}
-where $s_{ij}$ is the cosine similarity between the embeddings of items $i$ and $j$, and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). An item that resembles items shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped items keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
+where $s_{ij}$ is the cosine similarity between the embeddings of items $i$ and $j$, and $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). An item that resembles items shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped items keeps it. We measure similarity with the cosine because the matrix of all $s_{ij}$, which we call the similarity matrix, is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
 
 \begin{comment}
 % Previous Sec. 3.2 text with its comments, kept for reference (not printed).
@@ -165,7 +165,7 @@ We first solve Eq.~\eqref{eq:allocation} with the relevance fixed to $r_i(q)$, s
   b_i=\left[\sqrt{r_i\,\tau}\,\Big(\mu-\sqrt{\tau/r_i}\Big)\right]_{0}^{b_i^{\max}},\qquad \mu=\frac{1}{\sqrt{\lambda}},
   \label{eq:waterfill}
 \end{equation}
-where $r_i$ abbreviates the relevance $r_i(q)$, scaled by $\beta$ for a subtitle, $\tau$ is the token value parameter of its modality, and $[\cdot]_0^{b_i^{\max}}$ clips to the feasible range. Intuitively, each item acts as a vessel with floor $\sqrt{\tau/r_i}$, width $\sqrt{r_i\tau}$, and capacity $b_i^{\max}$, and the budget is water poured into all vessels at once, settling at one common level $\mu$. An item receives tokens only once the level exceeds its floor, so a single level decides both which items are retained and how many tokens each one receives. Since the total allocation grows with $\mu$, a bisection finds the level that meets the budget $B$. We derive this weighted water-filling in the supplementary material.
+where $r_i$ abbreviates the relevance $r_i(q)$, scaled by $\beta$ for a subtitle, $\tau$ is the token value parameter of its modality, and $[\cdot]_0^{b_i^{\max}}$ clips to the range from $0$ to $b_i^{\max}$. Intuitively, each item acts as a vessel with floor $\sqrt{\tau/r_i}$, width $\sqrt{r_i\tau}$, and capacity $b_i^{\max}$, and the budget is water poured into all vessels at once, settling at one common level $\mu$. An item receives tokens only once the level exceeds its floor, so a single level decides both which items receive tokens and how many. Since the total allocation grows with $\mu$, a bisection finds the level that meets the budget $B$. We derive this water-filling solution in the supplementary material.
 
 \paragraph{Iterative Water-Filling.}
 Water-filling requires fixed relevances, yet the full relevance $r_i(q,\mathbf b)$ changes whenever tokens move. The Token Scheduler resolves this circular dependence by iterating: it evaluates the relevances at the current allocation, water-fills with them, and moves the allocation a step toward the result (\cref{alg:iwf}). Let $\bar v_i$ denote the current token value of item $i$, initially zero. The relevance that water-filling needs for item $i$ is the gain in Eq.~\eqref{eq:allocation} from raising $\bar v_i$, which we call its discounted relevance:
@@ -183,11 +183,11 @@ where $\ell$ is the iteration and $v$ is the token value function of the item's 
 \label{prop:convergence}
 Let $J^\star$ be the maximum of Eq.~\eqref{eq:allocation} over real-valued token counts, and let $J^{(\ell)}$ be the objective of the allocation after $\ell$ iterations of \cref{alg:iwf}. Then
 \begin{equation}
-  J^\star-J^{(\ell)}\le\frac{4\,\eta\,\sigma_{\max}D^2}{\ell+2} ,
+  J^\star-J^{(\ell)}\le\frac{4\,\eta\,\sigma_{\max}D^2}{\ell+2}=O\!\left(\frac{1}{\ell}\right),
 \end{equation}
 where $\sigma_{\max}$ is the largest eigenvalue of the similarity matrix and $D$ is the largest distance between the token values of two allocations within the budget.
 \end{proposition}
-\noindent The gap thus shrinks as $O(1/\ell)$. The guarantee holds because the similarity matrix is positive semidefinite: the total discount is then never negative, which makes the objective concave in the token values~\cite{jaggi2013}. A proof is provided in the supplementary material.
+\noindent The guarantee holds because the similarity matrix is positive semidefinite, which makes the objective concave in the token values, so that it has a single maximum~\cite{jaggi2013}. A proof is provided in the supplementary material.
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling}
