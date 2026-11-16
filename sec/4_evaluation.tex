@@ -1,7 +1,7 @@
 \section{Evaluation}
 \label{sec:exp}
 
-To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, with Qwen3-VL-8B serving as the default backbone unless stated otherwise. ~\name is combined with a plain RAG system that stores paired video frames and subtitles sampled at 0.5 FPS, before semantically scoring frames with SigLIP~2~\cite{siglip2} and subtitles with BGE~\cite{bge}. We also add a graph based RAG method due to its popularity in video understanding building atop VideoRAG ~\cite{luo2024videorag}. As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
+To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, with Qwen3-VL-8B serving as the default backbone unless stated otherwise. ~\name is combined with a plain RAG system that stores paired video frames and subtitles sampled at 0.5 FPS, before semantically scoring frames with SigLIP~2~\cite{siglip2} and subtitles with BGE~\cite{bge}. We also add a graph based RAG method due to its popularity in video understanding building atop VideoRAG ~\cite{luo2024videorag}. As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one hardware-independent scale. Token counts and latency are provided in the Appendix. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
 
 \paragraph{Benchmarks.} We evaluate on the three most popular video understanding benchmarks, however as they only cover single-turn multiple-choice Q\&A, we also include a multi-turn, open-ended benchmark:
 \begin{itemize}
@@ -25,49 +25,49 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
 
 \begin{table*}[t]
   \centering
-  \footnotesize
+  \small
   \renewcommand{\arraystretch}{1.2}
   % Rules that border a shaded row get no booktabs gap, so the shading touches the rule.
   \newcommand{\na}{--}
   \newcommand{\hd}[2]{\begin{tabular}{@{}c@{}}#1\\[-1pt]#2\end{tabular}}  % two-line column header
-  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{13}{l}{\textit{#1}} \\}  % purple band naming the VLM
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % purple band naming the VLM
   \newcommand{\maintab}{%
-  \begin{tabular}{l ccc ccc cccccc}
+  \begin{tabular}{l cc cc ccccc}
     \toprule
-    \multirow{2}{*}{Method} & \multicolumn{3}{c}{MLVU (w/o subtitles)} & \multicolumn{3}{c}{LVB (w/o subtitles)} & \multicolumn{6}{c}{Video-MME (w/ subtitles)} \\
-    \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-13}
-    & \#Tokens & TFLOPs~$\downarrow$ & Overall~$\uparrow$
-      & \#Tokens & TFLOPs~$\downarrow$ & Overall~$\uparrow$
-      & \#Tokens & TFLOPs~$\downarrow$
+    \multirow{2}{*}{Method} & \multicolumn{2}{c}{MLVU (w/o subtitles)} & \multicolumn{2}{c}{LVB (w/o subtitles)} & \multicolumn{5}{c}{Video-MME (w/ subtitles)} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-10}
+    & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$
       & Overall~$\uparrow$ & Short~$\uparrow$ & Medium~$\uparrow$ & Long~$\uparrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
-    Uniform sampling                                         & 12.2k & \cellcolor{heat1}215 & \cellcolor{heat4}73.4 & 12.9k & \cellcolor{heat1}229 & \cellcolor{heat2}65.1 & 12.7k & \cellcolor{heat1}224 & \cellcolor{heat4}72.9 & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat3}73.0 & 62.0 \\
-    RAG                                                      &  &  &  &  &  &  &  &  &  &  &  &  \\
-    \quad w/ Top-K                                  & 12.3k & \cellcolor{heat1}218 & \cellcolor{heat3}75.9 & 13.1k & \cellcolor{heat1}232 & \cellcolor{heat3}64.0 & 13.0k & \cellcolor{heat1}230 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 \\
-    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 11.9k & \cellcolor{heat1}209 & \cellcolor{heat3}74.7 & 12.7k & \cellcolor{heat1}225 & \cellcolor{heat1}65.7 & 12.4k & \cellcolor{heat0}218 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 \\
-    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \na & 781 & \cellcolor{heat1}77.2 & \na & 676 & \cellcolor{heat0}\textbf{66.6} & \na & 647 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 \\
-    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 12.0k & \cellcolor{heat1}211 & \cellcolor{heat4}71.7 & 12.8k & \cellcolor{heat1}226 & \cellcolor{heat3}64.0 & 12.7k & \cellcolor{heat1}224 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 \\
-    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \cellcolor{heat0}203 & \cellcolor{heat4}73.2 & \na & \cellcolor{heat0}222 & \cellcolor{heat2}65.1 & \na & \cellcolor{heat1}225 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 \\
-    \quad w/ \textbf{\name (Ours)}                            & 13.0k & \cellcolor{heat2}230 & \cellcolor{heat0}\textbf{78.1} & 13.2k & \cellcolor{heat1}234 & \cellcolor{heat0}\textbf{66.6} & 13.1k & \cellcolor{heat1}232 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} \\
-    VideoRAG~\cite{ren2025videorag}\venue{KDD'26}             & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad w/ \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    Uniform sampling                                         & \cellcolor{heat1}215 & \cellcolor{heat4}73.4 & \cellcolor{heat1}229 & \cellcolor{heat2}65.1 & \cellcolor{heat1}224 & \cellcolor{heat4}72.9 & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat3}73.0 & 62.0 \\
+    RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                                  & \cellcolor{heat1}218 & \cellcolor{heat3}75.9 & \cellcolor{heat1}232 & \cellcolor{heat3}64.0 & \cellcolor{heat1}230 & \cellcolor{heat4}73.1 & \cellcolor{heat2}82.4 & \cellcolor{heat3}73.4 & 63.6 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat1}209 & \cellcolor{heat3}74.7 & \cellcolor{heat1}225 & \cellcolor{heat1}65.7 & \cellcolor{heat0}218 & \cellcolor{heat4}71.1 & \cellcolor{heat3}80.1 & \cellcolor{heat4}70.3 & 63.0 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 781 & \cellcolor{heat1}77.2 & 676 & \cellcolor{heat0}\textbf{66.6} & 647 & \cellcolor{heat3}74.4 & \cellcolor{heat1}83.2 & \cellcolor{heat3}74.4 & \cellcolor{heat4}65.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat1}211 & \cellcolor{heat4}71.7 & \cellcolor{heat1}226 & \cellcolor{heat3}64.0 & \cellcolor{heat1}224 & \cellcolor{heat4}70.1 & \cellcolor{heat4}79.1 & \cellcolor{heat4}69.4 & 61.8 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat0}203 & \cellcolor{heat4}73.2 & \cellcolor{heat0}222 & \cellcolor{heat2}65.1 & \cellcolor{heat1}225 & \cellcolor{heat4}71.0 & \cellcolor{heat1}82.8 & \cellcolor{heat4}69.4 & 60.7 \\
+    \quad w/ \textbf{\name (Ours)}                            & \cellcolor{heat2}230 & \cellcolor{heat0}\textbf{78.1} & \cellcolor{heat1}234 & \cellcolor{heat0}\textbf{66.6} & \cellcolor{heat1}232 & \cellcolor{heat0}\textbf{77.3} & \cellcolor{heat0}\textbf{83.6} & \cellcolor{heat0}\textbf{76.8} & \cellcolor{heat0}\textbf{71.7} \\
+    VideoRAG~\cite{ren2025videorag}\venue{KDD'26}             & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \quad w/ \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
     \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
-    Uniform sampling                                         & 12.9k & \cellcolor{heat1}143 & \cellcolor{heat3}69.9 & 12.9k & \cellcolor{heat0}143 & \cellcolor{heat2}62.0 & 12.8k & \cellcolor{heat1}141 & \cellcolor{heat4}65.6 & \cellcolor{heat0}\textbf{79.8} & \cellcolor{heat4}63.8 & 53.2 \\
-    RAG                                                      &  &  &  &  &  &  &  &  &  &  &  &  \\
-    \quad w/ Top-K                               & 13.1k & \cellcolor{heat1}145 & \cellcolor{heat1}72.5 & 13.1k & \cellcolor{heat1}146 & \cellcolor{heat3}60.4 & 13.0k & \cellcolor{heat1}145 & \cellcolor{heat3}68.6 & \cellcolor{heat2}78.0 & \cellcolor{heat2}69.1 & \cellcolor{heat4}58.7 \\
-    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 13.1k & \cellcolor{heat1}146 & \cellcolor{heat2}71.1 & 13.1k & \cellcolor{heat1}146 & \cellcolor{heat0}\textbf{63.1} & 12.9k & \cellcolor{heat1}142 & \cellcolor{heat4}66.0 & \cellcolor{heat3}76.7 & \cellcolor{heat4}64.6 & 56.9 \\
-    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & \na & 708 & \cellcolor{heat2}71.3 & \na & 583 & \cellcolor{heat1}62.5 & \na & 551 & \cellcolor{heat4}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat4}64.6 & 55.4 \\
-    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 12.9k & \cellcolor{heat0}142 & \cellcolor{heat3}69.5 & 12.9k & \cellcolor{heat0}143 & \cellcolor{heat4}58.8 & 12.7k & \cellcolor{heat0}140 & \cellcolor{heat4}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat4}65.9 & 57.4 \\
-    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad w/ \textbf{\name (Ours)}                            & 13.5k & \cellcolor{heat1}152 & \cellcolor{heat0}\textbf{73.0} & 13.5k & \cellcolor{heat1}152 & \cellcolor{heat2}61.2 & 13.4k & \cellcolor{heat1}150 & \cellcolor{heat0}\textbf{72.1} & \cellcolor{heat1}79.0 & \cellcolor{heat0}\textbf{70.8} & \cellcolor{heat0}\textbf{66.4} \\
+    Uniform sampling                                         & \cellcolor{heat1}143 & \cellcolor{heat3}69.9 & \cellcolor{heat0}143 & \cellcolor{heat2}62.0 & \cellcolor{heat1}141 & \cellcolor{heat4}65.6 & \cellcolor{heat0}\textbf{79.8} & \cellcolor{heat4}63.8 & 53.2 \\
+    RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                               & \cellcolor{heat1}145 & \cellcolor{heat1}72.5 & \cellcolor{heat1}146 & \cellcolor{heat3}60.4 & \cellcolor{heat1}145 & \cellcolor{heat3}68.6 & \cellcolor{heat2}78.0 & \cellcolor{heat2}69.1 & \cellcolor{heat4}58.7 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & \cellcolor{heat1}146 & \cellcolor{heat2}71.1 & \cellcolor{heat1}146 & \cellcolor{heat0}\textbf{63.1} & \cellcolor{heat1}142 & \cellcolor{heat4}66.0 & \cellcolor{heat3}76.7 & \cellcolor{heat4}64.6 & 56.9 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 708 & \cellcolor{heat2}71.3 & 583 & \cellcolor{heat1}62.5 & 551 & \cellcolor{heat4}64.9 & \cellcolor{heat4}74.7 & \cellcolor{heat4}64.6 & 55.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & \cellcolor{heat1}142 & \cellcolor{heat3}69.5 & \cellcolor{heat0}143 & \cellcolor{heat4}58.8 & \cellcolor{heat1}140 & \cellcolor{heat4}66.4 & \cellcolor{heat3}75.9 & \cellcolor{heat4}65.9 & 57.4 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & \cellcolor{heat0}140 & \cellcolor{heat3}69.6 & \cellcolor{heat0}143 & \cellcolor{heat2}61.3 & \cellcolor{heat0}139 & \cellcolor{heat4}65.7 & \cellcolor{heat3}76.3 & \cellcolor{heat4}66.4 & 54.2 \\
+    \quad w/ \textbf{\name (Ours)}                            & \cellcolor{heat1}152 & \cellcolor{heat0}\textbf{73.0} & \cellcolor{heat1}152 & \cellcolor{heat2}61.2 & \cellcolor{heat1}150 & \cellcolor{heat0}\textbf{72.1} & \cellcolor{heat1}79.0 & \cellcolor{heat0}\textbf{70.8} & \cellcolor{heat0}\textbf{66.4} \\
     \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
   % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
-  % 26 column sides. This stays correct when the numbers change.
+  % 20 column sides. This stays correct when the numbers change.
   \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
-  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/26\relax}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
   \maintab
   \caption{\TODO{Main results.} Accuracy (\%) on MLVU, LongVideoBench (LVB) and Video-MME with subtitles, with the
     compute (TFLOPs per question) of each method on each benchmark.}
@@ -140,7 +140,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \renewcommand{\arraystretch}{1.2}
   % Same side gap as Table 2 (\ablsep); the two number columns share the remaining width.
   \setlength{\tabcolsep}{\ablsep}%
-  \settowidth{\dimen0}{\hspace{0.5em}w/o carried allocation}%
+  \settowidth{\dimen0}{\hspace{0.5em}w/o incremental allocation}%
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
   \begin{tabular}{l@{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
     \toprule
@@ -148,7 +148,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
     \midrule
     \textbf{\name}             & \cellcolor{heat0}275 & \cellcolor{heat0}\textbf{58.5} \\
     \hspace{0.5em}w/o attention        & \cellcolor{heat2}315 & \cellcolor{heat2}57.4 \\
-    \hspace{0.5em}w/o carried allocation & 687 & 59.1 \\
+    \hspace{0.5em}w/o incremental allocation & 687 & 59.1 \\
     \bottomrule
   \end{tabular}
   \caption{Multi-turn \name with and without attention-guided relevance on MT-Video-Bench (200 conversations,
