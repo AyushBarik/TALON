@@ -1,7 +1,7 @@
 """Token value and the allocation it leads to: TWO separate half-column figures, set side by side in one column
 (fig/value_half.pdf = Figure "value", fig/alloc_case.pdf = Figure "alloc"; no panel letters, each has its own caption).
 
-(a) Accuracy against the tokens of each frame, with four curve families fitted to the measured means (as in
+(a) Normalized accuracy (0 = no visual tokens, 1 = full frame) against the tokens of each frame, with four curve families fitted to the measured means (as in
     value_curve.py; data fig/value_curve.csv, held-out LVBench calibration, Qwen3-VL-8B, 280 questions).
 (b) The allocation of one question over the time of its video, in one plot with two y-axes: tokens of every candidate
     frame (left axis) and the transcript tokens shown (right axis, summed per frame interval). Data: fig/alloc_case.json, Video-MME
@@ -39,15 +39,19 @@ def main():
 
     rows = list(csv.DictReader(open(os.path.join(HERE, "value_curve.csv"))))
     b = np.array([float(r["tokens_per_frame"]) for r in rows])
-    acc = np.array([100 * float(r["accuracy"]) for r in rows])
+    # Normalized accuracy: the probability of the correct answer, rescaled so that 0 is the level without visual
+    # tokens and 1 is the full frame (column p_gold_normalized).
+    acc = np.array([float(r["p_gold_normalized"]) for r in rows])
     grid = np.exp(np.linspace(np.log(3.5), np.log(1000), 300))
-    for name, (f, p0, color, ls) in FAMILIES.items():
-        p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
+    start = {"Rational": [0, 1, 30], "Sigmoid": [0, 1, 30], "Exponential": [0, 1, 50], "Log": [0, 0.2]}
+    for name, (f, _, color, ls) in FAMILIES.items():
+        p, _ = curve_fit(f, b, acc, p0=start[name], maxfev=20000)
+        print(f"{name:12s} RMSE={np.sqrt(np.mean((f(b, *p) - acc) ** 2)):.3f}")
         ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.0, label=name, zorder=ZORDER[name])
     ax.plot(b, acc, "o", color="black", ms=2.2, zorder=3)
     log_axis(ax, 2, 1000, label=(1,))  # labels at 2, 10, 100, 1k; short ticks at every other step (fig/logaxis.py)
-    ax.set_ylim(20, 50); ax.set_yticks([20, 30, 40, 50])
-    ax.set_xlabel("Tokens per frame"); ax.set_ylabel("Accuracy (%)", labelpad=1)
+    ax.set_ylim(0, 1); ax.set_yticks([0, 0.25, 0.5, 0.75, 1]); ax.set_yticklabels(["0", "0.25", "0.5", "0.75", "1"])
+    ax.set_xlabel("Tokens per frame"); ax.set_ylabel("Normalized accuracy", labelpad=1)
     ax.legend(loc="lower right", frameon=False, fontsize=5, labelspacing=0.2, handlelength=1.3, borderaxespad=0.2)
 
     c = json.load(open(os.path.join(HERE, "alloc_case.json")))
