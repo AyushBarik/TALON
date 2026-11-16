@@ -74,7 +74,8 @@ While various valid function choices exist, we observed that a rational function
   v_i(b_i)=\frac{b_i}{b_i+\tau} ,
   \label{eq:curve}
 \end{equation}
-\fyy{why is this $v_i$ instead of just $v$?}
+\fyy{Why is this $v_i$ instead of just $v$?}
+\fyy{Didn't explain the important takeaway: diminishing returns / concave, and how this property will become useful later.}
 where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum likelihood offline and updated online using feedback on answered queries (e.g., accuracy, user feedback). Transcript events have a token value of the same form, fitted in the same way. \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.} \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} Weighting the value of each frame by its relevance gives the token-level objective
 \fyy{This weighting shouldn't be taken for granted; it's a design choice. Why does it approximate accuracy?}
 \begin{equation}
@@ -113,6 +114,7 @@ The solver treats the $N$ frames and the $M$ transcript events alike as items $i
 Eq.~\eqref{eq:p1} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
 If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
 The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
+\fyy{Explain the rationale behind this method, and how it's applied.}
 It discounts the relevance of each frame by its similarity to the frames that already hold tokens, allocates the budget exactly under the discounted relevances, and averages the result into a running estimate.
 
 \textit{Step 1: Discount the relevances.}
@@ -165,6 +167,7 @@ Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:p1} and $J^\star$ its maxim
 \end{equation}
 where $\mu_{\max}$ is the largest eigenvalue of the matrix of cosine similarities between frames, and $D$ is the largest distance between the token values of two allocations within the budget.
 \end{proposition}
+\fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
 
 \noindent Proposition~\ref{prop:convergence} states that the gap to the optimal allocation falls as $O(1/\ell)$.
 Ten times more iterations make the bound ten times smaller: after $\ell=100$ iterations, the gap is at most about one hundredth of the constant $4\eta\mu_{\max}D^2$.
