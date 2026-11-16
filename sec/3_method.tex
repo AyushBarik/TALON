@@ -237,12 +237,21 @@ A detailed proof is provided in the supplementary material.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{fig/reuse_share_pair.pdf}
-  \caption{\textbf{Reuse across turns.} (a) Share of the frames or tokens that a turn needs and that an earlier turn of the same conversation already used. (b) Tokens prefilled per turn. Results on 300 MT-Video-Bench conversations at 12{,}288 tokens per turn.}
-  \label{fig:reuse}
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_seen.pdf}
+    \caption{\textbf{Reuse across turns.} Share of the frames or tokens that a turn needs and that an earlier turn of the same conversation already used (300 MT-Video-Bench conversations, 12{,}288 tokens per turn).}
+    \label{fig:reuse}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
+    \caption{\textbf{Prefill per turn.} Tokens prefilled per turn, in the same setting as \cref{fig:reuse}.}
+    \label{fig:prefill}
+  \end{minipage}
 \end{figure}
 
-Within a conversation, a user may ask several questions $q_1,\dots,q_T$ about a video. These questions are inherently correlated and later turns often reference frames and tokens referenced by prior turns, as shown in \cref{fig:reuse}a.
+Within a conversation, a user may ask several questions $q_1,\dots,q_T$ about a video. These questions are inherently correlated and later turns often reference frames and tokens referenced by prior turns, as shown in \cref{fig:reuse}.
 
 Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, . Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:p1} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
 
