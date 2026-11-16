@@ -143,7 +143,6 @@
 \begin{scope}[shift={(4.7,1.95)}]
   \draw[ax] (0,0) -- (2.6,0); \draw[ax] (0,0) -- (0,1.3);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.65) {relevance};
-  \node[font=\sffamily\scriptsize\itshape, text=ink, anchor=north west, inner sep=1pt] at (0.08,1.27) {$r(\cdot\mid q)$};
   \node[axl, anchor=north] at (1.3,-0.02) {time};
   \items{2.5}{1.3}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
@@ -155,43 +154,44 @@
 % Equation on top; below it the two things it names: the token value curves (left) and the solution (right).
 % The two plots have equal margins to the box edges; each arrow sits over the centre of its plot.
 \node[font=\sffamily\footnotesize, align=center] at (12.65,4.2) {$\max\limits_{\mathbf b}\ \sum_{i\in\mathcal F} r_i(q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_{i\in\mathcal S} r_i(q,\mathbf b)\,v_{\text{text}}(b_i)$\\[1pt]$\text{s.t.}\ \ \sum_{i\in\mathcal F\cup\mathcal S} b_i\le B$};
-\begin{scope}[shift={(8.87,1.95)}]
-  \draw[ax] (0,0) -- (3.2,0); \draw[ax] (0,0) -- (0,1.3);
+\begin{scope}[shift={(8.75,1.95)}]
+  \draw[ax] (0,0) -- (3.4,0); \draw[ax] (0,0) -- (0,1.3);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.65) {accuracy};
-  \node[axl, anchor=north] at (1.6,-0.02) {tokens};
-  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.37*\x}, {1.2*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
-  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.37*\x}, {1.1*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\footnotesize, text=txt!75!black, anchor=south west, inner sep=1pt] at (3.0,1.1) {$v_{\text{text}}$};
-  \node[font=\sffamily\footnotesize, text=frm, anchor=north west, inner sep=1pt] at (3.0,1.04) {$v_{\text{frame}}$};
+  \node[axl, anchor=north] at (1.7,-0.02) {tokens};
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.4*\x}, {1.2*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.4*\x}, {1.1*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\footnotesize, text=ink, anchor=north west, inner sep=1pt] at (0.12,1.27) {$v_i(b_i)$};
 \end{scope}
-\begin{scope}[shift={(13.67,1.95)}]
-  \draw[ax] (0,0) -- (3.2,0); \draw[ax] (0,0) -- (0,1.3);
+\begin{scope}[shift={(13.6,1.95)}]
+  \draw[ax] (0,0) -- (3.4,0); \draw[ax] (0,0) -- (0,1.3);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.65) {tokens};
-  \node[axl, anchor=north] at (1.6,-0.02) {time};
-  \items{3.1}{1.5}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
+  \node[axl, anchor=north] at (1.7,-0.02) {time};
+  \items{3.3}{1.5}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
                    0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
+  \fill[frm] (1.86,1.06) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.0,1.13) {frame};
+  \fill[txt] (2.76,1.06) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.9,1.13) {text};
 \end{scope}
 
-\draw[arr] (10.47,3.4) -- (10.47,4.0);
-\draw[arr] (15.27,4.0) -- (15.27,3.4);
+\draw[arr] (10.45,3.4) -- (10.45,4.0);
+\draw[arr] (15.3,4.0) -- (15.3,3.4);
 \end{scope}
 % ---------------- (3) inference ----------------
-% Attention-ranked pruning, left to right (as in the token-pruning figures of VisionZip and FastV): the tokens of
-% every frame (a stack of frames) -> the attention each token receives, over the frame -> tokens sorted by attention;
-% the budget b_i from Allocation sets the cut (marked b_i on the rank axis) -> the kept tokens -> the VLM answers.
+% Attention-ranked pruning, left to right: the retrieved frames -> the attention each token receives, as a map over
+% the frame -> the tokens sorted by that attention; the budget b_i from Allocation sets the cut -> the kept tokens ->
+% the VLM answers. Each picture has one label that names it.
 % One centre line (y = 0.76) for every item and arrow; items are 0.7 cm apart.
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.32,0.87) {\includegraphics[width=1.6cm]{fig/frames/frame2.jpg}};
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.16,0.76) {\includegraphics[width=1.6cm]{fig/frames/frame3.jpg}};
-\bigframe{1.0,0.65}{frame4.jpg}{32}
-\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.16,1.34) {tokens};
+\node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.0,0.65) {\includegraphics[width=1.6cm]{fig/frames/frame4.jpg}};
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.16,1.34) {frames};
 \bigattn{3.75,0.76}{frame4.jpg}
-\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (3.75,1.24) {attention};
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (3.75,1.24) {attention map};
 \node[model, fill=chipF, minimum width=5.38cm, minimum height=1.5cm] (rk) at (7.81,0.95) {};
 \rankbars{5.67,0.58}{4.45}{12}
 \draw[ink, densely dashed, line width=0.6pt] ({5.67+12*4.45/32},0.58) -- ++(0,1.0);
 \node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({5.67+12*4.45/32},0.58) {$b_i$};
 \node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (5.67,1.08) {attention};
-\node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (10.27,0.58) {rank};
+\node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (10.27,0.58) {token rank};
 \node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (6.34,1.23) {kept};
 \node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (7.59,0.9) {dropped};
 \bigframe{12.0,0.76}{frame4.jpg}{12}
