@@ -73,7 +73,7 @@ where $\tau_{\text{frame}}$ is a single fitted parameter shared across all frame
 \paragraph{Item Relevance.}
 The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of a frame by its similarity to the frames that already hold tokens, weighted by their token values:
 \begin{equation}
-  r_i(q,\mathbf b)=r_i(q)-\eta\sum_{j\in\mathcal F}\cos(f_i,f_j)\,v_{\text{frame}}(b_j),\qquad i\in\mathcal F,
+  r_i(q,\mathbf b)=r_i(q)-\eta\sum_{j\in\mathcal F}\cos(f_i,f_j)\,v_{\text{frame}}(b_j),
   \label{eq:cond}
 \end{equation}
 where $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). Subtitles are discounted analogously over $\mathcal S$ with $v_{\text{text}}$. A frame that resembles frames shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped frames keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
