@@ -72,19 +72,19 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \label{tab:main}
 \end{table*}
 
-\paragraph{\name achieves the Pareto frontier across single-turn video understanding} As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over the compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. These gains hold across token budgets (\cref{fig:multiturn}a) and are largest at small budgets, where the choice of frames and of their token counts matters most.
+\paragraph{\name achieves the Pareto frontier across single-turn video understanding} As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over all compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. \name also improves the accuracy of VideoRAG by X points. These gains hold across token budgets (\cref{fig:multiturn}a).
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/tflops_pair.pdf}
-  \caption{\TODO{} (a) single turn, (b) multi turn (dataset still running)}
+  \caption{\name achieves the compute-to-accuracy Pareto frontier across (a) single-turn and (b) multi-turn video understanding.}
   \label{fig:multiturn}
 \end{figure}
 
-\paragraph{\name achieves the Pareto frontier across multi-turn video understanding} As shown in \cref{fig:multiturn}b, \name attains the highest accuracy at every token budget, while requiring 1.7--17.4$\times$ fewer TFLOPs than each baseline at its most accurate budget. The baselines select frames and tokens anew at every turn, which changes the tokens of previously shown frames and prevents reuse of the KV cache. In contrast, \name carries its token allocation across turns and prefills only the missing tokens.
+\paragraph{\name achieves the Pareto frontier across multi-turn video understanding} As shown in \cref{fig:multiturn}b, \name attains 0.9--2.1 points higher accuracy than each baseline while requiring 1.7--17.4$\times$ fewer TFLOPs. We attribute the latter to the limited ability of prior works to reuse the KV cache across turns.
 
 
-\paragraph{\name introduces negligible overhead} Since frame and subtitle embeddings are computed once per video, scoring them against a query only encodes the query, which adds less than 0.1 TFLOPs. Water-filling and token pruning operate on a few hundred scalars and add no measurable compute. Together, the overhead of \name stays below 0.1\% of the prefill compute of a query.
+\paragraph{\name is extremely lightweight} Semantic similarity search via FAISS~\cite{faiss}, water-filling, and token pruning together cost less than a thousandth of a TFLOP per query, unlike agentic and neural selection methods.
 
 
 % \begin{figure}[t]
@@ -126,7 +126,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \label{tab:ablation}
 \end{table}
 
-\paragraph{Performance breakdown.} While Q-Frame and QuoTA allow us to compare water-filling, our core algorithm, against existing allocation rules, the diversity term remains a confounding factor, as does text allocation on Video-MME, the only benchmark with subtitles. We therefore remove each of them in \cref{tab:ablation}. Removing text allocation lowers accuracy by 3.6 points, as subtitles convey context with a few tokens whereas frames are far heavier. Nonetheless, \name still outperforms every compute-matched baseline by 0.6--3.6 points without it. Removing the diversity term lowers accuracy by a modest 0.7 points, showing that the gains stem primarily from water-filling itself. In multi-turn conversations (\cref{tab:multiturn}), removing attention refinement lowers accuracy and increases prefill compute, as relevance estimated from the query alone leads \name to prefill evidence that the VLM does not use. Removing incremental allocation instead re-allocates the budget at every turn, requiring 2.5$\times$ more TFLOPs at comparable accuracy. The vision encoder runs once per video, at 48 TFLOPs, and its output is reused across questions and turns. A sensitivity analysis of the hyperparameters is provided in the appendix.
+\paragraph{Performance breakdown.} While Q-Frame and QuoTA allow us to compare water-filling, our core algorithm, against existing allocation rules, the diversity term remains a confounding factor, as does text allocation on Video-MME. We therefore remove each of them in \cref{tab:ablation}. Removing text allocation lowers accuracy by 3.6 points, as it reduces the information available to the VLM. Nonetheless, \name still outperforms every compute-matched baseline by 0.6--3.6 points without it. Removing the diversity term, in turn, lowers accuracy by 0.7 points. In multi-turn conversations (\cref{tab:multiturn}), removing attention refinement increases prefill compute, as attention scores the frames that are already prefilled more accurately at no additional cost. Removing incremental allocation forces a new allocation at every turn, which requires 2.5$\times$ more TFLOPs at comparable accuracy. A sensitivity analysis of the hyperparameters is provided in the supplementary material.
 
 \begin{table}[t]
   \centering
