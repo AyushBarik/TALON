@@ -1,6 +1,6 @@
 """One convention for every base-10 log axis in the paper figures.
 
-Labelled ticks follow the 1-2-5 series (..., 0.5, 1, 2, 5, 10, 20, 50, 100, ...), written as plain numbers. Every other
+Labelled ticks follow the 1-2-5 series (..., 0.5, 1, 2, 5, 10, 20, 50, 100, ...), written as plain numbers (1k, 2k, 5k from one thousand up, so that neighbouring labels never touch). Every other
 integer multiple of a power of ten (3, 4, 6, 7, 8, 9) gets a short unlabelled tick, so no position of the scale is
 skipped. The axis starts and ends at a labelled tick, so both limits must be 1-2-5 values.
 (Token counts per frame use base 2 instead: ticks at powers of two, no minor ticks. See value_pair.py.)
@@ -28,7 +28,7 @@ def log_axis(ax, lo, hi, which="x"):
     axis = ax.xaxis if which == "x" else ax.yaxis
     (ax.set_xscale if which == "x" else ax.set_yscale)("log")
     axis.set_major_locator(mticker.FixedLocator(major))
-    axis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    axis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v / 1000:g}k" if v >= 1000 else f"{v:g}"))
     axis.set_minor_locator(mticker.FixedLocator(minor))
     axis.set_minor_formatter(mticker.NullFormatter())
     (ax.set_xlim if which == "x" else ax.set_ylim)(lo, hi)
