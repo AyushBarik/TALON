@@ -235,16 +235,17 @@ A detailed proof is provided in the supplementary material.
 %   \label{fig:overlap}
 % \end{figure}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/reuse_share_pair.pdf}
-  \caption{\textbf{Reuse across turns.} (a) Share of the frames or tokens that a turn needs and that an earlier turn of the same conversation already used. (b) Tokens prefilled per turn. Results on 300 MT-Video-Bench conversations at 12{,}288 tokens per turn.}
-  \label{fig:reuse}
-\end{figure}
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\linewidth]{fig/reuse_share_pair.pdf}
+%   \caption{ (a) Later turns often reference frames or tokens stored in a prior turn's KV cache (b) Incremental allocation greatly improves efficiency by allowing ~\name to reuse tokens across turns}
+%   \label{fig:reuse}
+% \end{figure}
 
-Within a conversation, a user may ask several questions $q_1,\dots,q_T$ about a video. These questions are inherently correlated and later turns often reference frames and tokens referenced by prior turns, as shown in \cref{fig:reuse}a.
+Within a conversation, a user may ask several questions $q_1,\dots,q_T$ about a video. These questions are inherently correlated, and later turns often reference evidence prefilled by prior turns, as shown in \cref{fig:reuse}, allowing for ample reuse opportunities that lead to large cost savings, but how do we actually enable such reuse? For Top-K RAG a simple patch is sufficient. If a relevant frame or subtitle has been prefilled by a prior question, we do not prefill it again. However, the solution is not directly obvious for ~\name as frames and text are prefilled at different token counts they rarely match exactly with a prior turn. Carrying our prefilled allocations across turns then raises two questions: (i) how can we avoid compute costs stemming from overlapping content across turns. At the same time, we realize another unique opportunity. Given that queries are prefilled against past context anyways, can we use attention maps that arise from it to refine our allocation? Therefore, (ii) how can we use attention scores against past context to refine allocations.
 
-Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, . Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:p1} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
+
+\name answers the first with incremental allocation, which prefills only the tokens that the cache lacks, and the second with the attention of the VLM, which has already read the cached frames.
 
 \paragraph{Updating Relevance with Attention.}
 Once a frame is cached, the VLM has already read it, and its attention to the frame indicates how much the frame matters for the new question. \name prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads~\cite{rekv2025}. With $a_i$ the share of this attention per cached token of frame $f_i$ and $r_i$ its retrieval relevance to $q_t$ (Eq.~\eqref{eq:rel}), \name combines them as
