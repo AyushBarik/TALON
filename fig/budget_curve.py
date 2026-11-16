@@ -39,7 +39,7 @@ def main():
     use_style()
     rows = load(DATA)
     fig = plt.figure(figsize=(COLUMN, COLUMN * 0.72))
-    gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
+    gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.95)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
     LEFT, RIGHT = (0.4, 5.0), (22.0, 25.0)  # each axis starts and ends at a labelled tick
@@ -93,22 +93,15 @@ def main():
                         fancybox=False, fontsize=6, ncol=2, columnspacing=0.8, borderaxespad=0.5)
     legend.get_frame().set_linewidth(0.6)
     legend.set_zorder(5)
-    # "Better" arrow towards the good corner: lower cost, higher accuracy. It is drawn at 45 degrees on the page
-    # (offsets in points, not data units), with the word centred on the arrow.
-    if os.environ.get("BETTER_STYLE", "block") == "block":
-        # block arrow with the word inside it
-        ax.annotate("Better", xy=(0.03, 0.975), xycoords="axes fraction", xytext=(15, -15),
-                    textcoords="offset points", ha="center", va="center", rotation=-45, fontsize=7,
-                    bbox=dict(boxstyle="larrow,pad=0.3", fc="white", ec="black", lw=0.8))
-    else:
-        # line arrow with the word along the middle of the shaft
-        L = 25
-        ax.annotate("", xy=(0.035, 0.965), xycoords="axes fraction", xytext=(L, -L), textcoords="offset points",
-                    arrowprops=dict(arrowstyle="-|>,head_length=0.7,head_width=0.3", color="black", lw=1.3,
-                                    shrinkA=0, shrinkB=0, mutation_scale=9))
-        ax.annotate("Better", xy=(0.035, 0.965), xycoords="axes fraction", xytext=(L / 2 + 4.5, -L / 2 + 4.5),
-                    textcoords="offset points", ha="center", va="center", rotation=-45, rotation_mode="anchor",
-                    fontsize=7)
+    # "Better" arrow towards the good corner: lower cost, higher accuracy. A slim outlined arrow at 45 degrees on the
+    # page (sizes in points, not data units), with the word centred on its shaft.
+    TIP, L, HEAD = (0.03, 0.975), 24, 8.5  # L = tip-to-tail offset per axis; HEAD = head length
+    ax.annotate("", xy=TIP, xycoords="axes fraction", xytext=(L, -L), textcoords="offset points",
+                arrowprops=dict(arrowstyle=f"simple,tail_width=9,head_width=15,head_length={HEAD}", fc="white",
+                                ec="black", lw=0.7, shrinkA=0, shrinkB=0, mutation_scale=1, joinstyle="miter"))
+    mid = (HEAD / 2 ** 0.5 + L) / 2  # middle of the shaft, measured from the tip
+    ax.annotate("Better", xy=TIP, xycoords="axes fraction", xytext=(mid, -mid), textcoords="offset points",
+                ha="center", va="center_baseline", rotation=-45, rotation_mode="anchor", fontsize=6.5)
     ax.set_xlabel("Cost per 1k queries ($)")
     # one x label for both panels, centred under the whole axis
     l0, l1 = ax.get_position().x0, ax2.get_position().x1
