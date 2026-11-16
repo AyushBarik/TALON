@@ -2,9 +2,9 @@
 each figure lists exactly the lines it draws. Same data as reuse_share_pair.py: 300 MT-Video-Bench conversations,
 12,288 tokens per turn, turns 1 to 5 (overlap_turns.json for Lembas, baseline_reuse_turns.csv for Top-K).
 
-turn_seen.pdf     Share of the tokens a turn needs (allocated frame tokens + question tokens) that an earlier turn of
-    the same conversation already used, pooled over the conversations. Top-K and Lembas only: the share is a property
-    of what a turn needs, so it is the same with and without incremental allocation.
+turn_seen.pdf     Share of the frames a turn retrieves that an earlier turn of the same conversation already
+    retrieved, pooled over the conversations. Top-K only (author decision): every Top-K frame has the same token
+    count, so the share of frame tokens is the share of frames.
 turn_prefill.pdf  Tokens prefilled per turn (tokens needed that the KV cache does not hold), mean over the
     conversations. "Lembas w/o incremental allocation" follows from its definition: the whole prompt is prefilled
     again at every turn, so every token a turn needs is new.
@@ -37,18 +37,20 @@ def main():
     plt.rcParams.update({"xtick.labelsize": 5.5, "ytick.labelsize": 5.5, "axes.labelsize": 6.5})
     rows = [dict(r, method="Lembas") for r in json.load(open(os.path.join(HERE, "overlap_turns.json")))]
     rows += list(csv.DictReader(open(os.path.join(HERE, "baseline_reuse_turns.csv"))))
-    got, need, n = (defaultdict(lambda: defaultdict(int)) for _ in range(3))
+    got, need, n, qtok = (defaultdict(lambda: defaultdict(int)) for _ in range(4))
     for r in rows:
         m, t = RENAME.get(r["method"], r["method"]), int(r["turn"])
-        got[m][t] += int(r["reused"]); need[m][t] += int(r["need"]); n[m][t] += 1
+        got[m][t] += int(r["reused"]); need[m][t] += int(r["need"]); n[m][t] += 1; qtok[m][t] += int(r["qtok"])
     shown = [(m, c, k) for m, (c, k) in METHODS.items() if m in SHOWN]
 
     fig, ax = plt.subplots(figsize=(W, H), layout="constrained")
     for m, c, k in shown:
-        ax.plot(TURNS, [100 * got[m][t] / need[m][t] for t in TURNS], color=c, marker=k, ms=2.6, lw=1.0,
-                zorder=3 if is_ours(m) else 2, clip_on=False, label=m)
+        if m != "Top-K":
+            continue
+        ax.plot(TURNS, [100 * got[m][t] / (need[m][t] - qtok[m][t]) for t in TURNS], color=c, marker=k, ms=2.6, lw=1.0,
+                zorder=2, clip_on=False, label=m)
     ax.set_xlim(1, 5); ax.set_xticks(TURNS); ax.set_ylim(0, 100); ax.set_yticks([0, 25, 50, 75, 100])
-    ax.set_xlabel("Turn"); ax.set_ylabel("Frames or tokens seen\nin earlier turns (%)", labelpad=1)
+    ax.set_xlabel("Turn"); ax.set_ylabel("Frames seen\nin earlier turns (%)", labelpad=1)
     ax.legend(loc="lower right", **LEG)
     print(save(fig, os.path.join(HERE, "turn_seen")))
 
