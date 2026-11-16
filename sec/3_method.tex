@@ -16,14 +16,14 @@ In this section, we present \name, a video RAG framework that allocates tokens u
 
 \fan{we should have overview/workflow figure to see how \name works in the lifecycle. e.g., we assume given retrieved frames?}
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r(f_i\mid q)$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a frame budget, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the top-$K$ most semantically relevant frames to a VLM~\cite{tang2025aks,yu2024framevoyager}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i$ denote the relevance of $f_i$ to $q$. Mathematically, frame-level RAG makes a binary admit-or-reject decision for each frame, subject to a frame budget, so as to maximize the total relevance of the admitted frames. It is therefore naturally modeled as an integer linear program:
 \begin{equation}
-  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r(f_i\mid q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
+  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
 \end{equation}
 where $f_i$ is passed to the VLM if $x_i=1$ and dropped if $x_i=0$ subject to a maximum of $K$ frames, and
 \begin{equation}
-  r(f_i\mid q)=\operatorname{softmax}_i\big(\cos(f_i,q)\big)
+  r_i=\operatorname{softmax}_i\big(\cos(f_i,q)\big)
   \label{eq:rel}
 \end{equation}
 is the cosine similarity between the image embedding of $f_i$ and the text embedding of $q$ (e.g., using CLIP~\cite{radford2021clip}), normalized across frames. We lift this frame-level objective to a multimodal token-level objective that carefully defines \textit{how} tokens should be valued, and then prove that our solver is theoretically more optimal compared to prior works (\cref{sec:allocation}). In multi-turn conversations, however, naively re-allocating tokens at every turn is inefficient, especially when later turns reference evidence available in the KV cache from previous turns. We therefore extend \name to enable incremental allocations across turns while additionally demonstrating theoretical prefill boundedness across turns (\cref{sec:multiturn}).
@@ -38,13 +38,13 @@ is the cosine similarity between the image embedding of $f_i$ and the text embed
   \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
-    \caption{\TODO{}}
+    \caption{\textbf{Token value.} Accuracy against tokens per frame (dots), with four fitted value functions.}
     \label{fig:value}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.53\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
-    \caption{\TODO{}}
+    \caption{\textbf{Example allocation.} Tokens that \name allocates to the frames and transcript events of one video at a budget of 12{,}288 tokens.}
     \label{fig:alloc}
   \end{minipage}
 \end{figure}
@@ -62,7 +62,7 @@ Intuitively, the token count of a frame acts as its effective resolution: with f
 \end{equation}
 where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum likelihood offline and updated online using feedback on answered queries (e.g., accuracy, user feedback). Transcript events have a token value of the same form, fitted in the same way. \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.} \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} Weighting the value of each frame by its relevance gives the token-level objective
 \begin{equation}
-  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q)\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
+  \max_{\mathbf b}\ \sum_{i}r_i\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
 \end{equation}
 
@@ -70,12 +70,12 @@ where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum 
 The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which the token value credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.} to every frame, itself included, weighted by the value of that frame:
 % Fix A (applied in the text 2026-11-15): the sum includes j = i and uses the raw cosine, so the similarity matrix is PSD; step 2/(l+1); averaged allocation (Proposition prop:convergence). The reported numbers still come from the old solver (j != i, max(0, cos), halfway step, best iterate): update the code and rerun before submission.
 \begin{equation}
-  r(f_i\mid q,\mathbf b)=r(f_i\mid q)-\eta\sum_{j}\cos(f_i,f_j)\,v_j(b_j) ,
+  r_i(\mathbf b)=r_i-\eta\sum_{j}\cos(f_i,f_j)\,v_j(b_j) ,
   \label{eq:cond}
 \end{equation}
 where $\eta$ sets the strength of the discount. A frame that duplicates a frame shown with many tokens thus loses most of its relevance, while one that duplicates a dropped frame keeps it. \name then solves
 \begin{equation}
-  \max_{\mathbf b}\ \sum_{i}r(f_i\mid q,\mathbf b)\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
+  \max_{\mathbf b}\ \sum_{i}r_i(\mathbf b)\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B ,
   \label{eq:p1}
 \end{equation}
 where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recovers the objective above.
@@ -230,12 +230,12 @@ A detailed proof is provided in the supplementary material.
 In a conversation, a user asks several questions $q_1,\dots,q_T$ about one video, and the KV cache of the conversation is kept between turns. Frame-level RAG fits this setting naturally: a later question appends only the frames it adds, and prefix caching reuses everything before them~\cite{kwon2023vllm,zheng2024sglang}. Token allocation, however, breaks this reuse, since solving Eq.~\eqref{eq:p1} afresh for each question changes the token counts of frames already in the context, even though consecutive questions share much of their evidence. \name instead carries the allocation across turns. At each turn $t$, it (1) updates the relevance of the cached frames with the attention of the VLM, (2) solves Eq.~\eqref{eq:p1} with the updated relevance, and (3) prefills only the tokens that the cache lacks.
 
 \paragraph{Updating Relevance with Attention.}
-Once a frame is cached, the VLM has already read it, and its attention to the frame indicates how much the frame matters for the new question. \name prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads~\cite{rekv2025}. With $a_i$ the share of this attention per cached token of frame $f_i$, \name combines it with the retrieval relevance as
+Once a frame is cached, the VLM has already read it, and its attention to the frame indicates how much the frame matters for the new question. \name prefills $q_t$ on top of the cache, which the turn requires anyway, and measures the attention from the question tokens to the cached visual tokens in a few heads~\cite{rekv2025}. With $a_i$ the share of this attention per cached token of frame $f_i$ and $r_i$ its retrieval relevance to $q_t$ (Eq.~\eqref{eq:rel}), \name combines them as
 \begin{equation}
-  r_i^{(t)}\propto r(f_i\mid q_t)^{1-\omega}\,a_i^{\omega}
+  r_i^{(t)}\propto r_i^{1-\omega}\,a_i^{\omega}
   \label{eq:fusion}
 \end{equation}
-for cached frames, and keeps $r_i^{(t)}=r(f_i\mid q_t)$ for the others. Here, $\omega\in[0,1]$ sets the trust in attention, from retrieval alone at $\omega=0$ to attention alone at $\omega=1$. We tune $\omega$ to maximize the hypervolume of the accuracy--TFLOPs Pareto frontier, following standard multi-objective optimization~\cite{karl2023multiobjective,daulton2020qehvi}. The cached frames are then rescaled to keep their total relevance, so attention only re-ranks the frames the VLM has already seen and cannot take relevance from frames it has not seen.
+for cached frames, and keeps $r_i^{(t)}=r_i$ for the others. Here, $\omega\in[0,1]$ sets the trust in attention, from retrieval alone at $\omega=0$ to attention alone at $\omega=1$. We tune $\omega$ to maximize the hypervolume of the accuracy--TFLOPs Pareto frontier, following standard multi-objective optimization~\cite{karl2023multiobjective,daulton2020qehvi}. The cached frames are then rescaled to keep their total relevance, so attention only re-ranks the frames the VLM has already seen and cannot take relevance from frames it has not seen.
 
 \paragraph{Allocating and Prefilling.}
 \name then solves Eq.~\eqref{eq:p1} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the multimodal RoPE of the VLM~\cite{bai2025qwen3vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
