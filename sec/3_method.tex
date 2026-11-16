@@ -62,6 +62,25 @@ However, this formulation exposes three fundamental questions: \circnum{1}~how s
   \end{minipage}
 \end{figure}
 
+\paragraph{Token Value.}
+The token value captures the fraction of an item's relevance retained when it is represented with $b_i$ tokens. To represent an item at an arbitrary count $b_i$, \name ranks its tokens once and retains the top $b_i$, using attention scores from the vision encoder for frames~\cite{yang2024visionzip,chen2024fastv} and from the text encoder for subtitles~\cite{goyal2020powerbert,kim2022ltp}. Intuitively, the token count governs how coarsely an item is represented: a small number of tokens already conveys the coarse semantics that suffice for most queries, whereas additional tokens recover fine-grained details, such as on-screen text, that only a few queries need (e.g., needle queries). Consequently, the token value exhibits diminishing marginal returns, with each additional token retaining less relevance than the last. To obtain the token value function, we take short- and medium-length videos from the held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, sweep the token count of all of their frames, and measure the retained relevance through the accuracy that the VLM retains at each count, normalized across counts (\cref{fig:value}). We then fit several candidate function families to these measurements by least squares. A rational curve provides the tightest fit, motivating
+\begin{equation}
+  v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},
+  \label{eq:curve}
+\end{equation}
+where $\tau_{\text{frame}}$ is a single fitted parameter shared across all frames, and subtitles follow an analogous form $v_{\text{text}}(b_i)$ parameterized by $\tau_{\text{text}}$. We calibrate both parameters offline on these measurements and refine them online via feedback from answered queries. Both functions are strictly increasing and concave, which reflects the diminishing returns above. The Token Scheduler relies on this concavity (\cref{sec:allocation}).
+
+\paragraph{Item Relevance.}
+The retrieval relevance $r_i(q)$ of an item is the cosine similarity between its embedding and that of the query, normalized across items. However, it scores every item in isolation, so items that show the same content each receive full credit, even though a second copy adds little once the first is shown. The relevance of an item should therefore depend on the current allocation as well as on the query. \name discounts the retrieval relevance of a frame by its similarity to the frames that already hold tokens, weighted by their token values:
+\begin{equation}
+  r_i(q,\mathbf b)=r_i(q)-\eta\sum_{j\in\mathcal F}\cos(f_i,f_j)\,v_{\text{frame}}(b_j),\qquad i\in\mathcal F,
+  \label{eq:cond}
+\end{equation}
+where $\eta$ sets the strength of the discount (e.g., $\eta = 2.7\times10^{-5}$). Subtitles are discounted analogously over $\mathcal S$ with $v_{\text{text}}$. A frame that resembles frames shown with many tokens thus loses most of its relevance, whereas one that resembles only dropped frames keeps it. We measure similarity with the cosine because the resulting similarity matrix is positive semidefinite, a property that the Token Scheduler also relies on (\cref{sec:allocation}). Substituting $r_i(q,\mathbf b)$ and the token value functions into Eq.~\eqref{eq:allocation} completes the objective.
+
+\begin{comment}
+% Previous Sec. 3.2 text with its comments, kept for reference (not printed).
+
 \paragraph{Pruning Frames and Transcripts to a Token Count.}
 Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i\le b_{\max}$, where $b_{\max}$ is the full token count of a frame, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned analogously: \name passes each event through the text encoder once, ranks its tokens by the attention they receive, and keeps the top-ranked tokens up to its allocated count, following attention-based token pruning for language models~\cite{goyal2020powerbert,kim2022ltp}. \fan{maybe merge it into the next paragraph as it is not new and short.}
 
@@ -113,13 +132,15 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 % \end{equation}
 % where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
 
+\end{comment}
+
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Token Scheduler}
 \label{sec:allocation}
 
 \paragraph{Iterative Water-Filling.}
 The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b_i)$, and tokens $b_i$.
-Eq.~\eqref{eq:p1} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
+Eq.~\eqref{eq:allocation} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
 If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
 The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
 \fyy{Explain the rationale behind this method, and how it's applied.}
@@ -134,8 +155,8 @@ The Token Scheduler lowers the relevance of each frame by the value that its sim
 \end{equation}
 where the sum runs over frames.
 A transcript event has no diversity term and keeps $\tilde r_i=r_i$.
-The discounted relevance $\tilde r_i$ is the gradient of Eq.~\eqref{eq:p1} with respect to the value of item $i$, that is, the gain in the objective per unit of value added to item $i$.
-The factor of two appears because Eq.~\eqref{eq:p1} counts every pair of frames twice.
+The discounted relevance $\tilde r_i$ is the gradient of Eq.~\eqref{eq:allocation} with respect to the value of item $i$, that is, the gain in the objective per unit of value added to item $i$.
+The factor of two appears because Eq.~\eqref{eq:allocation} counts every pair of frames twice.
 
 \textit{Step 2: Allocate by water-filling.}
 With the discounted relevances fixed, the items no longer depend on each other, and water-filling~\cite{boyd2004} allocates the budget exactly.
@@ -165,11 +186,11 @@ After the last iteration, the Token Scheduler converts the averaged token values
 This averaged allocation stays within the budget because every $v_i$ is concave.
 
 Each iteration solves only a simplified problem.
-Nevertheless, the averaged allocation converges to the global optimum of Eq.~\eqref{eq:p1}, and the gap shrinks in inverse proportion to the number of iterations:
+Nevertheless, the averaged allocation converges to the global optimum of Eq.~\eqref{eq:allocation}, and the gap shrinks in inverse proportion to the number of iterations:
 
 \begin{proposition}
 \label{prop:convergence}
-Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:p1} and $J^\star$ its maximum. Over real-valued token counts, the averaged allocation $\hat{\mathbf b}^{(\ell)}$ after $\ell$ iterations of \cref{alg:iwf} satisfies
+Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:allocation} and $J^\star$ its maximum. Over real-valued token counts, the averaged allocation $\hat{\mathbf b}^{(\ell)}$ after $\ell$ iterations of \cref{alg:iwf} satisfies
 \begin{equation}
   J^\star-J\big(\hat{\mathbf b}^{(\ell)}\big)\le\frac{4\,\eta\,\mu_{\max}D^2}{\ell+2} ,
 \end{equation}
@@ -283,7 +304,7 @@ Once a frame is cached, the VLM has already read it, and its attention to the fr
 for cached frames, and keeps $r_i^{(t)}=r_i$ for the others. Here, $\omega\in[0,1]$ sets the trust in attention, from retrieval alone at $\omega=0$ to attention alone at $\omega=1$. We tune $\omega$ to maximize the hypervolume of the accuracy--TFLOPs Pareto frontier, following standard multi-objective optimization~\cite{karl2023multiobjective,daulton2020qehvi}. The cached frames are then rescaled to keep their total relevance, so attention only re-ranks the frames the VLM has already seen and cannot take relevance from frames it has not seen.
 
 \paragraph{Allocating and Prefilling.}
-\name then solves Eq.~\eqref{eq:p1} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the multimodal RoPE of the VLM~\cite{bai2025qwen3vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
+\name then solves Eq.~\eqref{eq:allocation} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the multimodal RoPE of the VLM~\cite{bai2025qwen3vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
 
 % Table 1 (main results, Sec. 4) is placed here so that it floats to the top of the page where Sec. 4 discusses it.
 \begin{table*}[t]
