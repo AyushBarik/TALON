@@ -150,3 +150,14 @@
 \setlist*[itemize]{itemsep=2pt, topsep=3pt}
 \setlist*[enumerate]{itemsep=2pt, topsep=3pt}
 
+
+% Section references print as the section sign (e.g., \S3.1) instead of "Sec. 3.1". cvpr.sty is not changed: it loads
+% cleveref at the end of the preamble, so the formats are set in the same hook, after it (through a macro, because the
+% hook cannot hold #).
+\newcommand{\sectionsignrefs}{%
+  \crefformat{section}{\S##2##1##3}%
+  \Crefformat{section}{\S##2##1##3}%
+  \crefmultiformat{section}{\S\S##2##1##3}{ and~##2##1##3}{, ##2##1##3}{, and~##2##1##3}%
+  \Crefmultiformat{section}{\S\S##2##1##3}{ and~##2##1##3}{, ##2##1##3}{, and~##2##1##3}%
+}
+\AtEndPreamble{\sectionsignrefs}
