@@ -12,7 +12,7 @@ METHODS = {
     "QuoTA": (PALETTE["green"], "D"),
     "FOCUS": (PALETTE["red"], "^"),
     "AdaAlloc": (PALETTE["purple"], "X"),
-    "Lembas (Ours)": (PALETTE["blue"], "o"),
+    "Lembas": (PALETTE["blue"], "o"),
 }
 
 
@@ -23,4 +23,4 @@ NO_CARRY_STYLE = dict(color=BASELINE, marker="v")
 
 
 def is_ours(method):
-    return method.startswith("Lembas")
+    return method == "Lembas"

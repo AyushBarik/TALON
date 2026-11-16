@@ -34,7 +34,7 @@ def main():
     # (file, x label, y label, x ticks, y ticks): every axis starts at its first tick and ends at its last tick
     panels = [("tflops_curve.csv", "TFLOPs per query", "MLVU accuracy (%)", [10, 100, 1000], [64, 68, 72, 76, 80]),
               ("multiturn_curve.csv", "TFLOPs per conversation", "MTVB accuracy (%)", [50, 200, 800], [54, 56, 58, 60])]
-    multi_turn = ("Top-K", "Lembas (Ours)")  # panel (b) compares only the two methods with a defined reuse (author decision)
+    multi_turn = ("Top-K", "Lembas")  # panel (b) compares only the two methods with a defined reuse (author decision)
     handles = {}
     for ax, (name, xlabel, ylabel, ticks, yticks) in zip(axes, panels):
         rows = load(name)

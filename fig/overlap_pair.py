@@ -26,7 +26,7 @@ from orx_figstyle import COLUMN, panel_labels, save, use_style
 HERE = os.path.dirname(os.path.abspath(__file__))
 TICKS = [0, 25, 50, 75, 100]
 TURNS = [1, 2, 3, 4, 5]
-SHOWN = ("Top-K", "Lembas (Ours)")
+SHOWN = ("Top-K", "Lembas")
 
 
 def cdf(ax, values, **style):
@@ -41,7 +41,7 @@ def main():
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(COLUMN, COLUMN * 0.6), layout="constrained")
     turns = json.load(open(os.path.join(HERE, "overlap_turns.json")))
     new, reuse = defaultdict(lambda: defaultdict(list)), defaultdict(list)
-    rows = [dict(r, method="Lembas (Ours)") for r in turns] + list(csv.DictReader(open(os.path.join(HERE, "baseline_reuse_turns.csv"))))
+    rows = [dict(r, method="Lembas") for r in turns] + list(csv.DictReader(open(os.path.join(HERE, "baseline_reuse_turns.csv"))))
     for r in rows:
         t, need, got = int(r["turn"]), int(r["need"]), int(r["reused"])
         new[r["method"]][t].append(need - got)

@@ -23,7 +23,7 @@ from orx_figstyle import COLUMN, panel_labels, save, use_style
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TURNS = [1, 2, 3, 4, 5]
-SHOWN = ("Top-K", "Lembas (Ours)")
+SHOWN = ("Top-K", "Lembas")
 NO_INC = "Lembas w/o incremental allocation"
 NO_INC_COLOR = "#0B2A4A"  # dark navy: a Lembas variant, same hue family, solid like every other line
 RENAME = {"Top-K (w/ pruning)": "Top-K", "w/o carried allocation": NO_INC}
@@ -33,7 +33,7 @@ def main():
     use_style()
     plt.rcParams.update({"xtick.labelsize": 5.5, "ytick.labelsize": 5.5, "axes.labelsize": 6.5})
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(COLUMN, COLUMN * 0.6), layout="constrained")
-    rows = [dict(r, method="Lembas (Ours)") for r in json.load(open(os.path.join(HERE, "overlap_turns.json")))]
+    rows = [dict(r, method="Lembas") for r in json.load(open(os.path.join(HERE, "overlap_turns.json")))]
     rows += list(csv.DictReader(open(os.path.join(HERE, "baseline_reuse_turns.csv"))))
     got, need, n = (defaultdict(lambda: defaultdict(int)) for _ in range(3))
     for r in rows:
@@ -50,7 +50,7 @@ def main():
         if method in SHOWN:
             bx.plot(TURNS, [(need[method][t] - got[method][t]) / n[method][t] / 1000 for t in TURNS], color=color,
                     marker=marker, ms=2.6, lw=1.0, zorder=3 if is_ours(method) else 2, clip_on=False)
-    m = "Lembas (Ours)"
+    m = "Lembas"
     handles[NO_INC] = bx.plot(TURNS, [need[m][t] / n[m][t] / 1000 for t in TURNS], color=NO_INC_COLOR,
                               marker="v", ms=2.8, lw=1.0, zorder=2.5, clip_on=False)[0]
     ax.set_xlim(1, 5); ax.set_xticks(TURNS); ax.set_ylim(0, 100); ax.set_yticks([0, 25, 50, 75, 100])
