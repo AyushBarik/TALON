@@ -34,7 +34,7 @@ where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivial
 
 ~\name aims to break this rigidity by lifting the problem from frame selection to multimodal token allocation. We let each item $i$ be either a frame or its subtitle. Then the binary decision $x_i$ is replaced with a token allocation $b_i$ and the frame budget $K$ with a shared token budget $B$. When shown with $b_i$ tokens, item $i$ retains a fraction of its relevance, captured by the token value function $v_i(b_i) \in [0, 1]$, while its relevance $r_i(q, \mathbf{b})$ captures its value with respect to the query $q$ and the current allocation $\mathbf{b}$. Their product yields the core \name objective:
 \begin{equation}
-  \max_{\mathbf{b}}\ J(\mathbf{b}; q) = \sum_{i} r_i(q, \mathbf{b})\, v_i(b_i) \qquad \text{s.t.} \quad \sum_{i} b_i \le B.
+  \max_{\mathbf{b}}\ \sum_{i} r_i(q, \mathbf{b})\, v_i(b_i) \qquad \text{s.t.} \quad \sum_{i} b_i \le B.
   \label{eq:allocation}
 \end{equation}
 However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value $v_i(b_i)$ and the relevance $r_i(q, \mathbf{b})$ of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
