@@ -385,9 +385,9 @@ At turn $t$, the Token Scheduler solves Eq.~\eqref{eq:allocation} for the query 
 \end{aligned}
   \label{eq:incremental}
 \end{equation}
-where $p_i^{(t)}$ is the number of tokens of item $i$ that turn $t$ prefills. This difference is well defined because the tokens of an item are ranked once, independently of the query (\cref{sec:objective}). A larger token count only extends a smaller one, so the tokens to prefill are those ranked from $c_i^{(t-1)}+1$ to $b_i^{(t)}$. \name appends them to the end of the context, which leaves the KV cache of all earlier tokens valid, and each appended token keeps the positional encoding of its place within its item~\cite{bai2025qwen3vl}. The budget $B$ thus limits the allocation of each turn, while the tokens of earlier turns remain available to the VLM. Since each token of an item is prefilled at most once, the number of tokens that a conversation prefills for item $i$ is bounded, however many turns $T$ it lasts:
+where $p_i^{(t)}$ is the number of tokens of item $i$ that turn $t$ prefills. Since the tokens of an item are ranked once, independently of the query (\cref{sec:objective}), these are the tokens ranked from $c_i^{(t-1)}+1$ to $b_i^{(t)}$. \name appends them to the end of the context, which leaves the KV cache valid, and each appended token keeps the positional encoding of its place within its item~\cite{bai2025qwen3vl}. The context thus holds the same tokens as a prefill in time order, in a different order, and retains comparable accuracy (\cref{tab:multiturn}). After turn $t$, it holds $c_i^{(t)}\ge b_i^{(t)}$ tokens of item $i$, so the budget $B$ limits the allocation of each turn rather than the context. Since each token is prefilled at most once, the context is nevertheless bounded by the full token count of the video, however many turns $T$ the conversation lasts:
 \begin{equation}
-  \sum_{t=1}^{T}p_i^{(t)}=\max_{t}\,b_i^{(t)}\le b_i^{\max} .
+  \sum_{t=1}^{T}\sum_{i} p_i^{(t)}=\sum_{i} c_i^{(T)}\le\sum_{i} b_i^{\max} .
   \label{eq:bound}
 \end{equation}
 In contrast, allocating every turn anew prefills up to $B$ tokens per turn, which grows linearly with $T$.
