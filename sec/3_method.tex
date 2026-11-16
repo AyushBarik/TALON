@@ -62,12 +62,21 @@ Moving from frame-level to token-level RAG replaces the binary decision $x_i$ by
 Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i\le b_{\max}$, where $b_{\max}$ is the full token count of a frame, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned analogously: \name passes each event through the text encoder once, ranks its tokens by the attention they receive, and keeps the top-ranked tokens up to its allocated count, following attention-based token pruning for language models~\cite{goyal2020powerbert,kim2022ltp}. \fan{maybe merge it into the next paragraph as it is not new and short.}
 
 \paragraph{Capturing Token Value.}
-Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves. \name therefore learns a \textit{token value} function fitted over various short videos uniformly pruned and processed at different token counts. While various valid function choices exist, we observed that a rational function achieved the highest log-likelihood on held-out calibration data (\cref{fig:value}). Therefore, we define the value function as
+Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves.
+\name therefore learns a \textit{token value} function fitted over various short videos uniformly pruned and processed at different token counts.
+\fyy{Fig. 4 is a key result. We should explain where these ``short videos'' come from, which VLM is used, and any relevant experimental setup for this curve fitting.
+Ideally we can say we repeat this experiment
+across various settings, and the rational function
+wins consistently.}
+\fyy{What about text/transcript? This paragraph focuses on frames only.}
+While various valid function choices exist, we observed that a rational function achieved the highest log-likelihood on held-out calibration data (\cref{fig:value}). Therefore, we define the value function as
 \begin{equation}
   v_i(b_i)=\frac{b_i}{b_i+\tau} ,
   \label{eq:curve}
 \end{equation}
+\fyy{why is this $v_i$ instead of just $v$?}
 where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum likelihood offline and updated online using feedback on answered queries (e.g., accuracy, user feedback). Transcript events have a token value of the same form, fitted in the same way. \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.} \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} Weighting the value of each frame by its relevance gives the token-level objective
+\fyy{This weighting shouldn't be taken for granted; it's a design choice. Why does it approximate accuracy?}
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r_i\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
