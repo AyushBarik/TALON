@@ -96,6 +96,8 @@
 \newcolumntype{V}{>{\centering\arraybackslash}p{\splitw}}
 \newcommand{\venue}[1]{\textsubscript{\,#1}}   % venue under a baseline name, e.g. Q-Frame [x]_{ICCV'25}
 \usepackage{tikz}
+\usepackage{pifont}
+\newcommand{\circnum}[1]{\ding{\numexpr201+#1\relax}}  % white digit in a black circle (1 to 10)
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}   % no "end for"/"end if" lines (DDPM / CLRS style)
 \algrenewcommand\algorithmicrequire{\textbf{Input:}}
