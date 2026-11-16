@@ -313,6 +313,13 @@ Finally, \name merges the selected frames and events in time order, each precede
 
 \end{comment}
 
+\fan{``mind assumptions'' makes it flat.}
+
+\paragraph{Optimality over Prior Allocation Rules.}
+Prior methods allocate tokens by a fixed rule rather than by maximizing an objective. In contrast, over real-valued token counts, water-filling attains the maximum of the objective with fixed relevances, and because the token value functions are strictly concave, every other allocation within the same budget attains a strictly lower objective. This includes the two prior rules. QuoTA~\cite{luo2025quota} sets the token count of a frame in proportion to its relevance, whereas Eq.~\eqref{eq:waterfill} lets it grow only with the square root of the relevance and gives no tokens to frames with $r_i\le\lambda\tau$. The proportional allocation is thus suboptimal as soon as three frames of distinct relevance hold some but not all of their tokens. Q-Frame~\cite{zhang2025qframe} gives all frames of a tier the same token count, which is suboptimal whenever a tier shown with fewer than all of its tokens contains frames of different relevance. Moreover, neither rule accounts for the similarity between items, which the full objective captures and iterative water-filling maximizes up to a gap of $O(1/\ell)$ (\cref{prop:convergence}). Proofs are provided in the supplementary material.
+
+\begin{comment}
+% Previous text of this paragraph and its proposition, kept for reference (not printed).
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but they allocate tokens by a fixed rule instead of by optimization.
 Q-Frame~\cite{zhang2025qframe} assigns one fixed token count to each tier of relevance ranks.
@@ -337,7 +344,10 @@ The learned token value does saturate.
 QuoTA therefore keeps adding tokens to the most relevant frames after their value has saturated, and takes these tokens from less relevant frames that would still benefit.
 A detailed proof is provided in the supplementary material.
 
+\end{comment}
+
 % ---------------------------------------------------------------------------------------------------------------------
+
 \subsection{Scheduling across Multi-Turn Conversations}
 \label{sec:multiturn}
 
