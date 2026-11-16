@@ -13,7 +13,6 @@ import matplotlib.ticker
 import os
 from collections import defaultdict
 
-from logaxis import log_axis
 from methods import METHODS, is_ours
 from orx_figstyle import COLUMN, figure, save, use_style
 
@@ -43,8 +42,15 @@ def main():
     gs = fig.add_gridspec(1, 2, width_ratios=[5.0, 1.25], wspace=0.07, left=0.13, right=0.97, bottom=0.17, top=0.97)
     ax = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1], sharey=ax)
-    LEFT, RIGHT = (0.2, 5.0), (22.0, 25.0)  # each axis starts and ends at a labelled tick
-    log_axis(ax, *LEFT)  # 1-2-5 labels, complete minor ticks (fig/logaxis.py)
+    LEFT, RIGHT = (0.4, 5.0), (22.0, 25.0)  # each axis starts and ends at a labelled tick
+    # The axis starts at 0.4, which is not a 1-2-5 value, so the ticks are set here: the start and the 1-2-5 values
+    # are labelled; 0.5 sits too close to 0.4 for a label and gets a short tick like the other in-between values.
+    ax.set_xscale("log")
+    ax.set_xlim(*LEFT)
+    ax.xaxis.set_major_locator(matplotlib.ticker.FixedLocator([0.4, 1, 2, 5]))
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([0.5, 0.6, 0.7, 0.8, 0.9, 3, 4]))
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     # The right panel is a cut-out of the same log scale around QuoTA: it spans less than one 1-2-5 step, so its two
     # end ticks are labelled and the integers between them get the short ticks.
     ax2.set_xscale("log")
@@ -81,7 +87,16 @@ def main():
         if right:
             x, y, _ = zip(*right)
             ax2.plot(x, y, **style)
-    ax.legend(loc="lower right", frameon=False, fontsize=6, ncol=2, columnspacing=0.8)
+    # Boxed legend in the lower right corner of the whole plot (drawn on the right panel so it covers both).
+    handles, labels = ax.get_legend_handles_labels()
+    legend = ax2.legend(handles, labels, loc="lower right", frameon=True, framealpha=1.0, edgecolor="black",
+                        fancybox=False, fontsize=6, ncol=2, columnspacing=0.8, borderaxespad=0.5)
+    legend.get_frame().set_linewidth(0.6)
+    legend.set_zorder(5)
+    # "Better" arrow towards the good corner: lower cost, higher accuracy.
+    ax.annotate("", xy=(0.04, 0.96), xytext=(0.16, 0.84), xycoords="axes fraction",
+                arrowprops=dict(arrowstyle="-|>", color="black", lw=1.0, mutation_scale=9))
+    ax.text(0.17, 0.84, "Better", transform=ax.transAxes, fontsize=7, ha="left", va="center")
     ax.set_xlabel("Cost per 1k queries ($)")
     # one x label for both panels, centred under the whole axis
     l0, l1 = ax.get_position().x0, ax2.get_position().x1
