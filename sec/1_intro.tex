@@ -1,20 +1,6 @@
 \section{Introduction \fyy{LOCK; do not edit text}}
 \label{sec:intro}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/budget_curve.pdf}
-  \caption{~\name establishes the accuracy-to-cost pareto frontier compared against state-of-the-art methods}
-  \label{fig:budget}
-\end{figure}
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{fig/case_study.pdf}
-  \caption{Intuitively, ~\name is able to purchase more frames by varying the tokens allocated to them, leading to better performance}
-  \label{fig:case}
-\end{figure}
-
 %\fyy{It turns out token compression is a popular method for video understanding (e.g., \href{https://arxiv.org/pdf/2510.07915}{retrieve-then-compress} and \href{https://arxiv.org/abs/2410.17434}{adaptive compression}). See my Teams message.}
 
 %\fyy{Therefore, a safer and better title and narrative should be something like ``Efficient Video RAG through Token Allocation''.}
@@ -99,6 +85,13 @@ Beyond retrieving relevant evidence, video RAG must decide how much evidence to 
 % Concurrently, video token compression merges or prunes visual tokens [FrameFusion, DyCoke, HoliTom].
 
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/budget_curve.pdf}
+  \caption{~\name establishes the accuracy-to-cost pareto frontier compared against state-of-the-art methods}
+  \label{fig:budget}
+\end{figure}
+
 Frame selection determines \emph{which} frames to show, while token compression reduces the tokens used to represent them. FrameFusion, DyCoke, and HoliTom exploit redundancy across frames through token merging or pruning~\cite{fu2025framefusion,tao2025dycoke,shao2025holitom}. Allocating a shared budget also requires accounting for diminishing returns: additional tokens reveal finer detail within a frame, but their contribution to answering the query eventually saturates. Relevance-based allocation rules, such as the resolution tiers of Q-Frame~\cite{zhang2025qframe} and the proportional allocation of QuoTA~\cite{luo2025quota}, do not model this saturation. This motivates joint token allocation that considers query relevance, diminishing returns, and redundancy across frames.
 
 We present \name, a plug-and-play framework for token-efficient video RAG (\cref{fig:overview}). \name formulates evidence selection and compression as a constrained token allocation problem: it jointly decides which frames to retain and how many tokens each receives under a shared budget. This formulation provides finer control over the accuracy--cost trade-off than frame-level selection. Its objective weights each frame's value at a given token count by query relevance and discounts redundant content.
@@ -118,6 +111,13 @@ Multi-turn conversations introduce a further challenge because successive questi
 % With token allocation, however, each turn may assign a different token count to the same frame, preventing direct reuse of an independently constructed input.
 % \name preserves reuse through query-independent token rankings: a larger allocation extends the retained token set, so each turn prefills only tokens missing from the cache.
 % When prefilling each new query on top of the cache, \name also uses the VLM's attention from query tokens to cached frames to update their relevance, without an additional model call.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/case_study.pdf}
+  \caption{Intuitively, ~\name is able to purchase more frames by varying the tokens allocated to them, leading to better performance}
+  \label{fig:case}
+\end{figure}
 
 We evaluate \name on MLVU, LongVideoBench, and Video-MME, as well as multi-turn conversations on MT-Video-Bench. At matched compute, \name improves accuracy over top-$K$ retrieval by up to 4.2\%. With Qwen3-VL-8B, it matches or exceeds QuoTA's accuracy using 2.8--3.4$\times$ less prefill compute. In multi-turn conversations, incremental allocation reduces prefill compute by 2.5$\times$ relative to re-allocating at every turn, at comparable accuracy.
 

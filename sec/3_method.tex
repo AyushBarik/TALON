@@ -274,6 +274,56 @@ for cached frames, and keeps $r_i^{(t)}=r_i$ for the others. Here, $\omega\in[0,
 \paragraph{Allocating and Prefilling.}
 \name then solves Eq.~\eqref{eq:p1} with relevance $r_i^{(t)}$. Let $c_i$ be the tokens of frame $f_i$ already in the cache, with $c_i=0$ before the first turn. Rather than prefilling the new allocation $b_i$ in full, \name prefills only the $p_i=\max(0,b_i-c_i)$ tokens that the cache lacks and sets $c_i\leftarrow\max(c_i,b_i)$. Since the pruner ranks tokens independently of the query (\cref{sec:allocation}), the missing tokens are simply the ones ranked between $c_i+1$ and $b_i$. \name appends them after the conversation, since inserting them inside the block of their frame would invalidate every later cache entry. Because the multimodal RoPE of the VLM~\cite{bai2025qwen3vl} encodes the temporal and spatial position of each visual token, an appended token keeps its position within its frame, and only its place in the sequence changes. The budget $B$ thus bounds the allocation of each turn, while the cache also retains the evidence of earlier turns.
 
+% Table 1 (main results, Sec. 4) is placed here so that it floats to the top of the page where Sec. 4 discusses it.
+\begin{table*}[t]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.2}
+  \newcommand{\na}{--}
+  \newcommand{\hd}[2]{\begin{tabular}{@{}c@{}}#1\\[-1pt]#2\end{tabular}}  % two-line column header
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % grey band naming the VLM
+  \newcommand{\maintab}{%
+  \begin{tabular}{l cc cc ccccc}
+    \toprule
+    \multirow{2}{*}{Method} & \multicolumn{2}{c}{MLVU (w/o subtitles)} & \multicolumn{2}{c}{LVB (w/o subtitles)} & \multicolumn{5}{c}{Video-MME (w/ subtitles)} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-10}
+    & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$
+      & Overall~$\uparrow$ & Short~$\uparrow$ & Medium~$\uparrow$ & Long~$\uparrow$ \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
+    Uniform sampling                                         & 215 & 73.4 & 229 & 65.1 & 224 & 72.9 & \textbf{83.6} & 73.0 & 62.0 \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                                  & 218 & 75.9 & 232 & 64.0 & 230 & 73.1 & 82.4 & 73.4 & 63.6 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 209 & 74.7 & 225 & 65.7 & 218 & 71.1 & 80.1 & 70.3 & 63.0 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 781 & 77.2 & 676 & \textbf{66.6} & 647 & 74.4 & 83.2 & 74.4 & 65.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 211 & 71.7 & 226 & 64.0 & 224 & 70.1 & 79.1 & 69.4 & 61.8 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 203 & 73.2 & 222 & 65.1 & 225 & 71.0 & 82.8 & 69.4 & 60.7 \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 230 & \textbf{78.1} & 234 & \textbf{66.6} & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
+    VideoRAG~\cite{ren2025videorag}\venue{KDD'26}             & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \specialrule{\lightrulewidth}{0pt}{0pt}
+    \group{InternVL3.5-4B~\cite{wang2025internvl35}}
+    Uniform sampling                                         & 143 & 69.9 & 143 & 62.0 & 141 & 65.6 & \textbf{79.8} & 63.8 & 53.2 \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                               & 145 & 72.5 & 146 & 60.4 & 145 & 68.6 & 78.0 & 69.1 & 58.7 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 146 & 71.1 & 146 & 63.1 & 142 & 66.0 & 76.7 & 64.6 & 56.9 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 708 & 71.3 & 583 & 62.5 & 551 & 64.9 & 74.7 & 64.6 & 55.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 142 & 69.5 & 143 & 58.8 & 140 & 66.4 & 75.9 & 65.9 & 57.4 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 140 & 69.6 & 143 & 61.3 & 139 & 65.7 & 76.3 & 66.4 & 54.2 \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 152 & \textbf{73.0} & 152 & \textbf{63.2} & 150 & \textbf{72.1} & 79.0 & \textbf{70.8} & \textbf{66.4} \\
+    \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
+  \end{tabular}}%
+  % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
+  % 20 column sides. This stays correct when the numbers change.
+  \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
+  \maintab
+  \caption{Accuracy in matched compute settings across state-of-the-art video understanding benchmarks and a multi-turn benchmark across diverse baselines and backbones.\fan{let's drop the color? hard to read}}
+  \label{tab:main}
+\end{table*}
+
 \paragraph{Bounded Prefill.}
 \name designs its pruner to rank the tokens of each frame once, independently of the query, so that every turn only extends the nested token sequence of a frame, and each rank is prefilled at most once. The evidence prefill of a conversation is therefore bounded, however many turns it lasts:
 
