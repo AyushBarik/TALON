@@ -37,10 +37,11 @@ where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivial
   \max_{\mathbf{b}}\ J(\mathbf{b}; q) = \sum_{i} r_i(q, \mathbf{b})\, v_i(b_i) \qquad \text{s.t.} \quad \sum_{i} b_i \le B.
   \label{eq:allocation}
 \end{equation}
-However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value $v_i(b_i)$ and the relevance $r_i(q, \mathbf{b})$ of each item? (sec 3.2) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (sec 3.3) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (sec 3.4).
+However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value $v_i(b_i)$ and the relevance $r_i(q, \mathbf{b})$ of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
 % ---------------------------------------------------------------------------------------------------------------------
-\subsection{Token Scheduler}
-\label{sec:allocation}
+
+\subsection{Allocation Objective}
+\label{sec:objective}
 
 \begin{figure}[t]
   \centering
@@ -108,6 +109,10 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 %   \label{eq:joint}
 % \end{equation}
 % where $v_{\text{frame}}$ is the token value of a frame defined above, $v_{\text{text}}$ is that of a transcript event, fitted in the same way, and $\beta$ weights text against frames. Since both sums share the same form, the solver below treats frames and events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i$, and tokens $b_i$.
+
+% ---------------------------------------------------------------------------------------------------------------------
+\subsection{Token Scheduler}
+\label{sec:allocation}
 
 \paragraph{Iterative Water-Filling.}
 The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b_i)$, and tokens $b_i$.
