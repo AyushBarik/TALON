@@ -21,6 +21,7 @@ import matplotlib.ticker
 import numpy as np
 from scipy.optimize import curve_fit
 
+from logaxis import log_axis
 from orx_figstyle import COLUMN, save, use_style
 from value_curve import FAMILIES, ZORDER
 
@@ -44,13 +45,8 @@ def main():
         p, _ = curve_fit(f, b, acc, p0=p0, maxfev=20000)
         ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.0, label=name, zorder=ZORDER[name])
     ax.plot(b, acc, "o", color="black", ms=2.2, zorder=3)
-    ax.set_xscale("log")
-    ax.set_xticks([2, 8, 32, 128, 512, 2048])
-    ax.set_xticklabels(["2", "8", "32", "128", "512", "2048"])
-    # base-2 scale: labels at every second power of two, short unlabelled ticks at the powers between them
-    ax.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([4, 16, 64, 256, 1024]))
-    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-    ax.set_xlim(2, 2048); ax.set_ylim(20, 50); ax.set_yticks([20, 30, 40, 50])
+    log_axis(ax, 2, 1000, label=(1,))  # labels at 2, 10, 100, 1k; short ticks at every other step (fig/logaxis.py)
+    ax.set_ylim(20, 50); ax.set_yticks([20, 30, 40, 50])
     ax.set_xlabel("Tokens per frame"); ax.set_ylabel("Accuracy (%)", labelpad=1)
     ax.legend(loc="lower right", frameon=False, fontsize=5, labelspacing=0.2, handlelength=1.3, borderaxespad=0.2)
 

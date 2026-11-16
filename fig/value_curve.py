@@ -17,6 +17,7 @@ import os
 import numpy as np
 from scipy.optimize import curve_fit
 
+from logaxis import log_axis
 from orx_figstyle import COLUMN, PALETTE, figure, save, use_style
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -55,13 +56,7 @@ def main():
         ax.plot(grid, f(grid, *p), color=color, ls=ls, lw=1.1, label=name, zorder=ZORDER[name])
     ax.plot(b, acc, "o", color="black", ms=2.5, zorder=3)
 
-    ax.set_xscale("log")
-    ax.set_xticks([2, 8, 32, 128, 512, 2048])
-    ax.set_xticklabels(["2", "8", "32", "128", "512", "2048"])
-    # base-2 scale: labels at every second power of two, short unlabelled ticks at the powers between them
-    ax.xaxis.set_minor_locator(matplotlib.ticker.FixedLocator([4, 16, 64, 256, 1024]))
-    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-    ax.set_xlim(2, 2048)  # every axis starts at its first tick and ends at its last tick
+    log_axis(ax, 2, 1000, label=(1,))  # labels at 2, 10, 100, 1k; short ticks at every other step (fig/logaxis.py)
     ax.set_ylim(20, 50)
     ax.set_yticks([20, 30, 40, 50])
     ax.set_xlabel("Token budget")

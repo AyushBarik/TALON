@@ -3,7 +3,6 @@
 Labelled ticks follow the 1-2-5 series (..., 0.5, 1, 2, 5, 10, 20, 50, 100, ...), written as plain numbers (1k, 2k, 5k from one thousand up, so that neighbouring labels never touch). Every other
 integer multiple of a power of ten (3, 4, 6, 7, 8, 9) gets a short unlabelled tick, so no position of the scale is
 skipped. The axis starts and ends at a labelled tick, so both limits must be 1-2-5 values.
-(Token counts per frame use base 2 instead: ticks at powers of two, no minor ticks. See value_pair.py.)
 """
 import math
 
@@ -20,11 +19,15 @@ def _series(lo, hi, mantissas):
     return out
 
 
-def log_axis(ax, lo, hi, which="x"):
-    """Log scale from lo to hi (both 1-2-5 values) with 1-2-5 labels and complete minor ticks."""
-    major = _series(lo, hi, (1, 2, 5))
-    assert major and major[0] == float(f"{lo:.6g}") and major[-1] == float(f"{hi:.6g}"), "limits must be 1-2-5 values"
-    minor = _series(lo, hi, (3, 4, 6, 7, 8, 9))
+def log_axis(ax, lo, hi, which="x", label=(1, 2, 5)):
+    """Log scale from lo to hi (both 1-2-5 values) with complete ticks. `label` names the mantissas that get a label
+    (1, 2, 5 by default; (1,) labels the powers of ten only, for an axis too narrow for every 1-2-5 label). The two
+    end ticks are always labelled. Ticks without a label are short."""
+    ends = (float(f"{lo:.6g}"), float(f"{hi:.6g}"))
+    all125 = _series(lo, hi, (1, 2, 5))
+    assert all125 and all125[0] == ends[0] and all125[-1] == ends[1], "limits must be 1-2-5 values"
+    major = sorted(set(_series(lo, hi, label)) | set(ends))
+    minor = sorted((set(all125) | set(_series(lo, hi, (3, 4, 6, 7, 8, 9)))) - set(major))
     axis = ax.xaxis if which == "x" else ax.yaxis
     (ax.set_xscale if which == "x" else ax.set_yscale)("log")
     axis.set_major_locator(mticker.FixedLocator(major))
