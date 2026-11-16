@@ -25,9 +25,9 @@ Otherwise, 3.1 is not complete by itself.}
 \fyy{which obviously has a trivial solution---top-K frames with highest scores. Next, we should introduce our extended formulation from 3.2; otherwise, it'd be meaningless to bring up Equation (1) in 3.1.}
 
 
-Frame-level RAG answers a user query $q$ about a video $V$ by passing the $K$ most semantically relevant frames to a VLM~\cite{tang2025aks,yu2024framevoyager}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i \ge 0$ denote the retrieval relevance of $f_i$ to $q$ (e.g., via CLIP cosine similarity~\cite{radford2021clip}). Standard frame-level RAG makes a binary admit-or-reject decision for each frame to maximize total relevance under a frame budget. Viewed through an optimization lens, this is equivalent to an integer linear program:
+Frame-level RAG answers a user query $q$ about a video $V$ by passing the $K$ most semantically relevant frames to a VLM~\cite{tang2025aks,yu2024framevoyager}. Let $f_1, \dots, f_N$ be frames sampled uniformly from $V$, and let $r_i(q) \ge 0$ denote the retrieval relevance of $f_i$ to $q$ (e.g., via CLIP cosine similarity~\cite{radford2021clip}). Standard frame-level RAG makes a binary admit-or-reject decision for each frame to maximize total relevance under a frame budget. Viewed through an optimization lens, this is equivalent to an integer linear program:
 \begin{equation}
-  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
+  \max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=1}^{N} r_i(q)\, x_i \qquad \text{s.t.} \quad \sum_{i=1}^{N} x_i \le K,
   \label{eq:topk}
 \end{equation}
 where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivially solved by greedily selecting the highest-relevance frames until the budget $K$ is reached, recovering standard Top-K retrieval. However, every admitted frame receives its full token count regardless of how much detail the query requires, which forces a rigid choice of which frames to show and prevents trading the detail of one frame for broader coverage across other frames.
@@ -36,11 +36,11 @@ where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivial
 \begin{equation}
 \begin{aligned}
   \max_{\mathbf{b}}\quad & \sum_{i \in \mathcal{F}} r_i(q, \mathbf{b})\, v_{\text{frame}}(b_i) + \beta \sum_{i \in \mathcal{S}} r_i(q, \mathbf{b})\, v_{\text{text}}(b_i) \\
-  \text{s.t.}\quad & \sum_{i \in \mathcal{F} \cup \mathcal{S}} b_i \le B.
+  \text{s.t.}\quad & \sum_{i \in \mathcal{F} \cup \mathcal{S}} b_i \le B, \qquad 0 \le b_i \le b_i^{\max},
 \end{aligned}
   \label{eq:allocation}
 \end{equation}
-However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value functions $v_{\text{frame}}$ and $v_{\text{text}}$ and the relevance of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
+where $b_i^{\max}$ is the full token count of item $i$. However, this formulation exposes three fundamental questions: \circnum{1}~how should we model the token value functions $v_{\text{frame}}$ and $v_{\text{text}}$ and the relevance of each item? (\cref{sec:objective}) \circnum{2}~how do we optimally solve Eq.~\eqref{eq:allocation}? (\cref{sec:allocation}) Still, across multi turn conversations users often refer to similar items, therefore \circnum{3}~how can we reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
 % ---------------------------------------------------------------------------------------------------------------------
 
 \subsection{Allocation Objective}
