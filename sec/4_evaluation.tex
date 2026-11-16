@@ -29,7 +29,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \renewcommand{\arraystretch}{1.2}
   \newcommand{\na}{--}
   \newcommand{\hd}[2]{\begin{tabular}{@{}c@{}}#1\\[-1pt]#2\end{tabular}}  % two-line column header
-  \newcommand{\group}[1]{\multicolumn{10}{l}{\textit{#1}} \\}  % row naming the VLM
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  % grey band naming the VLM
   \newcommand{\maintab}{%
   \begin{tabular}{l cc cc ccccc}
     \toprule
@@ -39,29 +39,29 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
       & TFLOPs~$\downarrow$ & Overall~$\uparrow$
       & TFLOPs~$\downarrow$
       & Overall~$\uparrow$ & Short~$\uparrow$ & Medium~$\uparrow$ & Long~$\uparrow$ \\
-    \midrule
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
     Uniform sampling                                         & 215 & 73.4 & 229 & 65.1 & 224 & 72.9 & \textbf{83.6} & 73.0 & 62.0 \\
-    RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
     \quad w/ Top-K                                  & 218 & 75.9 & 232 & 64.0 & 230 & 73.1 & 82.4 & 73.4 & 63.6 \\
     \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 209 & 74.7 & 225 & 65.7 & 218 & 71.1 & 80.1 & 70.3 & 63.0 \\
     \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 781 & 77.2 & 676 & \textbf{66.6} & 647 & 74.4 & 83.2 & 74.4 & 65.4 \\
     \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 211 & 71.7 & 226 & 64.0 & 224 & 70.1 & 79.1 & 69.4 & 61.8 \\
     \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 203 & 73.2 & 222 & 65.1 & 225 & 71.0 & 82.8 & 69.4 & 60.7 \\
-    \quad w/ \textbf{\name (Ours)}                            & 230 & \textbf{78.1} & 234 & \textbf{66.6} & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 230 & \textbf{78.1} & 234 & \textbf{66.6} & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
     VideoRAG~\cite{ren2025videorag}\venue{KDD'26}             & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \quad w/ \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
-    \midrule
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & \na & \na & \na & \na & \na & \na & \na & \na & \na \\
+    \specialrule{\lightrulewidth}{0pt}{0pt}
     \group{InternVL3.5-4B~\cite{wang2025internvl35}}
     Uniform sampling                                         & 143 & 69.9 & 143 & 62.0 & 141 & 65.6 & \textbf{79.8} & 63.8 & 53.2 \\
-    RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
     \quad w/ Top-K                               & 145 & 72.5 & 146 & 60.4 & 145 & 68.6 & 78.0 & 69.1 & 58.7 \\
     \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 146 & 71.1 & 146 & 63.1 & 142 & 66.0 & 76.7 & 64.6 & 56.9 \\
     \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 708 & 71.3 & 583 & 62.5 & 551 & 64.9 & 74.7 & 64.6 & 55.4 \\
     \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 142 & 69.5 & 143 & 58.8 & 140 & 66.4 & 75.9 & 65.9 & 57.4 \\
     \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 140 & 69.6 & 143 & 61.3 & 139 & 65.7 & 76.3 & 66.4 & 54.2 \\
-    \quad w/ \textbf{\name (Ours)}                            & 152 & \textbf{73.0} & 152 & \textbf{63.2} & 150 & \textbf{72.1} & 79.0 & \textbf{70.8} & \textbf{66.4} \\
-    \bottomrule
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 152 & \textbf{73.0} & 152 & \textbf{63.2} & 150 & \textbf{72.1} & 79.0 & \textbf{70.8} & \textbf{66.4} \\
+    \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
   \end{tabular}}%
   % Equal gaps that make the table exactly \textwidth: measure it with no gaps, then share the rest over the
   % 20 column sides. This stays correct when the numbers change.
@@ -103,7 +103,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \settowidth{\splitw}{Medium}%
   \newcommand{\na}{--}
   \newcommand{\abltab}{%
-  \begin{tabular}{l@{\hspace{5pt}} c VVVV}
+  \begin{tabular}{l<{\hspace{5pt}} c VVVV}
     \toprule
     Method & TFLOPs $\downarrow$
       & \multicolumn{4}{c}{%
@@ -112,8 +112,8 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
           \cmidrule(lr){1-4}
           Overall & Short & Medium & Long \\[2.6pt]
         \end{tabular}} \\
-    \midrule
-    \textbf{\name}                 & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \rowcolor{oursbg}\textbf{\name}                 & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
     \hspace{0.5em}w/o text allocation      & 226 & 73.7 & 81.9 & 74.9 & 64.4 \\
     \hspace{0.5em}w/o diversity term            & 226 & 76.6 & 82.4 & 76.4 & 70.8 \\
     \bottomrule
@@ -137,11 +137,11 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \setlength{\tabcolsep}{\ablsep}%
   \settowidth{\dimen0}{\hspace{0.5em}w/o incremental allocation}%
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
-  \begin{tabular}{l@{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
+  \begin{tabular}{l<{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
     \toprule
     Method & TFLOPs $\downarrow$ & MTVB (w/o subtitles) $\uparrow$ \\
-    \midrule
-    \textbf{\name}             & 275 & 58.5 \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \rowcolor{oursbg}\textbf{\name}             & 275 & 58.5 \\
     \hspace{0.5em}w/o attention refinement       & 315 & 57.4 \\
     \hspace{0.5em}w/o incremental allocation & 687 & \textbf{59.1} \\
     \bottomrule
