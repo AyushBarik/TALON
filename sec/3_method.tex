@@ -379,7 +379,10 @@ Within a conversation, a user may ask several queries $q_1,\dots,q_T$ about a vi
 \paragraph{Incremental Allocation.}
 At turn $t$, the Token Scheduler solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
 \begin{equation}
-  p_i^{(t)}=\max\!\big(0,\,b_i^{(t)}-c_i^{(t-1)}\big),\qquad c_i^{(t)}=\max\!\big(c_i^{(t-1)},\,b_i^{(t)}\big).
+\begin{aligned}
+  p_i^{(t)}&=\max\!\big(0,\,b_i^{(t)}-c_i^{(t-1)}\big),\\
+  c_i^{(t)}&=\max\!\big(c_i^{(t-1)},\,b_i^{(t)}\big),
+\end{aligned}
   \label{eq:incremental}
 \end{equation}
 where $p_i^{(t)}$ is the number of tokens of item $i$ that turn $t$ prefills. This difference is well defined because the tokens of an item are ranked once, independently of the query (\cref{sec:objective}). A larger token count only extends a smaller one, so the tokens to prefill are those ranked from $c_i^{(t-1)}+1$ to $b_i^{(t)}$. \name appends them to the end of the context, which leaves the KV cache of all earlier tokens valid, and each appended token keeps the positional encoding of its place within its item~\cite{bai2025qwen3vl}. The budget $B$ thus limits the allocation of each turn, while the tokens of earlier turns remain available to the VLM. Since each token of an item is prefilled at most once, the number of tokens that a conversation prefills for item $i$ is bounded, however many turns $T$ it lasts:
