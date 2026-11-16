@@ -154,6 +154,60 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 \subsection{Token Scheduler}
 \label{sec:allocation}
 
+% Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
+\fyy{Explain the rationale behind this method, and how it's applied.}
+\fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
+\ayush{too many symbols? fix later}
+
+\paragraph{Water-Filling.}
+We first solve Eq.~\eqref{eq:allocation} with the relevance fixed to $r_i(q)$, so that it no longer depends on the allocation. Let the marginal gain of an item be the increase in the objective from one more token. At the optimum, all items that hold some but not all of their tokens must have the same marginal gain, which we denote by $\lambda$; otherwise, moving a token from an item with a lower marginal gain to one with a higher one would improve the objective. Because the token value functions are concave, the problem is convex, so this condition is not only necessary but also sufficient for optimality~\cite{boyd2004}. For our token value functions, the marginal gain of item $i$ is the derivative $r_i\tau/(b_i+\tau)^2$. Setting it to $\lambda$ and solving for $b_i$ yields
+\begin{equation}
+  b_i=\left[\sqrt{r_i\,\tau}\,\Big(\mu-\sqrt{\tau/r_i}\Big)\right]_{0}^{b_i^{\max}},\qquad \mu=\frac{1}{\sqrt{\lambda}},
+  \label{eq:waterfill}
+\end{equation}
+where $r_i$ abbreviates the relevance $r_i(q)$, scaled by $\beta$ for a subtitle, $\tau$ is the token value parameter of its modality, and $[\cdot]_0^{b_i^{\max}}$ clips to the feasible range. Intuitively, each item acts as a vessel with floor $\sqrt{\tau/r_i}$, width $\sqrt{r_i\tau}$, and capacity $b_i^{\max}$, and the budget is water poured into all vessels at once, settling at one common level $\mu$. An item receives tokens only once the level exceeds its floor, so a single level decides both which items are retained and how many tokens each one receives. Since the total allocation grows with $\mu$, a bisection finds the level that meets the budget $B$. We derive this weighted water-filling in the supplementary material.
+
+\paragraph{Iterative Water-Filling.}
+Water-filling requires fixed relevances, yet the full relevance $r_i(q,\mathbf b)$ changes whenever tokens move. The Token Scheduler resolves this circular dependence by iterating: it evaluates the relevances at the current allocation, water-fills with them, and moves the allocation a step toward the result (\cref{alg:iwf}). Let $\bar v_i$ denote the current token value of item $i$, initially zero. The relevance that water-filling needs for item $i$ is the gain in Eq.~\eqref{eq:allocation} from raising $\bar v_i$, which we call its discounted relevance:
+\begin{equation}
+  \tilde r_i=r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j ,
+  \label{eq:weights}
+\end{equation}
+where $j$ ranges over the items of the same modality as $i$, including $i$, and a subtitle is further scaled by $\beta$. The discount appears twice: once because the relevance of item $i$ is discounted by its similar items, and once because raising $\bar v_i$ discounts theirs in turn. Water-filling with $\tilde r_i$ in place of $r_i$ returns token counts $b_i^\star$, with none for items with $\tilde r_i\le 0$. These counts are optimal only while the discounted relevances stay fixed, so adopting them outright would shift tokens back and forth between groups of similar items. The Token Scheduler instead averages them into the current token values with a shrinking step:
+\begin{equation}
+  \bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star),\qquad \gamma_\ell=\frac{2}{\ell+1},
+  \label{eq:average}
+\end{equation}
+where $\ell$ is the iteration and $v$ is the token value function of the item's modality. The first iteration is thus the water-filling of Eq.~\eqref{eq:waterfill}, and later iterations refine it. Finally, each token count is recovered as $b_i=v^{-1}(\bar v_i)$. This procedure converges to the optimum of Eq.~\eqref{eq:allocation}:
+\begin{proposition}
+\label{prop:convergence}
+Let $J^\star$ be the maximum of Eq.~\eqref{eq:allocation} over real-valued token counts, and let $J^{(\ell)}$ be the objective of the allocation after $\ell$ iterations of \cref{alg:iwf}. Then
+\begin{equation}
+  J^\star-J^{(\ell)}\le\frac{4\,\eta\,\sigma_{\max}D^2}{\ell+2} ,
+\end{equation}
+where $\sigma_{\max}$ is the largest eigenvalue of the similarity matrix and $D$ is the largest distance between the token values of two allocations within the budget.
+\end{proposition}
+\noindent The gap thus shrinks as $O(1/\ell)$. The guarantee holds because the similarity matrix is positive semidefinite: the total discount is then never negative, which makes the objective concave in the token values~\cite{jaggi2013}. A proof is provided in the supplementary material.
+
+\begin{algorithm}[t]
+\caption{Iterative Water-Filling}
+\label{alg:iwf}
+\small
+\begin{algorithmic}[1]
+\Require relevances $r_i(q)$, similarities $s_{ij}$, budget $B$, iterations $L$
+\Ensure token counts $b_i$ with $\sum_i b_i\le B$
+\State $\bar v_i\gets 0$ for every item $i$
+\For{$\ell=1,\dots,L$}
+  \State $\tilde r_i\gets r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j$ \Comment{discount, Eq.~\eqref{eq:weights}}
+  \State $b_i^\star\gets$ water-filling with $\tilde r_i$ under $B$ \Comment{allocate, Eq.~\eqref{eq:waterfill}}
+  \State $\bar v_i\gets(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star)$ \Comment{average, Eq.~\eqref{eq:average}}
+\EndFor
+\State \Return $b_i\gets v^{-1}(\bar v_i)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{comment}
+% Previous Sec. 3.3 solver text, kept for reference (not printed).
 \paragraph{Iterative Water-Filling.}
 The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b_i)$, and tokens $b_i$.
 Eq.~\eqref{eq:allocation} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
@@ -255,6 +309,9 @@ Finally, \name merges the selected frames and events in time order, each precede
 \end{algorithmic}
 \end{algorithm}
 
+
+
+\end{comment}
 
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior token allocation methods weight frames by relevance alone, as Eq.~\eqref{eq:relevance} does, but they allocate tokens by a fixed rule instead of by optimization.
