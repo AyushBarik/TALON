@@ -30,7 +30,7 @@ FRAME, TEXT = "#4E79A7", "#F28E2B"  # the frame and text colours of the overview
 def main():
     use_style()
     plt.rcParams.update({"xtick.labelsize": 5.5, "ytick.labelsize": 5.5, "axes.labelsize": 6.5})
-    W1, W2, H = COLUMN * 0.47, COLUMN * 0.53, COLUMN * 0.52  # the two widths used in the paper, one height
+    W1, W2, H = COLUMN * 0.5, COLUMN * 0.5, COLUMN * 0.5  # both figures have one size (the paper sets them at equal widths)
     fig, ax = plt.subplots(figsize=(W1, H), layout="constrained")
     fig2, fx = plt.subplots(figsize=(W2, H), layout="constrained")
     tx = fx.twinx()
