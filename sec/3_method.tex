@@ -318,6 +318,8 @@ Finally, \name merges the selected frames and events in time order, each precede
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior methods allocate tokens by a fixed rule rather than by maximizing an objective. In contrast, over real-valued token counts, water-filling attains the maximum of the objective with fixed relevances, and because the token value functions are strictly concave, every other allocation within the same budget attains a strictly lower objective. This includes the two prior rules. QuoTA~\cite{luo2025quota} sets the token count of a frame in proportion to its relevance, whereas Eq.~\eqref{eq:waterfill} lets it grow only with the square root of the relevance and gives no tokens to frames with $r_i\le\lambda\tau$. The proportional allocation is thus suboptimal as soon as three frames of distinct relevance hold some but not all of their tokens. Q-Frame~\cite{zhang2025qframe} gives all frames of a tier the same token count, which is suboptimal whenever a tier shown with fewer than all of its tokens contains frames of different relevance. Moreover, neither rule accounts for the similarity between items, which the full objective captures and iterative water-filling maximizes up to a gap of $O(1/\ell)$ (\cref{prop:convergence}). Proofs are provided in the supplementary material.
 
+Finally, the Token Scheduler rounds its real-valued token counts down to whole numbers, which keeps the allocation within the budget. \name then retains the $b_i$ highest-ranked tokens of each item and passes the items to the VLM in time order.
+
 \begin{comment}
 % Previous text of this paragraph and its proposition, kept for reference (not printed).
 \paragraph{Optimality over Prior Allocation Rules.}
