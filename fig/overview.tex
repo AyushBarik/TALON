@@ -141,7 +141,6 @@
 \begin{scope}[shift={(4.75,2.3)}]
   \draw[ax] (0,0) -- (2.6,0); \draw[ax] (0,0) -- (0,1.4);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.7) {relevance};
-  \node[font=\sffamily\scriptsize\itshape, text=ink, anchor=north west, inner sep=1pt] at (0.08,1.34) {$r(\cdot\mid q)$};
   \node[axl, anchor=north] at (1.3,-0.02) {time};
   \items{2.5}{1.5}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
                    .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
@@ -152,15 +151,14 @@
 
 % ---------------- (2) allocation ----------------
 % Equation on top; below it the two things it names: the token value curves (left) and the solution (right).
-\node[font=\sffamily\footnotesize, align=center] at (12.65,4.4) {$\max\limits_{\mathbf b,\mathbf w}\ \sum_i r(f_i\mid q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_m r(u_m\mid q)\,v_{\text{text}}(w_m)$\\[1pt]$\text{s.t.}\ \ \sum_i b_i+\sum_m w_m\le B$};
+\node[font=\sffamily\footnotesize, align=center] at (12.65,4.5) {$\displaystyle\max_{\mathbf b}\ \sum_{i}r_i(\mathbf b)\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B$};
 \begin{scope}[shift={(8.8,2.2)}]
   \draw[ax] (0,0) -- (3.3,0); \draw[ax] (0,0) -- (0,1.35);
   \node[axl, rotate=90, anchor=south] at (-0.03,0.68) {accuracy};
   \node[axl, anchor=north] at (1.65,-0.02) {tokens};
   \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.25*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
   \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.385*\x}, {1.15*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
-  \node[font=\sffamily\footnotesize, text=txt!75!black, anchor=south west, inner sep=1pt] at (3.1,1.16) {$v_{\text{text}}$};
-  \node[font=\sffamily\footnotesize, text=frm, anchor=north west, inner sep=1pt] at (3.1,1.02) {$v_{\text{frame}}$};
+  \node[font=\sffamily\footnotesize, text=ink, anchor=north west, inner sep=1pt] at (0.12,1.34) {$v_i(b_i)$};
 \end{scope}
 \begin{scope}[shift={(13.95,2.2)}]
   \draw[ax] (0,0) -- (3.25,0); \draw[ax] (0,0) -- (0,1.35);
@@ -168,29 +166,36 @@
   \node[axl, anchor=north] at (1.6,-0.02) {time};
   \items{3.15}{1.6}{0/0,0/0,.438/0,.688/0,.25/1,.531/0,0/0,0/0,0/0,.5/1,
                    0/0,.25/0,.344/0,.5/1,.406/0,.312/0,0/0,.25/1,0/0,0/0}
+  \fill[frm] (1.67,1.13) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (1.81,1.2) {frame};
+  \fill[txt] (2.57,1.13) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.71,1.2) {text};
 \end{scope}
 
-\draw[arr] (10.45,3.64) -- (10.45,4.2);
-\draw[arr] (15.55,4.2) -- (15.55,3.64);
+\draw[arr] (10.45,3.64) -- (10.45,4.12);
+\draw[arr] (15.55,4.12) -- (15.55,3.64);
 \end{scope}
 % ---------------- (3) inference ----------------
-% Attention-ranked pruning, left to right (as in the token-pruning figures of VisionZip and FastV): the tokens of
-% every frame (a stack of frames) -> the attention each token receives, over the frame -> tokens sorted by attention;
-% the budget b_i from Allocation sets the cut (marked b_i on the rank axis) -> the kept tokens -> the VLM answers.
+% Attention-ranked pruning, left to right, as the text of Sec. 3 states it: the retrieved frames -> the vision encoder
+% of the VLM (frozen) -> the attention each token receives in the encoder, as a map over the frame -> the tokens
+% sorted by that attention; the budget b_i from Allocation sets the cut -> the kept tokens -> the VLM answers.
+% Each picture has one label that names it; "tokens" and "attention" are no longer bare labels.
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.42,0.78) {\includegraphics[width=1.6cm]{fig/frames/frame2.jpg}};
 \node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.26,0.67) {\includegraphics[width=1.6cm]{fig/frames/frame3.jpg}};
-\bigframe{1.10,0.56}{frame4.jpg}{32}
-\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.26,1.24) {tokens};
-\bigattn{4.0,0.62}{frame4.jpg}
-\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (4.0,1.1) {attention};
-\node[model, fill=chipF, minimum width=5.25cm, minimum height=1.5cm] (rk) at (8.775,0.78) {};
-\rankbars{6.7,0.3}{4.3}{12}
-\draw[ink, densely dashed, line width=0.6pt] ({6.7+12*4.3/32},0.3) -- ++(0,1.0);
-\node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({6.7+12*4.3/32},0.3) {$b_i$};
-\node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (6.7,0.8) {attention};
-\node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (11.15,0.3) {rank};
-\node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (7.35,0.95) {kept};
-\node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (8.55,0.62) {dropped};
+\node[inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.10,0.56) {\includegraphics[width=1.6cm]{fig/frames/frame4.jpg}};
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.26,1.24) {frames};
+\node[model, fill=chipF, minimum width=1.6cm, minimum height=1.15cm] (enc) at (3.4,0.62) {};
+\nnet{3.4,0.62}{0.6}{0.4}
+\node[font=\sffamily\footnotesize, text=modelT, align=center] at (3.4,0.62) {Vision\\[-1pt]encoder};
+\snowflake{($(enc.south east)+(-0.19,0.19)$)}{0.11}
+\bigattn{5.4,0.62}{frame4.jpg}
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (5.4,1.1) {attention map};
+\node[model, fill=chipF, minimum width=4.75cm, minimum height=1.5cm] (rk) at (8.925,0.78) {};
+\rankbars{7.05,0.3}{3.9}{12}
+\draw[ink, densely dashed, line width=0.6pt] ({7.05+12*3.9/32},0.3) -- ++(0,1.0);
+\node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({7.05+12*3.9/32},0.3) {$b_i$};
+\node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (7.05,0.8) {attention};
+\node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (11.15,0.3) {token rank};
+\node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (7.65,0.95) {kept};
+\node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (8.8,0.62) {dropped};
 \bigframe{12.6,0.62}{frame4.jpg}{12}
 \node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (12.6,1.1) {top $b_i$ tokens};
 \node[model, fill=chipF, minimum width=1.9cm, minimum height=1.15cm] (vlm) at (14.9,0.62) {};
@@ -198,9 +203,10 @@
 \node[font=\sffamily\small, text=modelT] at (14.9,0.62) {VLM};
 \snowflake{($(vlm.south east)+(-0.19,0.19)$)}{0.11}
 \node[qa, inner sep=4pt] (ans) at (16.7,0.62) {\textbf{A:} Blue};
-\draw[arr] (2.3,0.62) -- (3.15,0.62);
-\draw[arr] (4.85,0.62) -- (6.15,0.62);
-\draw[arr] (11.4,0.62) -- (11.78,0.62);
+\draw[arr] (2.27,0.62) -- (enc.west);
+\draw[arr] (enc.east) -- (4.57,0.62);
+\draw[arr] (6.23,0.62) -- (6.23,0.62 -| rk.west);
+\draw[arr] (11.3,0.62) -- (11.78,0.62);
 \draw[arr] (13.45,0.62) -- (vlm.west);
 \draw[arr] (vlm.east) -- (ans.west);
 \end{tikzpicture}
