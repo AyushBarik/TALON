@@ -123,7 +123,7 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/11\relax}%
   \xdef\ablsep{\the\tabcolsep}% Table 3 reuses this gap, so both tables start at the same indent
   \abltab
-  \caption{Ablation studies across single-turn Q \& A}
+  \caption{Ablation studies across single-turn Q\&A.}
   \label{tab:ablation}
 \end{table}
 
@@ -139,14 +139,14 @@ To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
   \begin{tabular}{l<{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
     \toprule
-    Method & TFLOPs $\downarrow$ & MTVB (w/o subtitles) $\uparrow$ \\
+    Method & TFLOPs $\downarrow$ & MTVB $\uparrow$ \\
     \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
     \rowcolor{oursbg}\textbf{\name}             & 275 & 58.5 \\
     \hspace{0.5em}w/o attention refinement       & 315 & 57.4 \\
     \hspace{0.5em}w/o incremental allocation & 687 & \textbf{59.1} \\
     \bottomrule
   \end{tabular}
-  \caption{Ablation studies across multi-turn Q\&A. }
+  \caption{Ablation studies across multi-turn Q\&A.}
   \label{tab:multiturn}
 \end{table}
 
