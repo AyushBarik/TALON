@@ -31,11 +31,11 @@ We compare \name against uniform sampling and five recent frame selection and to
 
 \item \textbf{Q-Frame}~\cite{zhang2025qframe}: Samples frames according to query relevance and allocates tokens across high-, medium-, and low-resolution tiers with a 2:1:1 budget ratio.
 
-\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples tokens of each frame to a particular resolutions.
+\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples tokens of each frame to a particular resolution.
 
 \item \textbf{AdaAlloc}~\cite{an2026adaalloc}: Uses an agent to plan how to distribute the budget between low- and high-resolution frame tiers.
 \end{itemize}
-For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefetched content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because it arbitrarily downsamples tokens to variable amounts making reuse not possible.
+For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefilled content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because it downsamples tokens to variable amounts, which makes reuse impossible.
 
 
 \paragraph{Metrics.}

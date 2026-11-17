@@ -109,7 +109,7 @@ Building on these observations, we introduce \name, a plug-and-play framework fo
 
 % challenge & solution 1
 \para{Modeling token value.}
-An item's contribution depends not only on its relevance to the query, but more on how many tokens it receives and how much of its content is already covered by other items. We characterize downstream accuracy across token counts and find that a concave, saturating rational function well captures diminishing returns (\cref{fig:value}). We combine this modeling with query relevance and redundancy awareness, and use attention-based pruning to realize the resulting token counts (\cref{sec:objective}).
+An item's contribution depends not only on its relevance to the query, but also on how many tokens it receives and how much of its content is already covered by other items. We characterize downstream accuracy across token counts and find that a concave, saturating rational function well captures diminishing returns (\cref{fig:value}). We combine this modeling with query relevance and redundancy awareness, and use attention-based pruning to realize the resulting token counts (\cref{sec:objective}).
 % We fit candidate functions to accuracy measurements across token counts
 % and find that a concave, saturating rational function fits best
 % (\cref{fig:value}).
@@ -201,55 +201,11 @@ with 1.7--17.4$\times$ fewer TFLOPs.
 
 
 \begin{comment}
-\fyy{It turns out token compression is a popular method for video understanding (e.g., \href{https://arxiv.org/pdf/2510.07915}{retrieve-then-compress} and \href{https://arxiv.org/abs/2410.17434}{adaptive compression}). See my Teams message.}
 
-\fyy{Therefore, a safer and better title and narrative should be
-something like ``Efficient Video RAG through Token Allocation''.
-Our keywords are token efficiency and token allocation (in a globally optimal manner, rather than greedy, independent compression).}
 
-\fyy{My current thinking for the intro outline is as follows
-(each point is a paragraph):
-\begin{enumerate}
-\item \textit{Problem \& importance.}
-Briefly introduce VLM-based video understanding, then quickly
-move to our problem setting of \textit{long} video understanding.
-Establish its importance through concrete application domains.
-\item \textit{RAG is commonly used for long video understanding.}
-Processing all tokens from long videos can easily
-exceed VLM context windows and incur high compute costs.
-Therefore, existing systems widely resort to
-RAG, notably embedding-based and graph-based approaches,
-to supply relevant
-visual or textual evidence for each query.
-\item \textit{Limitations of existing approaches.}
-Graph-based RAG achieves high benchmark accuracy,
-but video ingestion is expensive and often wasted
-since users tend to ask questions sporadically.
-Embedding-based RAG is more lightweight, but our motivating
-experiments in Section 2 reveal its limitations.
-Adding tokens to a relevant frame yields diminishing returns.
-Although video token compression mitigates this issue,
-independently compressing retrieved frames
-is also suboptimal,
-as a different allocation of the global token budget
-could reveal useful evidence in other frames.
-\item \textit{Our insight and method.}
-These limitations motivate us to jointly allocate
-tokens across frames according to their contribution
-to answering the query.
-We present \name, a token-efficient video RAG framework
-that preserves QA accuracy.
-\name formulates video RAG as a token allocation problem
-under a limited budget.
-\item \textit{Challenges faced by \name and our solutions.}
-Challenge 1 / solution 1 centers on
-offline profiling of token value
-and the water-filling algorithm.
-Challenge 2 / solution 2 is multi-turn conversations.
-\item \textit{Evaluation highlights.}
-\item \textit{Contributions and three bullet points.}
-\end{enumerate}
-}
+
+
+
 \end{comment}
 
 % --- earlier outline notes, kept for reference ---

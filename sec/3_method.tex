@@ -13,11 +13,10 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{An illustration of ~\name' workflow}
+  \caption{An illustration of \name's workflow.}
   \label{fig:overview}
 \end{figure*}
 
-% \fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of evidence items such as candidate frames and transcript events. We use these scores in a token scheduler to decide which items to retain and how many tokens to allocate to each item, accounting for the diminishing value of additional tokens. Following this allocation, we prune each item to its allocated token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
 
 \begin{figure}[t]
   \centering
@@ -26,13 +25,12 @@
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
     \caption{Fitting candidate token-value functions to mean normalized accuracy measured across varying token counts.
     }
-    % \fyy{Legend text looks too small. Go through all figures to make sure text is readable in the paper. Also explain black dots are raw/measured data points in the caption or add a legend label.}
     \label{fig:value}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.485\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
-    \caption{Example of ~\name' token allocation for a nine-minute video
+    \caption{Example of \name's token allocation for a nine-minute video.
     }
     \label{fig:alloc}
   \end{minipage}
@@ -49,13 +47,6 @@
 \label{sec:overview}
 
 
-% \fyy{It's not that these RAGs explicitly model the problem this way. Instead, we observe that their approach essentially solves the following problem:}
-% \fyy{Move this paragraph to 3.1 as we shouldn't end it
-% at a problem formulation of the baselines. It should be focused on
-% \textit{our own} problem formulation, including Eq. (4)
-% and the challenges in solving it.
-% Otherwise, 3.1 is not complete by itself.}
-% \fyy{which obviously has a trivial solution---top-K frames with highest scores. Next, we should introduce our extended formulation from 3.2; otherwise, it'd be meaningless to bring up Equation (1) in 3.1.}
 
 Consider a video $V$ and query $q$. Conventional Top-$K$ video RAG retrieves $K$ frames with the highest relevance to $q$. Let $f_1,\ldots,f_N$ be candidate frames and let $r_i(q)\geq 0$ denote the retrieval relevance of frame $i$. Viewing it from an optimization lens, this is an integer linear program:
 \begin{equation}
@@ -87,33 +78,22 @@ where $x_i$ indicates whether frame $i$ is selected. The optimum simply selects 
 \subsection{Constructing the Allocation Objective}
 \label{sec:objective}
 
- % \fyy{Setup is unclear. Looks more like an evaluation result that belongs to section 4?}
 
 
-% \fan{maybe merge it into the next paragraph as it is not new and short.}
-% \fyy{Fig. 4 is a key result. We should explain where these ``short videos'' come from, which VLM is used, and any relevant experimental setup for this curve fitting. Ideally we can say we repeat this experiment across various settings, and the rational function wins consistently.}
-% \fyy{What about text/transcript? This paragraph focuses on frames only.}
-% \fyy{Why is this $v_i$ instead of just $v$?}
-% \fyy{Didn't explain the important takeaway: diminishing returns / concave, and how this property will become useful later.}
-% \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.}
-% \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.}
-% \fyy{This weighting shouldn't be taken for granted; it's a design choice. Why does it approximate accuracy?}
-% \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.}
-% \fan{shall we cut down this part? 1. it's not new; 2. introduce other knobs.}
 
 \paragraph{Token Value Function.}
 Retrieval relevance estimates an item's relevance when it is fully represented, but not how much of that usefulness survives token pruning. In Eq.~\eqref{eq:allocation}, we model this using the token value functions $v_{\text{frame}}(b_i)$ and $v_{\text{text}}(b_i)$, which weigh an item's relevance by the fraction of its value preserved at token count $b_i$. To evaluate an item at any arbitrary $b_i$, \name ranks its tokens once using its encoder's attention scores and keeps the top $b_i$ tokens.
 
-To define $v(b_i)$ we measure mean Q\&A accuracy across various $b_i$ token counts, measuring the fundamental utility of various token counts within VLMs, allowing us to most accurately scale whole-frame relevance scores based on them. We measure across held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, by pruning to $b_i$ across all frames of each short to medium length video before feeding them into a VLM along with the query. After normalizing the resulting accuracy measurements, we fit various functions to the resulting graph (\cref{fig:value}). We notice that a simple rational function best fits the observed data, for both visual and textual evidence:
+To define $v(b_i)$, we measure the mean Q\&A accuracy at various token counts $b_i$, which captures the utility of a token count within VLMs and allows us to scale whole-frame relevance scores accordingly. We measure across held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, by pruning to $b_i$ across all frames of each short to medium length video before feeding them into a VLM along with the query. After normalizing the resulting accuracy measurements, we fit various functions to the resulting graph (\cref{fig:value}). We notice that a simple rational function best fits the observed data, for both visual and textual evidence:
 \begin{equation}
   v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},\quad
   v_{\text{text}}(b_i)=\frac{b_i}{b_i+\tau_{\text{text}}},
   \label{eq:curve}
 \end{equation}
-where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The reported fits achieve $R^2>0.85$ in our profiling experiments, demonstrating that simple functions appear sufficient over more complex methods (e.g. neural networks) for this task . However, static functions may not be robust against shifting query distributions, therefore when query-feedback data is available, the parameters can be refitted during off-peak serving periods.
+where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The reported fits achieve $R^2>0.85$ in our profiling experiments, demonstrating that simple functions appear sufficient over more complex methods (e.g., neural networks) for this task. However, static functions may not be robust against shifting query distributions; therefore, when query-feedback data is available, the parameters can be refitted during off-peak serving periods.
 
 \paragraph{Diversity-aware Relevance.}
-$r_i(q)$ captures relevance but assumes that items are inherently independent. However, In videos, nearby frames may depict nearly identical content, therefore frames similar to already selected frames should be discounted. To capture this dependency, we discount each item's retrieval relevance $r_i(q)\geq 0$ according to the token value already allocated to similar items. Let $s_{ij}$ denote the cosine similarity between item embeddings within the same modality. We define the complete allocation-dependent relevance as follows:
+The retrieval relevance $r_i(q)$ captures relevance but assumes that items are independent. However, in videos, nearby frames may depict nearly identical content; therefore, frames similar to already selected frames should be discounted. To capture this dependency, we discount each item's retrieval relevance $r_i(q)\geq 0$ according to the token value already allocated to similar items. Let $s_{ij}$ denote the cosine similarity between item embeddings within the same modality. We define the complete allocation-dependent relevance as follows:
 \begin{equation}
 \begin{aligned}
   r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal F}s_{ij}\,v_{\text{frame}}(b_j), & i&\in\mathcal F,\\
@@ -129,32 +109,29 @@ Substituting \cref{eq:curve,eq:cond} into \cref{eq:allocation} finally yields th
 % Previous Sec. 3.2 text with its comments, kept for reference (not printed).
 
 \paragraph{Pruning Frames and Transcripts to a Token Count.}
-Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i\le b_{\max}$, where $b_{\max}$ is the full token count of a frame, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned analogously: \name passes each event through the text encoder once, ranks its tokens by the attention they receive, and keeps the top-ranked tokens up to its allocated count, following attention-based token pruning for language models~\cite{goyal2020powerbert,kim2022ltp}. \fan{maybe merge it into the next paragraph as it is not new and short.}
+Allocating $b_i$ tokens to a frame requires a way to show the frame with any number of tokens. \name passes each frame through the vision encoder of the VLM once, ranks its output tokens by the attention they receive within the encoder, and keeps the top $b_i\le b_{\max}$, where $b_{\max}$ is the full token count of a frame, following attention-based token pruning~\cite{yang2024visionzip,chen2024fastv}. Transcript events are pruned analogously: \name passes each event through the text encoder once, ranks its tokens by the attention they receive, and keeps the top-ranked tokens up to its allocated count, following attention-based token pruning for language models~\cite{goyal2020powerbert,kim2022ltp}. 
 
 \paragraph{Capturing Token Value.}
 Intuitively, the token count of a frame acts as its effective resolution: with few tokens, the VLM perceives only the coarse structure of the frame, whereas with more tokens it also perceives fine detail, such as on-screen text. How this added detail translates into accuracy, however, depends on the VLM and the videos it serves.
 \name therefore learns a \textit{token value} function fitted over various short videos uniformly pruned and processed at different token counts.
-\fyy{Fig. 4 is a key result. We should explain where these ``short videos'' come from, which VLM is used, and any relevant experimental setup for this curve fitting.
-Ideally we can say we repeat this experiment
-across various settings, and the rational function
-wins consistently.}
-\fyy{What about text/transcript? This paragraph focuses on frames only.}
+
+
 While various valid function choices exist, we observed that a rational function achieved the highest log-likelihood on held-out calibration data (\cref{fig:value}). Therefore, we define the value function as
 \begin{equation}
   v_i(b_i)=\frac{b_i}{b_i+\tau} ,
   \label{eq:curve}
 \end{equation}
-\fyy{Why is this $v_i$ instead of just $v$?}
-\fyy{Didn't explain the important takeaway: diminishing returns / concave, and how this property will become useful later.}
-where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum likelihood offline and updated online using feedback on answered queries (e.g., accuracy, user feedback). Transcript events have a token value of the same form, fitted in the same way. \fan{we need to have out-of-distribution experiment. or, here, we need to justify this design (the learned curve) is robust.} \fan{we should not call it relevance? instead, it should be importance? also, many notations are introduced without definition, such as $b$.} Weighting the value of each frame by its relevance gives the token-level objective
-\fyy{This weighting shouldn't be taken for granted; it's a design choice. Why does it approximate accuracy?}
+
+
+where $b_i$ is the token count of frame $f_i$, and $\tau$ is fitted via maximum likelihood offline and updated online using feedback on answered queries (e.g., accuracy, user feedback). Transcript events have a token value of the same form, fitted in the same way.   Weighting the value of each frame by its relevance gives the token-level objective
+
 \begin{equation}
   \max_{\mathbf b}\ \sum_{i}r_i\,v_i(b_i)\qquad\text{s.t.}\quad\sum_{i}b_i\le B .
   \label{eq:relevance}
 \end{equation}
 
 \paragraph{Incorporating Frame Diversity.}
-The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which the token value credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity \fan{we may consider call it cosine distance here. but, why cosine is a good proxy? here, we may justify it from the efficiency perspective.} to every frame, itself included, weighted by the value of that frame:
+The objective above, however, scores every frame in isolation. Consecutive frames often show the same content, so it may spend tokens on near-duplicate frames, each of which the token value credits in full, even though a second copy adds little once the first is shown. \name therefore conditions the relevance of a frame on the current allocation as well as the query, discounting it by its cosine similarity  to every frame, itself included, weighted by the value of that frame:
 % Fix A (applied in the text 2026-11-15): the sum includes j = i and uses the raw cosine, so the similarity matrix is PSD; step 2/(l+1); averaged allocation (Proposition prop:convergence). The reported numbers still come from the old solver (j != i, max(0, cos), halfway step, best iterate): update the code and rerun before submission.
 \begin{equation}
   r_i(\mathbf b)=r_i-\eta\sum_{j}\cos(f_i,f_j)\,v_j(b_j) ,
@@ -167,7 +144,7 @@ where $\eta$ sets the strength of the discount. A frame that duplicates a frame 
 \end{equation}
 where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recovers the objective above.
 
-% \paragraph{Extending to Transcripts.} \fan{shall we cut down this part? 1. it's not new; 2. introduce other knobs.}
+% \paragraph{Extending to Transcripts.} 
 % Many questions hinge on what is said rather than shown, so \name also allocates tokens to the transcript of the video. Let $u_1,\dots,u_M$ be its transcript events, each a timestamped speech segment, with relevance $r(u_m\mid q)$ computed as for frames using a text encoder (e.g., BGE~\cite{bge}), and let $w_m$ be the tokens kept from $u_m$. Transcript events then enter the objective in the same way as frames:
 % \begin{equation}
 % \begin{aligned}
@@ -185,9 +162,6 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 \subsection{Efficient Token Allocation}
 \label{sec:allocation}
 
-% Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
-% \fyy{Explain the rationale behind this method, and how it's applied.}
-% \fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
 
 
 Allocating discrete token counts directly involves many integer decisions that are coupled through the diversity term, making off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) infeasible for real-time serving. In fact, on a sample hour-long video at 1 FPS, such solvers iterate for more than a dozen seconds, exceeding the VLM's own inference time.
@@ -203,7 +177,7 @@ b_i=\left[\sqrt{\bar r_i\tau_i/\lambda}-\tau_i\right]_0^{b_i^{\max}},
 where $[\cdot]_0^{b_i^{\max}}$ clips the token count to $[0,b_i^{\max}]$. Intuitively, an item receives tokens only if its relevance exceeds $\lambda\tau_i$, and its token count then grows with the square root of its relevance rather than in proportion to it. A single scalar $\lambda$ thus decides both which items are selected and how many tokens each receives. Since the total allocation decreases monotonically with $\lambda$, a bisection finds the $\lambda$ that meets the budget $B$. This procedure is known as water-filling~\cite{boyd2004,yu2004iwf}.
 
 \paragraph{Iterative Water-Filling.}
-The full objective, however, discounts the relevance of each item by the token values of its similar items, so the relevance that water-filling requires depends on the very allocation it produces. We resolve this dependence using the Frank--Wolfe method~\cite{frank1956,jaggi2013}, which iteratively optimizes linear approximations of the objective. In terms of the token values, Eq.~\eqref{eq:allocation} reads $J(\mathbf z)=\bar{\mathbf r}^{\top}\mathbf z-\eta\,\mathbf z^{\top}S\mathbf z$, where $S$ is the matrix of similarities $s_{ij}$. At iteration $\ell$, given the current token values $\bar{\mathbf z}$ (initialized to zero), we compute the diversity-discounted relevance as
+The full objective, however, discounts the relevance of each item by the token values of its similar items, so the relevance that water-filling requires depends on the very allocation it produces. We resolve this dependence using the Frank--Wolfe method~\cite{frank1956,jaggi2013}, which iteratively optimizes linear approximations of the objective. In terms of the token values, Eq.~\eqref{eq:allocation} reads $J(\mathbf z)=\bar{\mathbf r}^{\top}\mathbf z-\eta\,\mathbf z^{\top}S\mathbf z$, where $S$ is the block-diagonal matrix of within-modality similarities $s_{ij}$ (scaled by $\beta$ for subtitles). At iteration $\ell$, given the current token values $\bar{\mathbf z}$ (initialized to zero), we compute the diversity-discounted relevance as
 \begin{equation}
 \widetilde{\mathbf r}
 =\nabla J(\bar{\mathbf z})
@@ -269,7 +243,7 @@ Prior methods allocate tokens by fixed rules rather than by optimizing an object
 %  \frac{\max(0,g_i)\,\tau_i}{(\hat b_i+\tau_i)^2}.
 %  \label{eq:rounding}
 % \end{equation}
-% Combining this bound with \cref{prop:convergence} bounds the rounded solution's gap to the optimal integer allocation by $\epsilon_{\rm round}+O(1/L)$. In our reported measurements, the rounding bound is below $1\%$ of the objective on average. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order. \fan{I actually do not like this part and it does not smell CVPR either. I would intergrate it into Proposition. In fact, I assume lots of proof is written by AI, so I don't feel confident and like it. Toning it down to me is much better.}
+% Combining this bound with \cref{prop:convergence} bounds the rounded solution's gap to the optimal integer allocation by $\epsilon_{\rm round}+O(1/L)$. In our reported measurements, the rounding bound is below $1\%$ of the objective on average. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order. 
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling}
@@ -356,7 +330,7 @@ The solver treats the $N$ frames and the $M$ transcript events alike as items $i
 Eq.~\eqref{eq:allocation} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
 If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
 The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
-\fyy{Explain the rationale behind this method, and how it's applied.}
+
 It discounts the relevance of each frame by its similarity to the frames that already hold tokens, allocates the budget exactly under the discounted relevances, and averages the result into a running estimate.
 
 \textit{Step 1: Discount the relevances.}
@@ -409,7 +383,7 @@ Let $J(\mathbf b)$ be the objective of Eq.~\eqref{eq:allocation} and $J^\star$ i
 \end{equation}
 where $\mu_{\max}$ is the largest eigenvalue of the matrix of cosine similarities between frames, and $D$ is the largest distance between the token values of two allocations within the budget.
 \end{proposition}
-\fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
+
 
 \noindent Proposition~\ref{prop:convergence} states that the gap to the optimal allocation falls as $O(1/\ell)$.
 Ten times more iterations make the bound ten times smaller: after $\ell=100$ iterations, the gap is at most about one hundredth of the constant $4\eta\mu_{\max}D^2$.
@@ -426,7 +400,7 @@ Finally, \name merges the selected frames and events in time order, each precede
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require relevances $r_i$, token values $v_i(b_i)$ for $b_i\le b_{\max}$ \ayush{too many symbols? fix later}
+\Require relevances $r_i$, token values $v_i(b_i)$ for $b_i\le b_{\max}$ 
 \Require similarities $s_{ij}=\cos(f_i,f_j)$, budget $B$, weight $\eta$, rounds $L$, tolerance $\epsilon$
 \Ensure allocation $\mathbf{b}$ with $\sum_i b_i\le B$
 \Statex Each update with index $i$ applies to every item $i\in[N+M]$.
@@ -476,7 +450,7 @@ QuoTA, the closest prior work, is suboptimal whenever the frames differ in relev
 Let $N\ge 3$ frames have pairwise distinct relevances $r_1,\dots,r_N$, and let $0<r_iB<b_{\max}$ for every frame, so that the proportional allocation leaves no frame at zero or at full tokens. Then, over real-valued token counts, the proportional allocation $b_i=r_iB$ does not maximize Eq.~\eqref{eq:relevance}.
 \end{proposition}
 
-\fan{``mind assumptions'' makes it flat.}
+
 \noindent Intuitively, proportional allocation is optimal only for a logarithmic token value, and a logarithm never saturates.
 The learned token value does saturate.
 QuoTA therefore keeps adding tokens to the most relevant frames after their value has saturated, and takes these tokens from less relevant frames that would still benefit.
@@ -500,15 +474,11 @@ A detailed proof is provided in the supplementary material.
   \begin{minipage}[t]{0.47\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
-    \caption{Incremental allocation allows ~\name to recover a large amount of the available reuse opportunities.}
+    \caption{Incremental allocation allows \name to recover a large amount of the available reuse opportunities.}
     \label{fig:prefill}
   \end{minipage}
 \end{figure}
 
-% Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
-% \fan{token?}
-% \ayush{btw for multi turn only we are bounded unlike QFrame etc they are not bounded}
-% \fan{this bound reads trivial as we already mention each token is prefilled at most once.}
 
 In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about the same video~\cite{hsieh2018focus}. Later queries often refer to evidence processed in earlier turns (\cref{fig:reuse}). Top-K can reuse a previously prefilled frame when the selection matches exactly, but token allocation is harder: the same frame may receive different token counts at different turns. \name addresses this with \emph{incremental allocation}, which inserts only missing tokens, and \emph{attention refinement}, which updates the relevance of cached evidence without an additional VLM scoring call.
 % These queries are inherently correlated, and later turns often reference items prefilled by prior turns, as shown in \cref{fig:reuse}. This overlap offers ample opportunities for reuse, and thus large savings in prefill compute. But how do we enable such reuse? For Top-K, a simple patch suffices: if a relevant item has been prefilled by a prior turn, it is not prefilled again. For \name, however, the solution is less obvious. Since items are prefilled at different token counts, they rarely match a prior turn exactly. Carrying allocations across turns thus raises two questions. \circnum{1}~How can we avoid the prefill compute of content that overlaps across turns? At the same time, we identify a unique opportunity, as each query is prefilled against the past context anyway. \circnum{2}~How can we use the resulting attention scores to refine our allocations? \name answers the first with incremental allocation and the second with attention refinement.
@@ -653,7 +623,7 @@ for cached frames, and keeps $r_i^{(t)}=r_i$ for the others. Here, $\omega\in[0,
 
 
 \paragraph{Bounded Prefill.}
-\name designs its pruner to rank the tokens of each frame once, independently of the query, so that every turn only extends the nested token sequence of a frame, and each rank\fan{token?} is prefilled at most once. The evidence prefill of a conversation is therefore bounded, however many turns it lasts:
+\name designs its pruner to rank the tokens of each frame once, independently of the query, so that every turn only extends the nested token sequence of a frame, and each rank is prefilled at most once. The evidence prefill of a conversation is therefore bounded, however many turns it lasts:
 
 \begin{proposition}
 \label{prop:bound}
@@ -663,6 +633,6 @@ Let $b_i^{(t)}$ and $p_i^{(t)}$ be the allocation and the prefill of frame $f_i$
 \end{equation}
 \end{proposition}
 
-\noindent Proposition~\ref{prop:bound} shows that a conversation prefills at most the full tokens of the frames it ever shows, whereas re-allocating from scratch prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. The same holds for transcript events, so only the question text adds prefill at every turn. A detailed proof is provided in the supplementary material. \ayush{btw for multi turn only we are bounded unlike QFrame etc they are not bounded}\fan{this bound reads trivial as we already mention each token is prefilled at most once.}
+\noindent Proposition~\ref{prop:bound} shows that a conversation prefills at most the full tokens of the frames it ever shows, whereas re-allocating from scratch prefills $\sum_t\sum_ib_i^{(t)}$ tokens, which grows with every turn. The same holds for transcript events, so only the question text adds prefill at every turn. A detailed proof is provided in the supplementary material. 
 
 \end{comment}

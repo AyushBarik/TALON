@@ -6,6 +6,6 @@ We introduce \name, a plug-and-play framework for token-efficient video RAG that
 % This paper introduces \name, a plug-and-play framework for token-efficient video RAG. For each query, \name jointly decides which frames and subtitles to retain and how many tokens each receives under a shared token budget. Its Token Scheduler weights a saturating token value function by query relevance, discounts redundant content, and solves the resulting objective by iterative water-filling, while incremental allocation and attention-guided relevance carry the allocation across the turns of a conversation. At matched compute, \name improves accuracy over Top-K by up to 4.2\%, and incremental allocation reduces prefill compute by 2.5$\times$ in multi-turn conversations.
 
 
-\paragraph{Limitations and future work.} \name does not experiment with heterogenous budgets across turns or multi-user scheduling, which could be useful in generalizing performance toward real-world deployment. Furthermore, \name may benefit from deeper integration with graph-based RAG, by factoring in commonly used graphical inference methods like personalized pagerank. 
+\paragraph{Limitations and future work.} \name does not experiment with heterogeneous budgets across turns or multi-user scheduling, which could be useful in generalizing performance toward real-world deployment. Furthermore, \name may benefit from deeper integration with graph-based RAG, by factoring in commonly used graphical inference methods like personalized PageRank. 
 
 % \paragraph{Conclusion.} 
