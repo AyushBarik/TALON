@@ -52,6 +52,16 @@ constrained optimization framework, where we allocate
 tokens over evidence items (including frames and subtitles)
 to maximize the aggregate token value under a limited token budget.
 
+% frontpage figure
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig/budget_curve.pdf}
+  \vspace{-10pt}
+  \caption{\name improves the accuracy-cost trade-off on the MLVU benchmark. Cost values are derived from OpenRouter API prices for Qwen3-VL-8B.}
+  \vspace{-10pt}
+  \label{fig:budget}
+\end{figure}
+
 % our insights
 We estimate token value based on two key observations.
 First, query-relevant evidence deserves more tokens, but our profiling
@@ -62,15 +72,6 @@ decreases when other items already provide overlapping evidence.
 %Therefore, our token value model must capture both diminishing returns within
 %items and redundancy across items.
 %, while facilitating efficient optimization.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.85\linewidth]{fig/budget_curve.pdf}
-  \vspace{-10pt}
-  \caption{\name improves the accuracy-cost (and accuracy-compute) trade-off on the MLVU benchmark. Cost values derived from OpenRouter API prices for Qwen3-VL-8B}
-  \vspace{-5pt}
-  \label{fig:budget}
-\end{figure}
 
 % We introduce \name, a plug-and-play framework that addresses these challenges by formulating token allocation as constrained optimization (\cref{fig:overview}).
 % First, \name defines an objective that weights each frame's value at its allocated token count by its relevance to the query.
@@ -94,8 +95,8 @@ before passing them to the VLM
 (\cref{fig:overview}).
 As previewed in \cref{fig:budget}, \name achieves the best accuracy-cost (and accuracy-compute) trade-off.
 Realizing this performance, however, faces three challenges:
-modeling token value analytically,
-solving the optimization problem efficiently,
+modeling token value,
+solving the optimization efficiently,
 and reusing evidence across conversation turns.
 %(a challenge that naturally arises from our
 %fine-grained token allocation).
@@ -118,7 +119,7 @@ tokens~\cite{chen2024fastv,yang2024visionzip,goyal2020powerbert,kim2022ltp}.
 % We prove that the gap to the optimal allocation shrinks as $O(1/\ell)$ after $\ell$ iterations, while the solver takes only a few milliseconds per query.
 
 % challenge & solution 2
-\para{Solving the allocation.}
+\para{Solving token allocation.}
 We solve the token optimization problem through iterative water-filling
 (\cref{sec:allocation}).
 Each iteration discounts relevance under the current allocation, then
@@ -168,7 +169,14 @@ refinement to guide subsequent allocations without an additional scoring call.
 
 % evaluation highlights
 We evaluate \name on MLVU, LongVideoBench, and Video-MME with
-Qwen3-VL-8B and InternVL3.5-4B improving accuracy by 0.1--7.2 points over state-of-the-art baselines (\cref{tab:main}). And, additionally on MT-Video-Bench a multi-turn benchmark, where \name achieves 0.9--2.1 points higher accuracy with 1.7--17.4$\times$ fewer TFLOPs (\cref{tab:multiturn}).
+Qwen3-VL-8B and InternVL3.5-4B.
+With comparable compute budgets, \name improves accuracy by 0.1--7.2\%
+over state-of-the-art baselines (\cref{tab:main}).
+On MLVU, \name also achieves the best accuracy-cost trade-off among
+the evaluated methods across token budgets (\cref{fig:budget}).
+We also evaluate \name on the multi-turn benchmark MT-Video-Bench,
+where \name achieves 0.9--2.1\% higher accuracy than the baselines
+with 1.7--17.4$\times$ fewer TFLOPs (\cref{fig:multiturn}).
 
 % \para{Contributions:}
 % \begin{itemize}

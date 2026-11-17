@@ -1,4 +1,20 @@
 \begin{abstract}
-----
-\fyy{Feel free to leave the abstract to me. I should be able to complete it by midnight.}
+Long video understanding with vision-language models (VLMs)
+requires balancing evidence coverage and detail in
+retrieval-augmented generation (RAG).
+Existing RAG approaches adapt evidence selection and detail but do not
+explicitly optimize ``token value''---a token's estimated contribution
+to answer accuracy.
+We present \name, an efficient video RAG framework that allocates a
+shared token budget across evidence items (including frames and subtitles) to maximize aggregate token value.
+First, we model token value using query relevance,
+diminishing accuracy gains, and evidence redundancy.
+Second, we develop a token scheduler that uses iterative water-filling
+to allocate tokens efficiently.
+Finally, we support multi-turn conversations through incremental allocation
+and attention refinement, reusing evidence and updating relevance as
+queries change.
+We evaluate \name on three video benchmarks with two VLM backbones
+and find consistent improvements in accuracy-cost and accuracy-compute 
+trade-offs.
 \end{abstract}
