@@ -31,8 +31,8 @@ FRAME, TEXT = "#4E79A7", "#F28E2B"  # the frame and text colours of the overview
 
 def main():
     use_style()
-    plt.rcParams.update({"xtick.labelsize": 5.5, "ytick.labelsize": 5.5, "axes.labelsize": 6.5})
-    W1, W2, H = COLUMN * 0.5, COLUMN * 0.5, COLUMN * 0.5  # both figures have one size (the paper sets them at equal widths)
+    plt.rcParams.update({"xtick.labelsize": 7, "ytick.labelsize": 7, "axes.labelsize": 8})
+    W1, W2, H = COLUMN * 0.5, COLUMN * 0.5, COLUMN * 0.58  # both figures have one size (the paper sets them at equal widths)
     fig, ax = plt.subplots(figsize=(W1, H), layout="constrained")
     fig2, fx = plt.subplots(figsize=(W2, H), layout="constrained")
     tx = fx.twinx()
@@ -52,7 +52,9 @@ def main():
     log_axis(ax, 2, 1000, label=(1,))  # labels at 2, 10, 100, 1k; short ticks at every other step (fig/logaxis.py)
     ax.set_ylim(0, 1); ax.set_yticks([0, 0.25, 0.5, 0.75, 1]); ax.set_yticklabels(["0", "0.25", "0.5", "0.75", "1"])
     ax.set_xlabel("Tokens per frame"); ax.set_ylabel("Normalized accuracy", labelpad=1)
-    ax.legend(loc="lower right", frameon=False, fontsize=5, labelspacing=0.2, handlelength=1.3, borderaxespad=0.2)
+    # Legends sit above the axes, two rows in both figures, so that the two plot areas keep one size.
+    fig.legend(loc="outside upper center", ncol=2, frameon=False, fontsize=7, labelspacing=0.2, handlelength=1.2,
+               columnspacing=0.8, handletextpad=0.4, borderaxespad=0, borderpad=0)
 
     c = json.load(open(os.path.join(HERE, "alloc_case.json")))
     t = np.array(c["frame_times"]) / 60
@@ -71,8 +73,8 @@ def main():
     tx.grid(False); tx.spines["right"].set_visible(True)
     fx.set_xlim(0, 9); fx.set_xticks([0, 3, 6, 9]); fx.set_xlabel("Video time (min)")
     h = fx.get_legend_handles_labels()[0] + tx.get_legend_handles_labels()[0]
-    fx.legend(h, ["Frames", "Transcript"], loc="upper left", frameon=False, fontsize=5, handlelength=0.9,
-              handleheight=0.7, borderaxespad=0.2, labelspacing=0.2, handletextpad=0.4)
+    fig2.legend(h, ["Frames", "Transcript"], loc="outside upper center", ncol=1, frameon=False, fontsize=7,
+                handlelength=0.9, handleheight=0.7, labelspacing=0.2, handletextpad=0.4, borderaxespad=0, borderpad=0)
     print(save(fig, os.path.join(HERE, "value_half")))
     print(save(fig2, os.path.join(HERE, "alloc_case")))
     print("max frame", max(c["frame_tokens"]), "max text bin", kept.max(), "kept", kept.sum())
