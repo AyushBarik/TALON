@@ -54,18 +54,19 @@ where $x_i = 1$ if $f_i$ is passed to the VLM and $0$ otherwise. This is trivial
     \centering
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
     \caption{Mean normalized accuracy for each token level (black dots) are best fit with a rational function token value curve.
-    \fyy{Legend text looks too small. Go through all figures to make sure text is readable in the paper. Also explain black dots are raw/measured data points in the caption or add a legend label.}}
+    }
+    % \fyy{Legend text looks too small. Go through all figures to make sure text is readable in the paper. Also explain black dots are raw/measured data points in the caption or add a legend label.}
     \label{fig:value}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.485\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
     \caption{An example token allocation from ~\name for a sample query on a 9 minute video
-    \fyy{Setup is unclear. Looks more like an evaluation result that belongs to section 4?}
     }
     \label{fig:alloc}
   \end{minipage}
 \end{figure}
+ % \fyy{Setup is unclear. Looks more like an evaluation result that belongs to section 4?}
 
 
 % \fan{maybe merge it into the next paragraph as it is not new and short.}
@@ -163,13 +164,13 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 \label{sec:allocation}
 
 % Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
-\fyy{Explain the rationale behind this method, and how it's applied.}
-\fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
+% \fyy{Explain the rationale behind this method, and how it's applied.}
+% \fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
 
 
-Solving Eq.~\eqref{eq:allocation} directly over discrete token counts $b_i \in \{0, \dots, b_i^{\max}\}$ is a combinatorial integer program. While exact solutions can be found via dynamic programming~\cite{bellman1957} or off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) using branch-and-bound~\cite{land1960} and cutting-plane methods~\cite{gomory1958}, the discrete problem is NP-hard (see supplementary material for proof) and requires exponential time in the worst case. In practice, solving Eq.~\eqref{eq:allocation} with Gurobi on an hour-long video takes several minutes—exceeding the VLM's own inference latency and negating the efficiency gains of token pruning.
+Solving Eq.~\eqref{eq:allocation} directly over discrete token counts $b_i \in \{0, \dots, b_i^{\max}\}$, where $b_i^{\max}$ is the maximum possible token count for an item  is  a combinatorial integer program. While exact solutions can be found via dynamic programming~\cite{bellman1957} or popular off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}), the discrete problem is NP-hard (see reduction proof in supplementary materials) and requires exponential time in the worst case. Empirically, solving Eq.~\eqref{eq:allocation} with Gurobi on a sample hour-long video at 1 FPS is clearly prohibitively expensive taking on average more than dozens of minutes, exceeding the VLM's own inference latency by multiple times. While heuristic solutions (e.g. XYZ) may achieve good solutions we aim to provide strong and clear guarantees and bounds.
 
-To achieve real-time allocation, we relax the token allocations to continuous variables $0 \le b_i \le b_i^{\max}$, where $b_i^{\max}$ is the maximum token count of item $i$. Because our rational token value functions are concave and the similarity matrix is positive semidefinite, this relaxation turns Eq.~\eqref{eq:allocation} into a continuous convex optimization problem. While many convex solvers exist, such as interior-point methods~\cite{boyd2004} or first-order methods like projected gradient and ADMM~\cite{boyd2011admm}, they either reach the optimum only up to a tolerance or have a higher time complexity. Due to the structure of our problem, we can instead use a closed-form \emph{water-filling} solution for static relevances, which finds the exact optimum in time linear in the number of items. We then extend it via Frank-Wolfe iterations to handle our full diversity-discounted objective in dozens of milliseconds. Finally, rounding the continuous solution back to discrete token counts incurs at most a provably small optimality loss $\epsilon$.
+To achieve real-time allocation, we relax the token counts to continuous variables $0 \le b_i \le b_i^{\max}$. Because our rational token value functions are concave and the similarity matrix is positive semidefinite, this relaxation turns Eq.~\eqref{eq:allocation} into a continuous convex program. Even so, standard convex solvers remain too slow for online scheduling: interior-point methods~\cite{boyd2004} invert a system over all items at each step in cubic time, while projection-based methods such as projected gradient or ADMM~\cite{boyd2011admm} require projecting iterates onto the feasible set—an operation with no closed form under our objective. Instead, we exploit the separable structure of Eq.~\eqref{eq:allocation}. When item relevances are held fixed, the objective decouples into a sum of diminishing-return functions under a single budget, which admits an exact, closed-form \emph{water-filling} solution. We then embed this fast solver inside the Frank-Wolfe method~\cite{frank1956,jaggi2013}, which handles the full diversity-coupled objective by solving a sequence of fixed-relevance water-filling subproblems and converges to the global optimum at a rate of $O(1/\ell)$. We develop this \emph{iterative water-filling} solver in two steps—first deriving static water-filling and then extending it to the coupled objective—before showing that rounding back to discrete tokens incurs at most a negligible loss $\epsilon$.
 
 \paragraph{Water-Filling.}
 Consider first a simplified objective where each item's relevance is fixed to its query similarity $r_i(q)$, independent of the overall allocation $\mathbf{b}$. Under this simplification, Eq.~\eqref{eq:allocation} reduces to maximizing a sum of strictly concave, diminishing-return functions subject to a single linear budget $B$—a classic resource allocation problem solved globally in closed form by water-filling~\cite{boyd2004,yu2004iwf}. Let an item's marginal gain be the increase in the objective per additional token. At the global optimum, every partially allocated item ($0 < b_i < b_i^{\max}$) must share an identical marginal gain $\lambda$; otherwise, shifting tokens from an item with lower marginal gain to one with higher gain would strictly improve the objective. For our rational token value functions (Eq.~\eqref{eq:curve}), the marginal gain of item $i$ is the derivative $r_i\tau / (b_i + \tau)^2$. Equating this derivative to $\lambda$ and solving for $b_i$ yields the closed-form allocation:
@@ -426,9 +427,9 @@ A detailed proof is provided in the supplementary material.
 \end{figure}
 
 % Comments on the previous text of this subsection (from Overleaf), kept here until they are resolved.
-\fan{token?}
-\ayush{btw for multi turn only we are bounded unlike QFrame etc they are not bounded}
-\fan{this bound reads trivial as we already mention each token is prefilled at most once.}
+% \fan{token?}
+% \ayush{btw for multi turn only we are bounded unlike QFrame etc they are not bounded}
+% \fan{this bound reads trivial as we already mention each token is prefilled at most once.}
 
 Within a conversation, a user may ask several queries $q_1,\dots,q_T$ about a video. These queries are inherently correlated, and later turns often reference items prefilled by prior turns, as shown in \cref{fig:reuse}. This overlap offers ample opportunities for reuse, and thus large savings in prefill compute. But how do we enable such reuse? For Top-K, a simple patch suffices: if a relevant item has been prefilled by a prior turn, it is not prefilled again. For \name, however, the solution is less obvious. Since items are prefilled at different token counts, they rarely match a prior turn exactly. Carrying allocations across turns thus raises two questions. \circnum{1}~How can we avoid the prefill compute of content that overlaps across turns? At the same time, we identify a unique opportunity, as each query is prefilled against the past context anyway. \circnum{2}~How can we use the resulting attention scores to refine our allocations? \name answers the first with incremental allocation and the second with attention refinement.
 
