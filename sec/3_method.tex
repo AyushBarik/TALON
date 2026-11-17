@@ -528,7 +528,7 @@ Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $
 \end{equation}
 Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. 
 
-Since each token is prefilled at most once, summing \cref{eq:incremental} over turns gives
+Since each token is prefilled at most once, summing \cref{eq:incremental} over turns bounds cumulative evidence tokens:
 \begin{equation}
  \sum_{t=1}^{T}\sum_i p_i^{(t)}
  =\sum_i c_i^{(T)}
@@ -536,7 +536,6 @@ Since each token is prefilled at most once, summing \cref{eq:incremental} over t
  \leq\sum_i b_i^{\max}.
  \label{eq:bound}
 \end{equation}
-This bound applies to the number of newly prefilled evidence tokens, not to total attention FLOPs or KV-cache memory, which also depend on accumulated conversation context. In contrast, rebuilding the token representation at every turn can re-prefill up to $B$ evidence tokens per turn.
 
 % At turn $t$, the Token Allocator solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
 % \begin{equation}
