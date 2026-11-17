@@ -166,6 +166,71 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 \fyy{Explain the rationale behind this method, and how it's applied.}
 \fyy{Are we sure CVPR likes this kind of theoretical results? We can keep readable propositions and the proposition that contains the key result highlighted in the intro. For the remaining ones, we can rephrase them in plain English and defer them to the appendix.}
 
+
+Solving Eq.~\eqref{eq:allocation} directly over discrete token counts $b_i \in \{0, \dots, b_i^{\max}\}$ is a combinatorial integer program. While exact solutions can be found via dynamic programming~\cite{bellman1957} or off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) using branch-and-bound~\cite{land1960} and cutting-plane methods~\cite{gomory1958}, the discrete problem is NP-hard (see supplementary material for proof) and requires exponential time in the worst case. In practice, solving Eq.~\eqref{eq:allocation} with Gurobi on an hour-long video takes several minutes—exceeding the VLM's own inference latency and negating the efficiency gains of token pruning.
+
+To achieve real-time allocation, we relax the token allocations to continuous variables $0 \le b_i \le b_i^{\max}$, where $b_i^{\max}$ is the maximum token count of item $i$. Because our rational token value functions are concave and the similarity matrix is positive semidefinite, this relaxation turns Eq.~\eqref{eq:allocation} into a continuous convex optimization problem. While many convex solvers exist, such as interior-point methods~\cite{boyd2004} or first-order methods like projected gradient and ADMM~\cite{boyd2011admm}, they either reach the optimum only up to a tolerance or have a higher time complexity. Due to the structure of our problem, we can instead use a closed-form \emph{water-filling} solution for static relevances, which finds the exact optimum in time linear in the number of items. We then extend it via Frank-Wolfe iterations to handle our full diversity-discounted objective in dozens of milliseconds. Finally, rounding the continuous solution back to discrete token counts incurs at most a provably small optimality loss $\epsilon$.
+
+\paragraph{Water-Filling.}
+Consider first a simplified objective where each item's relevance is fixed to its query similarity $r_i(q)$, independent of the overall allocation $\mathbf{b}$. Under this simplification, Eq.~\eqref{eq:allocation} reduces to maximizing a sum of strictly concave, diminishing-return functions subject to a single linear budget $B$—a classic resource allocation problem solved globally in closed form by water-filling~\cite{boyd2004,yu2004iwf}. Let an item's marginal gain be the increase in the objective per additional token. At the global optimum, every partially allocated item ($0 < b_i < b_i^{\max}$) must share an identical marginal gain $\lambda$; otherwise, shifting tokens from an item with lower marginal gain to one with higher gain would strictly improve the objective. For our rational token value functions (Eq.~\eqref{eq:curve}), the marginal gain of item $i$ is the derivative $r_i\tau / (b_i + \tau)^2$. Equating this derivative to $\lambda$ and solving for $b_i$ yields the closed-form allocation:
+\begin{equation}
+  b_i = \left[\sqrt{r_i\,\tau}\,\Big(\mu - \sqrt{\tau / r_i}\Big)\right]_{0}^{b_i^{\max}}, \qquad \mu = \frac{1}{\sqrt{\lambda}},
+  \label{eq:waterfill}
+\end{equation}
+where $r_i$ denotes $r_i(q)$ (scaled by $\beta$ for subtitles), $\tau \in \{\tau_{\text{frame}}, \tau_{\text{text}}\}$ is the modality's token value parameter, and $[\cdot]_0^{b_i^{\max}}$ clips the allocation to $[0, b_i^{\max}]$. Intuitively, each item acts as a vessel with floor height $\sqrt{\tau / r_i}$, width $\sqrt{r_i\tau}$, and capacity $b_i^{\max}$. Pouring a total budget $B$ into all vessels simultaneously causes the water to settle at a uniform level $\mu$. An item receives tokens only if $\mu$ rises above its floor, allowing a single scalar threshold $\mu$ to jointly determine both item selection and token counts. Because the total allocation $\sum_i b_i(\mu)$ is continuous and monotonically increasing with $\mu$, we find the exact budget-clearing level $\mu$ via binary search in logarithmic time (full derivation in the supplementary material).
+
+\paragraph{Iterative Water-Filling.}
+Incorporating the full diversity-aware relevance $r_i(q, \mathbf{b})$ (Eq.~\eqref{eq:cond}) introduces a coupling across items: water-filling requires fixed relevances to compute $\mathbf{b}$, yet $r_i(q, \mathbf{b})$ depends on $\mathbf{b}$ through pairwise similarities. We resolve this coupling via the Frank-Wolfe (conditional gradient) method~\cite{frank1956,jaggi2013}, which iteratively linearizes the concave objective around the current iterate and steps toward the optimum of the linearized subproblem. Crucially, linearizing Eq.~\eqref{eq:allocation} with respect to the token values $v(b_i)$ reduces each subproblem to the exact static-relevance form solved by Eq.~\eqref{eq:waterfill}. Each Frank-Wolfe step therefore executes a single closed-form water-filling pass (\cref{alg:iwf}), a procedure we term \emph{iterative water-filling}.
+
+Specifically, let $\bar{v}_i$ denote the running token value of item $i$, initialized to $\bar{v}_i = 0$. The linearized weight of $\bar{v}_i$—measuring the marginal increase in Eq.~\eqref{eq:allocation} from raising $\bar{v}_i$—gives its \emph{discounted relevance}:
+\begin{equation}
+  \tilde{r}_i = r_i(q) - 2\eta\sum_{j} s_{ij}\,\bar{v}_j,
+  \label{eq:weights}
+\end{equation}
+where $j$ indexes all items of the same modality as $i$ (including $i$), and subtitle terms are scaled by $\beta$. The factor of $2$ arises symmetrically from the quadratic similarity penalty: raising $\bar{v}_i$ is penalized by similar items already allocated ($\bar{v}_j$), while simultaneously discounting their effective relevance by the same amount. Substituting $\tilde{r}_i$ for $r_i$ in Eq.~\eqref{eq:waterfill} produces candidate allocations $b_i^\star$ (with $b_i^\star = 0$ whenever $\tilde{r}_i \le 0$). Because $b_i^\star$ is optimal only under the local linearization $\tilde{r}_i$, jumping directly to $b_i^\star$ would cause allocations to oscillate between clusters of redundant items. Instead, \name updates the running token values via a convex combination with a decaying step size $\gamma_\ell$:
+\begin{equation}
+  \bar{v}_i \leftarrow (1 - \gamma_\ell)\,\bar{v}_i + \gamma_\ell\,v(b_i^\star), \qquad \gamma_\ell = \frac{2}{\ell + 1},
+  \label{eq:average}
+\end{equation}
+where $\ell \in \{1, \dots, L\}$ is the iteration index and $v(\cdot)$ is the modality's token value function. Note that $\gamma_1 = 1$, so the first iteration recovers standard water-filling (Eq.~\eqref{eq:waterfill}), while subsequent iterations progressively redistribute budget away from redundant items. After $L$ iterations, the continuous token counts are recovered by inverting the value function, $b_i = v^{-1}(\bar{v}_i)$. Because the similarity matrix is positive semidefinite, Eq.~\eqref{eq:allocation} is concave in the token values $\mathbf{v}$, guaranteeing global convergence at a sublinear rate~\cite{jaggi2013}:
+
+\begin{proposition}
+\label{prop:convergence}
+Let $J^\star$ be the global maximum of Eq.~\eqref{eq:allocation} over continuous token allocations, and let $J^{(\ell)}$ be the objective value after $\ell$ iterations of \cref{alg:iwf}. Then
+\begin{equation}
+  J^\star - J^{(\ell)} \le \frac{4\,\eta\,\sigma_{\max}D^2}{\ell + 2} = O\!\left(\frac{1}{\ell}\right),
+\end{equation}
+where $\sigma_{\max}$ is the largest eigenvalue of the modality similarity matrix and $D$ is the diameter of the feasible token-value set under budget $B$.
+\end{proposition}
+
+\begin{algorithm}[t]
+\caption{Iterative Water-Filling}
+\label{alg:iwf}
+\small
+\begin{algorithmic}[1]
+\Require relevances $r_i(q)$, similarities $s_{ij}$, budget $B$, iterations $L$
+\Ensure token counts $b_i$ with $\sum_i b_i\le B$
+\State $\bar v_i\gets 0$ for every item $i$
+\For{$\ell=1,\dots,L$}
+  \State $\tilde r_i\gets r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j$ \Comment{discount, Eq.~\eqref{eq:weights}}
+  \State $b_i^\star\gets$ water-filling with $\tilde r_i$ under $B$ \Comment{allocate, Eq.~\eqref{eq:waterfill}}
+  \State $\bar v_i\gets(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star)$ \Comment{average, Eq.~\eqref{eq:average}}
+\EndFor
+\State \Return $b_i\gets v^{-1}(\bar v_i)$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Discretization and Pruning.}
+Finally, because the VLM consumes whole tokens, \name rounds each continuous allocation down to $\lfloor b_i \rfloor$, strictly respecting the total budget $B$. Optimal integer and continuous allocations are known to be close for concave allocation problems~\cite{hochbaum1990,hochbaum1994}: for fixed relevances, an optimal integer allocation exceeds the continuous optimum by less than one token for any item. For our full objective, concavity bounds the loss of rounding directly: each active item loses at most the marginal gain of a single token, bounding the total discretization gap by:
+\begin{equation}
+  \epsilon = \sum_{i:\,b_i > 0} \frac{\tilde{r}_i\,\tau}{(\lfloor b_i \rfloor + \tau)^2}.
+  \label{eq:rounding}
+\end{equation}
+In practice, $\epsilon$ is negligible, accounting for less than \TODO{measured share} of the total objective. \name then retains the top $\lfloor b_i \rfloor$ pre-ranked tokens for each selected item and passes them to the VLM in chronological order.
+
+\begin{comment}
+% Printed text of this subsection until 2026-11-16 (Water-Filling, Iterative Water-Filling, Optimality over Prior
+% Allocation Rules), replaced by the text above; kept for reference (not printed).
 \paragraph{Water-Filling.}
 We first solve Eq.~\eqref{eq:allocation} with the relevance fixed to $r_i(q)$ rather than $r_i(q,\mathbf b)$, so that it no longer depends on the allocation. Let the marginal gain of an item be the increase in the objective from one more token. At the optimum, all items that hold some but not all of their tokens must have the same marginal gain, which we denote by $\lambda$; otherwise, moving a token from an item with a lower marginal gain to one with a higher one would improve the objective, but we are already at the optimum. Because the token value functions were deliberately concave, the problem is convex, so this condition is not only necessary but also sufficient for optimality~\cite{boyd2004}. For our token value functions, the marginal gain of item $i$ is the derivative $r_i\tau/(b_i+\tau)^2$. Setting it to $\lambda$ and solving for $b_i$ yields
 \begin{equation}
@@ -199,22 +264,10 @@ where $\sigma_{\max}$ is the largest eigenvalue of the similarity matrix and $D$
 
 Following this, \name retains the $b_i$ highest-ranked tokens of each item per the allocation and passes the items to the VLM in time order.
 
-\begin{algorithm}[t]
-\caption{Iterative Water-Filling}
-\label{alg:iwf}
-\small
-\begin{algorithmic}[1]
-\Require relevances $r_i(q)$, similarities $s_{ij}$, budget $B$, iterations $L$
-\Ensure token counts $b_i$ with $\sum_i b_i\le B$
-\State $\bar v_i\gets 0$ for every item $i$
-\For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j$ \Comment{discount, Eq.~\eqref{eq:weights}}
-  \State $b_i^\star\gets$ water-filling with $\tilde r_i$ under $B$ \Comment{allocate, Eq.~\eqref{eq:waterfill}}
-  \State $\bar v_i\gets(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star)$ \Comment{average, Eq.~\eqref{eq:average}}
-\EndFor
-\State \Return $b_i\gets v^{-1}(\bar v_i)$
-\end{algorithmic}
-\end{algorithm}
+\paragraph{Optimality over Prior Allocation Rules.}
+Prior methods allocate tokens by a fixed rule rather than by maximizing an objective. In contrast, over real-valued token counts, water-filling attains the maximum of the objective with fixed relevances, and because the token value functions are strictly concave, every other allocation within the same budget attains a strictly lower objective. This includes the two prior rules. QuoTA~\cite{luo2025quota} sets the token count of a frame in proportion to its relevance, whereas Eq.~\eqref{eq:waterfill} lets it grow only with the square root of the relevance and gives no tokens to frames with $r_i\le\lambda\tau$. The proportional allocation is thus suboptimal as soon as three frames of distinct relevance hold some but not all of their tokens. Q-Frame~\cite{zhang2025qframe} gives all frames of a tier the same token count, which is suboptimal whenever a tier shown with fewer than all of its tokens contains frames of different relevance. Moreover, neither rule accounts for the similarity between items, which the full objective captures and iterative water-filling maximizes up to a gap of $O(1/\ell)$ (\cref{prop:convergence}). Proofs are provided in the supplementary material.
+
+\end{comment}
 
 \begin{comment}
 % Previous Sec. 3.3 solver text, kept for reference (not printed).
@@ -322,9 +375,6 @@ Finally, \name merges the selected frames and events in time order, each precede
 
 
 \end{comment}
-
-\paragraph{Optimality over Prior Allocation Rules.}
-Prior methods allocate tokens by a fixed rule rather than by maximizing an objective. In contrast, over real-valued token counts, water-filling attains the maximum of the objective with fixed relevances, and because the token value functions are strictly concave, every other allocation within the same budget attains a strictly lower objective. This includes the two prior rules. QuoTA~\cite{luo2025quota} sets the token count of a frame in proportion to its relevance, whereas Eq.~\eqref{eq:waterfill} lets it grow only with the square root of the relevance and gives no tokens to frames with $r_i\le\lambda\tau$. The proportional allocation is thus suboptimal as soon as three frames of distinct relevance hold some but not all of their tokens. Q-Frame~\cite{zhang2025qframe} gives all frames of a tier the same token count, which is suboptimal whenever a tier shown with fewer than all of its tokens contains frames of different relevance. Moreover, neither rule accounts for the similarity between items, which the full objective captures and iterative water-filling maximizes up to a gap of $O(1/\ell)$ (\cref{prop:convergence}). Proofs are provided in the supplementary material.
 
 \begin{comment}
 % Previous text of this paragraph and its proposition, kept for reference (not printed).
