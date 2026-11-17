@@ -101,7 +101,7 @@ The retrieval relevance $r_i(q)$ captures relevance but assumes that items are i
 \end{aligned}
 \label{eq:cond}
 \end{equation}
-where $\eta\geq0$ controls the redundancy penalty.
+where $\eta\geq0$ controls the redundancy penalty. The sums include $j=i$, so the similarity matrix remains positive semidefinite.
 
 Substituting \cref{eq:curve,eq:cond} into \cref{eq:allocation} finally yields the full allocation objective which rewards query-relevant evidence, accounts for diminishing token value, and discourages redundant allocations.
 
@@ -204,7 +204,7 @@ Let $J^\star$ be the global maximum of Eq.~\eqref{eq:allocation} over continuous
 where $\sigma_{\max}$ is the largest eigenvalue of the frame and $\beta$-scaled subtitle similarity matrices and $D$ is the diameter of the feasible token-value set under budget $B$.
 \end{proposition}
 
-\noindent The VLM consumes whole tokens, so we round the continuous allocation down, $\hat b_i=\lfloor b_i\rfloor$. Rounding keeps the allocation within the budget and removes less than one token from each item. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order.
+\noindent The proof is provided in the supplementary material. The VLM consumes whole tokens, so we round the continuous allocation down, $\hat b_i=\lfloor b_i\rfloor$. Rounding keeps the allocation within the budget and removes less than one token from each item. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order.
 
 \paragraph{Optimality over Prior Allocation Rules.}
 Prior methods allocate tokens by fixed rules rather than by optimizing an objective. QuoTA~\cite{luo2025quota} assigns each frame a token count proportional to its relevance, while Q-Frame~\cite{zhang2025qframe} assigns the same token count to all frames within a relevance tier. Neither rule is optimal, even when diversity is ignored. Because the token value functions are strictly concave, the water-filling allocation of Eq.~\eqref{eq:waterfill} is the unique maximizer of the fixed-relevance objective, and it differs from both rules. Specifically, its token counts grow with the square root of the relevance rather than in proportion to it, and frames with $\bar r_i\le\lambda\tau_i$ receive no tokens at all. Proportional allocation, in contrast, keeps adding tokens to the most relevant frames after their value has saturated, while tiered allocation ignores the differences in relevance within a tier. Moreover, both rules score frames independently, whereas iterative water-filling also accounts for the redundancy among items and converges to the optimum of the full objective (\cref{prop:convergence}).

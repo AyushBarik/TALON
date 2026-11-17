@@ -56,7 +56,7 @@ We report answering accuracy and inference compute (TFLOPs), with the latter con
 As shown in \cref{tab:main}, \name achieves the highest overall accuracy across all three benchmarks and both VLM backbones. With Qwen3-VL-8B, it improves over Top-K by 2.2, 2.6, and 4.2 percentage points on MLVU, LVB, and Video-MME, respectively, at comparable compute. The gains are particularly pronounced on long videos: on the long subset of Video-MME, \name improves accuracy from 63.6\% to 71.7\% with nearly identical TFLOPs. QuoTA achieves competitive accuracy but incurs 2.8--3.4$\times$ higher compute due to its VLM-based frame scoring. These trends generalize to InternVL3.5-4B, where \name improves over Top-K by 0.5--3.5 points. Furthermore, \name consistently achieves favorable accuracy--compute trade-offs across multiple token budgets (\cref{fig:multiturn}a).
 
 
-When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage points on MLVU and Video-MME, respectively, by allocating tokens across more used frames at comparable compute. These results demonstrate that \name complements existing RAG designs.
+When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage points on MLVU and Video-MME, respectively, by allocating tokens across more frames at comparable compute, while accuracy decreases by 0.7 points on LVB. These results demonstrate that \name complements existing RAG designs.
 
 % As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over all compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. \name also improves the accuracy of VideoRAG by X points. These gains hold across multiple token budgets (\cref{fig:multiturn}a).
 
@@ -72,7 +72,7 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
 As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.3--1.5 percentage points while requiring 1.7--17.3$\times$ fewer TFLOPs. Unlike prior methods that reuse only previously selected frames or exact resolution matches, \name incrementally prefills only tokens not already present in the KV cache. This finer-grained reuse substantially reduces redundant computation across conversational turns while respecting answer accuracy.
 
 
-\paragraph{\name introduces negligible runtime overhead.}
+\paragraph{\name introduces negligible compute overhead.}
 The combined compute of semantic similarity search using FAISS~\cite{faiss}, iterative water-filling, and token pruning is below 0.001 TFLOPs per query, negligible compared with VLM prefill compute. 
 
 
