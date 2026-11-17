@@ -68,9 +68,12 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
   \label{fig:multiturn}
 \end{figure}
 
-\paragraph{\name achieves the Pareto frontier across multi-turn video understanding} As shown in \cref{fig:multiturn}b, \name attains 0.9--2.1 points higher accuracy than each baseline while requiring 1.7--17.4$\times$ fewer TFLOPs. We attribute the latter to the limited ability of prior works to reuse tokens or frames across turns.
+\paragraph{\name achieves the Pareto frontier across multi-turn video understanding.} 
+As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.9--2.1 accuracy points while requiring 1.7--17.4$\times$ fewer TFLOPs. Unlike prior methods that reuse only previously selected frames or exact resolution matches, \name incrementally prefills only tokens not already present in the KV cache. This finer-grained reuse substantially reduces redundant computation across conversational turns while respecting answer accuracy.
 
-\paragraph{\name is extremely lightweight} Semantic similarity search via FAISS~\cite{faiss}, water-filling, and token pruning together cost less than a thousandth of a TFLOP per query, unlike widely used agentic and neural frame selection methods ~\cite{}.
+
+\paragraph{\name introduces negligible runtime overhead.}
+The combined compute of semantic similarity search using FAISS~\cite{faiss}, iterative water-filling, and token pruning is below 0.001 TFLOPs per query, negligible compared with VLM prefill compute. 
 
 
 % \begin{figure}[t]
@@ -83,7 +86,7 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
 
 \begin{table}[t]
   \centering
-  \small
+  \footnotesize
   \renewcommand{\arraystretch}{1.2}
   \settowidth{\splitw}{Medium}%
   \newcommand{\na}{--}
@@ -114,7 +117,7 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
   \vspace{8pt}  % Tables 2 and 3 share one float so that both stay in this column
 
   \centering
-  \small
+  \footnotesize
   \renewcommand{\arraystretch}{1.2}
   % Same side gap as Table 2 (\ablsep); the two number columns share the remaining width.
   \setlength{\tabcolsep}{\ablsep}%
@@ -133,5 +136,9 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
   \label{tab:multiturn}
 \end{table}
 
-\paragraph{Performance breakdown.} While Q-Frame and QuoTA allow us to compare water-filling, our core algorithm, against existing allocation rules, the diversity term remains a confounding factor, as does text allocation on Video-MME. We therefore remove each of them in \cref{tab:ablation}. Removing text allocation lowers accuracy by 3.6 points, as we reduce the total information we have access to. Nonetheless, \name still outperforms every compute-matched baseline by 0.6--3.6 points without it. Next, removing the diversity term lowers accuracy by roughly 0.7 points. In multi-turn conversations (\cref{tab:multiturn}), removing attention refinement increases prefill compute, as attention allows us to score already prefilled frames more accurately for free. Removing incremental allocation results in re-allocations at every turn, requiring 2.5$\times$ more TFLOPs at comparable accuracy. A sensitivity analysis of the hyperparameters is provided in the appendix.
+\paragraph{Performance breakdown.}
+We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On Video-MME, removing subtitle allocation decreases overall accuracy by 3.6 points, with a particularly large 7.3-point drop on long videos. Even without subtitle allocation, \name outperforms all similarly budgeted, non-agentic frame selection baselines by 0.6--3.6 points. Removing the diversity term reduces accuracy by 0.7 points, confirming the benefit of accounting for redundant evidence during allocation.
 
+For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs, demonstrating that attention to cached evidence improves subsequent allocations. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
+
+Additional hyperparameter sensitivity analyses are provided in the Appendix.
