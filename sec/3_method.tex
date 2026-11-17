@@ -18,23 +18,6 @@
 \end{figure*}
 
 
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.485\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/value_half.pdf}
-    \caption{Candidate token-value functions fitted to the measured accuracy (black dots).
-    }
-    \label{fig:value}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.485\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
-    \caption{Example of \name's token allocation for a nine-minute video.
-    }
-    \label{fig:alloc}
-  \end{minipage}
-\end{figure}
 
 
 
@@ -91,6 +74,7 @@ To define the token value functions, we measure the mean Q\&A accuracy at variou
   \label{eq:curve}
 \end{equation}
 where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The reported fits achieve $R^2>0.85$ in our profiling experiments, demonstrating that simple functions appear sufficient over more complex methods (e.g., neural networks) for this task. However, static functions may not be robust against shifting query distributions; therefore, when query-feedback data is available, the parameters can be refitted during off-peak serving periods.
+
 
 \paragraph{Diversity-aware Relevance.}
 The retrieval relevance $r_i(q)$ captures relevance but assumes that items are independent. However, in videos, nearby frames may depict nearly identical content; therefore, frames similar to already selected frames should be discounted. To capture this dependency, we discount each item's retrieval relevance $r_i(q)$ according to the token value already allocated to similar items. Let $s_{ij}$ denote the cosine similarity between item embeddings within the same modality. We define the complete allocation-dependent relevance as follows:
@@ -159,6 +143,24 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 \end{comment}
 
 % ---------------------------------------------------------------------------------------------------------------------
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.485\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/value_half.pdf}
+    \caption{Candidate token-value functions fitted to the measured accuracy (black dots).
+    }
+    \label{fig:value}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.485\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
+    \caption{Example of \name's token allocation for a nine-minute video.
+    }
+    \label{fig:alloc}
+  \end{minipage}
+\end{figure}
+
 \subsection{Efficient Token Allocation}
 \label{sec:allocation}
 
@@ -463,21 +465,6 @@ A detailed proof is provided in the supplementary material.
 \subsection{Extending to Multi-Turn Conversations}
 \label{sec:multiturn}
 
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.47\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/turn_seen.pdf}
-    \caption{Later turns often reference frames already prefilled in prior turns.}
-    \label{fig:reuse}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.47\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
-    \caption{Incremental allocation allows \name to recover a large amount of the available reuse opportunities.}
-    \label{fig:prefill}
-  \end{minipage}
-\end{figure}
 
 
 In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about the same video~\cite{hsieh2018focus}. Later queries often refer to evidence processed in earlier turns (\cref{fig:reuse}). Top-K can reuse a previously prefilled frame when the selection matches exactly, but token allocation is harder: the same item may receive different token counts at different turns. \name addresses this with \emph{incremental allocation}, which inserts only missing tokens, and \emph{attention refinement}, which refines the relevance of cached evidence with attention for free.
@@ -493,6 +480,22 @@ Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $
 \label{eq:incremental}
 \end{equation}
 As in standard multi-turn serving, the KV cache retains the context of all earlier turns. Evidence prefilled at an earlier turn therefore remains available to later queries at no additional prefill cost, and the budget $B$ applies to the evidence allocated at each turn. Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. As shown in \cref{fig:prefill}, incremental allocation thereby recovers a large share of the available reuse opportunities.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_seen.pdf}
+    \caption{Later turns often reference frames already prefilled in prior turns.}
+    \label{fig:reuse}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
+    \caption{Incremental allocation allows \name to recover a large amount of the available reuse opportunities.}
+    \label{fig:prefill}
+  \end{minipage}
+\end{figure}
 
 Since each token is prefilled at most once, summing \cref{eq:incremental} over turns bounds cumulative evidence tokens:
 \begin{equation}

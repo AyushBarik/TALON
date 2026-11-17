@@ -73,7 +73,7 @@ As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.3--1.5 p
 
 
 \paragraph{\name introduces negligible compute overhead.}
-The combined compute of semantic similarity search using FAISS~\cite{faiss}, iterative water-filling, and token pruning is below 0.001 TFLOPs per query, negligible compared with VLM prefill compute. 
+Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and token pruning together run on the order of tens of milliseconds per query, which is negligible compared with VLM inference. 
 
 
 % \begin{figure}[t]
