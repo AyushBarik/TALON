@@ -569,7 +569,7 @@ Since each token is prefilled at most once, summing \cref{eq:incremental} over t
 \end{table*}
 
 \paragraph{Attention Refinement.}
-Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. When processing the current query $q_t$, \name measures the attention from its query tokens to each cached item at no additional model inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. Since attention is unavailable for uncached items, we refine only the relevance of previously seen evidence:
+Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. Since the query must be prefilled in any case, \name prefills $q_t$ first, over the cached context, and measures the attention from its query tokens to each cached item at no additional inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. Since attention is unavailable for uncached items, we refine only the relevance of previously seen evidence:
 \begin{equation}
 \hat r_i^{(t)}=
 \begin{cases}
