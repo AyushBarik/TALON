@@ -1,0 +1,227 @@
+% Overview figure (figure*, drawn at \textwidth = 17.46 cm). The Overleaf figure (fig/overview_v1.tex), refined:
+% numbered stages with a one-line description each, single-turn inference only (no KV cache), less empty space,
+% larger frames and text. Three stages left to right:
+% (1) retrieval: video + subtitles -> retriever (with query q) -> relevance r_i over items in time order;
+% (2) Token Scheduler (the contribution, the only accented stage): objective, value curves v_frame / v_text,
+%     water-filling -> token plan b_i;
+% (3) inference: frozen pruner keeps each frame's top-ranked tokens, the frozen VLM answers.
+% Bar heights and the plan are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU (illustration only).
+\input{fig/overview_palette}% every color role: ink, arrowgray, bandA/B/C, edgeB, stepA/B/C, modelA/C/D/T, flake, chipF/D, frm, txt
+\newcommand{\snowflake}[2]{%
+  \begin{scope}[shift={#1}, line width=0.7pt, draw=flake, line cap=round]
+    \foreach \a in {0,60,...,300}{\draw (0,0) -- (\a:#2);
+      \draw (\a:0.55*#2) -- ++(\a+45:0.32*#2); \draw (\a:0.55*#2) -- ++(\a-45:0.32*#2);}
+  \end{scope}}
+% \items{width}{height scale}{v1/t1,...,v20/t20}: 20 items on one time axis; t = 1 marks a transcript event (light bar)
+\newcommand{\items}[3]{%
+  \foreach \v/\t [count=\i] in {#3} {
+    \ifdim\v pt>0pt
+    \ifnum\t=1 \fill[txt, rounded corners=0.4pt] ({(\i-0.5)*#1/20-0.38*#1/20},0) -- ++(0,{\v*#2}) -- ++({0.76*#1/20},0) -- ++(0,{-\v*#2});
+    \else      \fill[frm, rounded corners=0.4pt] ({(\i-0.5)*#1/20-0.38*#1/20},0) -- ++(0,{\v*#2}) -- ++({0.76*#1/20},0) -- ++(0,{-\v*#2}); \fi\fi}}
+% \prunedframe{center}{image}{kept tokens out of 32}: a frame (1.0 cm) as an 8x4 token grid; dropped tokens greyed out.
+% The keep order is one fixed ranking (the attention map of fig/attn_map.py pooled to 8x4), so a frame at b tokens
+% holds its top b tokens.
+\newcommand{\prunedframe}[3]{%
+  \node[inner sep=0pt] at (#1) {\includegraphics[width=1.0cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+(-0.5,-0.28125)$)}]
+    \foreach \c [count=\k from 0] in {20,13,19,21,12,11,10,14,22,18,9,30,17,31,29,28,23,27,5,15,2,3,4,8,6,1,7,16,24,26,0,25} {
+      \ifnum\k<#3\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[white, opacity=0.85] (\cx*0.125,\cy*0.140625) rectangle ++(0.125,0.140625);
+      \fi}
+    \draw[ink!30, line width=0.15pt, xstep=0.125, ystep=0.140625] (0,0) grid (1.0,0.5625);
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.0,0.5625);
+  \end{scope}}
+% \attngrid{center}: the same 8x4 token grid shaded by the attention each token receives in the vision encoder
+% (darker = more attention). The shade follows the keep order of \prunedframe, so the darkest b cells are the kept ones.
+\newcommand{\attngrid}[1]{%
+  \begin{scope}[shift={($(#1)+(-0.5,-0.28125)$)}]
+    \foreach \c [count=\k from 0] in {20,13,19,21,12,11,10,14,22,18,9,30,17,31,29,28,23,27,5,15,2,3,4,8,6,1,7,16,24,26,0,25} {
+      \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+      \pgfmathtruncatemacro{\sh}{max(6,100-3.1*\k)}
+      \fill[frm!\sh] (\cx*0.125,\cy*0.140625) rectangle ++(0.125,0.140625);}
+    \draw[white, line width=0.15pt, xstep=0.125, ystep=0.140625] (0,0) grid (1.0,0.5625);
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.0,0.5625);
+  \end{scope}}
+% --- stage 3 mechanism: one frame, 8x4 tokens, 1.6 cm wide (cell 0.2 x 0.225). One fixed order (20,13,19,21,12,11,10,14,22,18,9,30,17,31,29,28,23,27,5,15,2,3,4,8,6,1,7,16,24,26,0,25) is the
+% attention rank of the tokens: it shades the attention map, orders the bars and decides which tokens are kept.
+% \bigframe{center}{image}{kept tokens out of 32}: the frame as a token grid; tokens beyond the kept count are greyed.
+\newcommand{\bigframe}[3]{%
+  \node[soft, inner sep=0pt] at (#1) {\includegraphics[width=1.6cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+(-0.8,-0.45)$)}]
+    \foreach \c [count=\k from 0] in {20,13,19,21,12,11,10,14,22,18,9,30,17,31,29,28,23,27,5,15,2,3,4,8,6,1,7,16,24,26,0,25} {
+      \ifnum\k<#3\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[white, opacity=0.88] (\cx*0.2,\cy*0.225) rectangle ++(0.2,0.225);
+      \fi}
+    \draw[white, line width=0.25pt, xstep=0.2, ystep=0.225] (0,0) grid (1.6,0.9);
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (1.6,0.9);
+  \end{scope}}
+% \bigattn{center}{image}: the attention map, a pre-rendered heat map (jet, blended over the frame) from
+% fig/attn_map.py; its 8x4 pooling gives the keep order used above.
+\newcommand{\bigattn}[2]{%
+  \node[soft, inner sep=0pt, draw=ink!45, line width=0.3pt] at (#1) {\includegraphics[width=1.6cm]{fig/frames/#2}};}
+% \rankbars{origin}{width}{kept}: the 32 tokens sorted by attention (bar height); the first `kept` are kept (blue)
+\newcommand{\rankbars}[3]{%
+  \begin{scope}[shift={(#1)}]
+    \foreach \k in {0,...,31} {
+      \pgfmathsetmacro{\h}{0.04+0.86*exp(-\k/9)}
+      \ifnum\k<#3\relax \fill[frm, rounded corners=0.4pt] ({(\k+0.11)*#2/32},0) -- ++(0,\h) -- ++({0.78*#2/32},0) -- ++(0,-\h);
+      \else \fill[ink!22, rounded corners=0.4pt] ({(\k+0.11)*#2/32},0) -- ++(0,\h) -- ++({0.78*#2/32},0) -- ++(0,-\h); \fi}
+    \draw[ax] (0,0) -- ({#2+0.15},0); \draw[ax] (0,0) -- (0,1.0);
+  \end{scope}}
+% \nnet{center}{half width}{half height}: a faint fully connected network drawn behind a model's name
+\newcommand{\nnet}[3]{%
+  \begin{scope}[shift={(#1)}]
+    \foreach \xa/\na/\xb/\nb in {-1/3/-0.33/4, -0.33/4/0.33/4, 0.33/4/1/3} {
+      \foreach \i in {1,...,\na} { \foreach \j in {1,...,\nb} {
+        \draw[ink!22, line width=0.25pt] ({\xa*#2},{(2*\i-\na-1)/3*#3}) -- ({\xb*#2},{(2*\j-\nb-1)/3*#3}); } } }
+    \foreach \xa/\na in {-1/3, -0.33/4, 0.33/4, 1/3} { \foreach \i in {1,...,\na} {
+      \fill[ink!14, draw=ink!28, line width=0.25pt] ({\xa*#2},{(2*\i-\na-1)/3*#3}) circle (0.055); } }
+  \end{scope}}
+% \allocframe{center}{image}{kept tokens out of 32}{width}: a frame as an 8x4 token grid; dropped tokens greyed out.
+\newcommand{\allocframe}[4]{%
+  \node[soft, inner sep=0pt] at (#1) {\includegraphics[width=#4cm]{fig/frames/#2}};
+  \begin{scope}[shift={($(#1)+({-#4/2},{-#4*0.28125})$)}]
+    \foreach \c [count=\k from 0] in {20,13,19,21,12,11,10,14,22,18,9,30,17,31,29,28,23,27,5,15,2,3,4,8,6,1,7,16,24,26,0,25} {
+      \ifnum\k<#3\relax\else
+        \pgfmathtruncatemacro{\cx}{mod(\c,8)}\pgfmathtruncatemacro{\cy}{int(\c/8)}
+        \fill[ink!9] ({\cx*#4/8},{\cy*#4*0.140625}) rectangle ++({#4/8},{#4*0.140625});
+      \fi}
+    \draw[white, line width=0.2pt, xstep=#4/8, ystep=#4*0.140625] (0,0) grid (#4,{#4*0.5625});
+    \draw[ink!45, line width=0.3pt] (0,0) rectangle (#4,{#4*0.5625});
+  \end{scope}}
+% \alloctxt{left centre}{length in cm}: a transcript event at its tokens (length 0 = dropped, an empty outline)
+\newcommand{\alloctxt}[2]{%
+  \ifdim#2pt>0pt
+    \fill[txt!40, rounded corners=1pt] ($(#1)+(0,-0.1)$) rectangle ++(#2,0.2);
+    \draw[txt!85!black, line width=0.45pt] ($(#1)+(0.06,0.035)$) -- ++({#2-0.12},0);
+    \draw[txt!85!black, line width=0.45pt] ($(#1)+(0.06,-0.035)$) -- ++({0.6*(#2-0.12)},0);
+  \else
+    \draw[txt!60, densely dotted, rounded corners=1pt, line width=0.4pt] ($(#1)+(0,-0.1)$) rectangle ++(0.4,0.2);
+  \fi}
+\newcommand{\txtchip}[1]{% transcript event: a short text chip
+  \fill[txt!35, rounded corners=1pt] ($(#1)+(-0.42,-0.2)$) rectangle ++(0.84,0.4);
+  \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,0.07)$) -- ++(0.6,0);
+  \draw[txt!85!black, line width=0.5pt] ($(#1)+(-0.3,-0.07)$) -- ++(0.4,0);}
+% \stage{x}{y}{number}{title}{one-line description}: numbered stage heading
+\newcommand{\stage}[5]{%
+  \node[circle, fill=#5, text=white, font=\sffamily\scriptsize\bfseries, inner sep=0pt, minimum size=0.4cm] at (#1+0.2,#2) {#3};
+  \node[font=\sffamily\small\bfseries, text=#5, anchor=west, inner sep=0pt, text height=1.6ex, text depth=0.4ex] at (#1+0.5,#2) {#4};}
+
+\tikzset{soft/.style={drop shadow={shadow xshift=0.35pt, shadow yshift=-0.55pt, opacity=0.16, fill=ink}}}%
+\begin{tikzpicture}[font=\sffamily\footnotesize, text=ink, line width=0.6pt,
+  card/.style={fill=white, draw=ink!18, line width=0.5pt, rounded corners=4pt, align=center, inner sep=3.5pt},
+  arr/.style={-{Stealth[length=5pt, width=4pt]}, draw=arrowgray, line width=0.8pt},
+  ax/.style={-{Stealth[length=3.5pt, width=3pt]}, draw=ink, line width=0.6pt},
+  axl/.style={font=\sffamily\footnotesize, text=ink},
+  desc/.style={font=\sffamily\scriptsize, text=ink!65, anchor=north west, inner sep=0pt, align=left},
+  elbl/.style={font=\sffamily\footnotesize, text=ink, inner sep=2pt},
+  model/.style={soft, fill=modelC, draw=modelD, text=modelT, line width=0.5pt, rounded corners=3pt, align=center,
+    minimum height=0.62cm, inner xsep=5pt, font=\sffamily\footnotesize},
+  qa/.style={soft, fill=chipF, draw=chipD, line width=0.5pt, rounded corners=3pt, align=left,
+    inner sep=3pt, font=\sffamily\scriptsize}]
+
+% ---------------- layout ----------------
+% Top row: (1) Scoring -> (2) Allocation; bottom row: (3) Inference, left to right. Stages connect box to box.
+% Spacing rules: 0.2 cm inner padding in every stage box, 0.4 cm between stage boxes (both directions), the plot
+% baselines of stages 1 and 2 on one line, equal 0.7 cm gaps between the items of stage 3.
+\begin{scope}[yshift=1.4cm]
+\fill[rounded corners=6pt, bandA] (0,1.3) rectangle (7.5,5.4);
+\fill[rounded corners=6pt, bandB] (7.9,1.3) rectangle (17.4,5.4);
+\draw[rounded corners=6pt, edgeB, line width=0.6pt] (7.9,1.3) rectangle (17.4,5.4);
+\end{scope}
+\fill[rounded corners=6pt, bandC] (0,0) rectangle (17.4,2.3);
+\begin{scope}[yshift=1.4cm]
+\stage{0.2}{5.0}{1}{Scoring}{stepA}
+\stage{8.1}{5.0}{2}{Allocation}{stepB}
+\end{scope}
+\stage{0.2}{1.9}{3}{Inference}{stepC}
+\draw[arr] (9.2,2.7) -- node[elbl, right, pos=0.45] {$b_i$} (9.2,1.7);
+\begin{scope}[yshift=1.4cm]
+\draw[arr] (7.5,3.35) -- (7.9,3.35);
+
+% ---------------- (1) scoring ----------------
+% No frame is selected here: the query is compared with the stored embedding of EVERY frame and transcript event.
+\fill[ink!88, rounded corners=1pt] (0.2,3.75) rectangle (7.3,4.6);
+\foreach \x in {0.28,0.48,...,7.2} {\fill[white] (\x,4.51) rectangle ++(0.1,0.05); \fill[white] (\x,3.79) rectangle ++(0.1,0.05);}
+\foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.91+(\k-1)*1.42},4.175) {\includegraphics[width=1.2cm]{fig/frames/frame\k.jpg}};}
+\fill[txt!35, rounded corners=1pt] (0.2,3.48) rectangle (7.3,3.68);
+\foreach \x/\l in {0.5/1.0, 1.9/0.8, 3.1/1.2, 4.7/0.9, 6.0/0.9} {\draw[txt!85!black, line width=0.5pt] (\x,3.58) -- ++(\l,0);}
+\node[qa, anchor=west] (q) at (0.2,2.6) {\textbf{Q:} Color of\\the last car?};
+\node[soft, cylinder, shape border rotate=90, aspect=0.28, fill=modelA, draw=modelD, line width=0.5pt, align=center,
+  minimum width=1.5cm, minimum height=1.0cm, inner sep=1pt, font=\sffamily\scriptsize, text=modelT, anchor=west] (db) at ($(q.east)+(0.45,0)$) {Frame\\database};
+\draw[arr] (q.east) -- (q.east -| db.west);
+\draw[arr] (db.north |- 0,3.46) -- (db.north);
+\draw[arr] (2.6,2.6 -| db.east) -- ++(0.45,0);
+\begin{scope}[shift={(4.7,1.95)}]
+  \draw[ax] (0,0) -- (2.6,0); \draw[ax] (0,0) -- (0,1.3);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.65) {relevance};
+  \node[axl, anchor=north] at (1.3,-0.02) {time};
+  \items{2.5}{1.3}{.04/0,.06/0,.30/0,.52/0,.20/1,.40/0,.10/0,.05/0,.04/0,.36/1,
+                   .06/0,.22/0,.30/0,.42/1,.34/0,.26/0,.08/0,.18/1,.05/0,.03/0}
+  \fill[frm] (1.08,1.06) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (1.22,1.13) {frame};
+  \fill[txt] (1.98,1.06) rectangle ++(0.14,0.14); \node[font=\sffamily\scriptsize, text=ink, anchor=west, inner sep=1.5pt] at (2.12,1.13) {text};
+\end{scope}
+
+% ---------------- (2) allocation ----------------
+% Equation on top; below it the two things it names: the token value curves (left) and the solution (right).
+% The two plots have equal margins to the box edges; each arrow sits over the centre of its plot.
+\node[font=\sffamily\footnotesize, align=center] at (12.65,4.2) {$\max\limits_{\mathbf b}\ \sum_{i\in\mathcal F} r_i(q,\mathbf b)\,v_{\text{frame}}(b_i)+\beta\sum_{i\in\mathcal S} r_i(q,\mathbf b)\,v_{\text{text}}(b_i)$\\[1pt]$\text{s.t.}\ \ \sum_{i\in\mathcal F\cup\mathcal S} b_i\le B$};
+\begin{scope}[shift={(8.75,1.95)}]
+  \draw[ax] (0,0) -- (3.4,0); \draw[ax] (0,0) -- (0,1.3);
+  \node[axl, rotate=90, anchor=south] at (-0.03,0.65) {accuracy};
+  \node[axl, anchor=north] at (1.7,-0.02) {tokens};
+  \fill[txt!14, domain=0.02:8, samples=60] (0,0) -- plot ({0.4*\x}, {1.2*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)}) -- (3.2,0) -- cycle;
+  \fill[frm!16, domain=0.02:8, samples=60] (0,0) -- plot ({0.4*\x}, {1.1*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)}) -- (3.2,0) -- cycle;
+  \draw[txt, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.4*\x}, {1.2*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+3.44)});
+  \draw[frm, line width=1.1pt, domain=0.02:8, samples=60] plot ({0.4*\x}, {1.1*((2^\x-1)^0.841)/(((2^\x-1)^0.841)+7.73)});
+  \node[font=\sffamily\footnotesize, text=ink, anchor=north west, inner sep=1pt] at (0.12,1.27) {$v_i(b_i)$};
+\end{scope}
+\begin{scope}[shift={(13.6,1.95)}]
+  % the solution as pictures: each frame drawn as its 8x4 token grid with b_i tokens kept, each transcript event as a
+  % chip whose length grows with its tokens; items in time order (illustrative values)
+  \draw[ax] (0,0) -- (3.6,0);
+  \node[axl, anchor=north] at (1.8,-0.02) {time};
+  \foreach \img/\b [count=\k from 0] in {frame1/0, frame3/20, frame4/12, frame5/32}
+    {\allocframe{{0.47+0.89*\k},1.0}{\img.jpg}{\b}{0.82}}
+  \foreach \x/\l in {0.2/0, 1.0/0.52, 1.95/0.30, 2.9/0.62}
+    {\alloctxt{\x,0.36}{\l}}
+\end{scope}
+
+\draw[arr] (10.45,3.4) -- (10.45,4.0);
+\draw[arr] (15.3,4.0) -- (15.3,3.4);
+\end{scope}
+% ---------------- (3) inference ----------------
+% Attention-ranked pruning, left to right: the retrieved frames -> the attention each token receives, as a map over
+% the frame -> the tokens sorted by that attention; the budget b_i from Allocation sets the cut -> the kept tokens ->
+% the VLM answers. Each picture has one label that names it.
+% One centre line (y = 0.76) for every item and arrow; items are 0.7 cm apart.
+\node[soft, inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.32,0.87) {\includegraphics[width=1.6cm]{fig/frames/frame2.jpg}};
+\node[soft, inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.16,0.76) {\includegraphics[width=1.6cm]{fig/frames/frame3.jpg}};
+\node[soft, inner sep=0pt, draw=ink!45, line width=0.3pt] at (1.0,0.65) {\includegraphics[width=1.6cm]{fig/frames/frame4.jpg}};
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (1.16,1.34) {frames};
+\bigattn{3.75,0.76}{frame4_attn.png}
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (3.75,1.24) {attention map};
+\node[model, fill=chipF, minimum width=5.38cm, minimum height=1.5cm] (rk) at (7.81,0.95) {};
+\fill[frm!10] (5.67,0.58) rectangle ({5.67+12*4.45/32},1.58);
+\rankbars{5.67,0.58}{4.45}{12}
+\draw[ink, densely dashed, line width=0.6pt] ({5.67+12*4.45/32},0.58) -- ++(0,1.0);
+\node[font=\sffamily\scriptsize, text=ink, anchor=north, inner sep=1.5pt] at ({5.67+12*4.45/32},0.58) {$b_i$};
+\node[font=\sffamily\scriptsize, text=ink, rotate=90, anchor=south, inner sep=1.5pt] at (5.67,1.08) {attention};
+\node[font=\sffamily\scriptsize, text=ink, anchor=north east, inner sep=1.5pt] at (10.27,0.58) {token rank};
+\node[font=\sffamily\scriptsize, text=frm, anchor=south west, inner sep=1pt] at (6.34,1.23) {kept};
+\node[font=\sffamily\scriptsize, text=ink!60, anchor=south west, inner sep=1pt] at (7.59,0.9) {dropped};
+\bigframe{12.0,0.76}{frame4.jpg}{12}
+\node[font=\sffamily\scriptsize, text=ink, anchor=south, inner sep=1pt] at (12.0,1.24) {top $b_i$ tokens};
+\node[model, minimum width=1.9cm, minimum height=1.15cm] (vlm) at (14.45,0.76) {};
+\nnet{14.45,0.76}{0.7}{0.4}
+\node[font=\sffamily\small, text=modelT] at (14.45,0.76) {VLM};
+\snowflake{($(vlm.south east)+(-0.19,0.19)$)}{0.11}
+\node[qa, inner sep=4pt, anchor=east] (ans) at (17.2,0.76) {\textbf{A:} Blue};
+\draw[arr] (2.18,0.76) -- (2.89,0.76);
+\draw[arr] (4.61,0.76) -- (rk.west |- 0,0.76);
+\draw[arr] (rk.east |- 0,0.76) -- (11.14,0.76);
+\draw[arr] (12.86,0.76) -- (vlm.west);
+\draw[arr] (vlm.east) -- (ans.west);
+\end{tikzpicture}
