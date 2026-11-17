@@ -4,7 +4,7 @@
 
 We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing their retrieval mechanisms. We evaluate its effectiveness on two retrieval pipelines:
 (i) \textit{Embedding-based RAG}, which indexes video frames sampled at 0.5 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
-(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{luo2024videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
+(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
 
  % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
 
