@@ -23,7 +23,7 @@
   \begin{minipage}[t]{0.485\linewidth}
     \centering
     \includegraphics[width=\linewidth]{fig/value_half.pdf}
-    \caption{Fitting candidate token-value functions to mean normalized accuracy measured across varying token counts.
+    \caption{Fitting candidate token-value functions to mean normalized accuracy measured across varying token counts. Black dots are the measured data points.
     }
     \label{fig:value}
   \end{minipage}\hfill
@@ -492,7 +492,7 @@ Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $
 \end{aligned}
 \label{eq:incremental}
 \end{equation}
-Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. 
+Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. As shown in \cref{fig:prefill}, incremental allocation thereby recovers a large share of the available reuse opportunities.
 
 Since each token is prefilled at most once, summing \cref{eq:incremental} over turns bounds cumulative evidence tokens:
 \begin{equation}
