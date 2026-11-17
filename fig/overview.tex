@@ -2,7 +2,7 @@
 % numbered stages with a one-line description each, single-turn inference only (no KV cache), less empty space,
 % larger frames and text. Three stages left to right:
 % (1) retrieval: video + subtitles -> retriever (with query q) -> relevance r_i over items in time order;
-% (2) Token Scheduler (the contribution, the only accented stage): objective, value curves v_frame / v_text,
+% (2) Token Allocator (the contribution, the only accented stage): objective, value curves v_frame / v_text,
 %     water-filling -> token plan b_i;
 % (3) inference: frozen pruner keeps each frame's top-ranked tokens, the frozen VLM answers.
 % Bar heights and the plan are illustrative, not measured. Frames: Video-MME video bepwr1-CNRU (illustration only).

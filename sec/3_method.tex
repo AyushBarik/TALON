@@ -329,13 +329,13 @@ Prior methods allocate tokens by a fixed rule rather than by maximizing an objec
 The solver treats the $N$ frames and the $M$ transcript events alike as items $i\in[N+M]$, with relevance $r_i$, token value $v_i(b_i)$, and tokens $b_i$.
 Eq.~\eqref{eq:allocation} is hard to maximize directly because the diversity term couples the frames: the best token count for one frame depends on the tokens given to the frames similar to it.
 If the token values of all other frames are held fixed, however, the coupling disappears and the problem has an exact solution.
-The Token Scheduler therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
+The Token Allocator therefore follows the Frank-Wolfe method~\cite{frank1956,jaggi2013} and repeats three steps, summarized in \cref{alg:iwf}.
 
 It discounts the relevance of each frame by its similarity to the frames that already hold tokens, allocates the budget exactly under the discounted relevances, and averages the result into a running estimate.
 
 \textit{Step 1: Discount the relevances.}
 Let $\bar v_j$ be the current token value of frame $j$.
-The Token Scheduler lowers the relevance of each frame by the value that its similar frames already carry:
+The Token Allocator lowers the relevance of each frame by the value that its similar frames already carry:
 \begin{equation}
   \tilde r_i=r_i-2\eta\sum_{j}\cos(f_i,f_j)\,\bar v_j ,
   \label{eq:effective}
@@ -361,7 +361,7 @@ Although token counts are discrete, no allocation that spends the same number of
 Exact derivations are given in the supplementary material.
 
 \textit{Step 3: Average.}
-If the Token Scheduler adopted each new allocation outright, two similar frames would pass the same tokens back and forth between iterations.
+If the Token Allocator adopted each new allocation outright, two similar frames would pass the same tokens back and forth between iterations.
 It therefore moves the token values only part of the way toward the new allocation,
 \begin{equation}
   \bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v_i(b_i^*),\qquad \gamma_\ell=\frac{2}{\ell+1},
@@ -369,7 +369,7 @@ It therefore moves the token values only part of the way toward the new allocati
 \end{equation}
 with a step $\gamma_\ell$ that decreases with the iteration $\ell$.
 The first iteration starts from $\bar v=0$ and takes a full step, so it solves Eq.~\eqref{eq:relevance}.
-After the last iteration, the Token Scheduler converts the averaged token values back to token counts, $\hat b_i=v_i^{-1}(\bar v_i)$.
+After the last iteration, the Token Allocator converts the averaged token values back to token counts, $\hat b_i=v_i^{-1}(\bar v_i)$.
 This averaged allocation stays within the budget because every $v_i$ is concave.
 
 Each iteration solves only a simplified problem.
@@ -391,7 +391,7 @@ The guarantee holds because the diversity term of Eq.~\eqref{eq:cond} includes e
 The cosine similarities then form a positive semidefinite matrix, so the objective is concave in the token values and has no local optimum other than the global one.
 A detailed proof is provided in the supplementary material.
 
-In practice, the Token Scheduler rounds the averaged allocation down to the token counts that the pruner supports, and returns it unless a single iteration attains a higher objective.
+In practice, the Token Allocator rounds the averaged allocation down to the token counts that the pruner supports, and returns it unless a single iteration attains a higher objective.
 The solver takes a few milliseconds per query.
 Finally, \name merges the selected frames and events in time order, each preceded by its timestamp, into one storyboard for the VLM.
 
