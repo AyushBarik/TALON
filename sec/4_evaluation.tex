@@ -141,21 +141,4 @@ We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On V
 
 For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs, demonstrating that attention to cached evidence improves subsequent allocations. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
 
-\begin{figure}[t]
-  \centering
-  \begin{minipage}[t]{0.47\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/sens_beta.pdf}
-    \caption{The subtitle weight $\beta$ trades visual tokens for subtitle tokens. Accuracy is stable for $\beta\geq0.25$.}
-    \label{fig:sens-beta}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.47\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{fig/sens_omega.pdf}
-    \caption{The attention trust $\omega$ weighs VLM attention against retrieval relevance. Every $\omega>0$ lowers compute at similar accuracy.}
-    \label{fig:sens-omega}
-  \end{minipage}
-\end{figure}
-
-\paragraph{Sensitivity analysis.}
-We study the sensitivity of \name to its two weights. \Cref{fig:sens-beta} varies the subtitle weight $\beta$ on Video-MME. Accuracy varies by at most 2 points for $\beta$ between 0.25 and 2, and drops sharply only when subtitles are removed ($\beta=0$). \Cref{fig:sens-omega} varies the attention trust $\omega$ on MTVB. Accuracy varies by about 1 point across all values, while every $\omega>0$ lowers prefill compute relative to retrieval alone ($\omega=0$). \name is therefore robust to both weights and requires no careful tuning. Additional hyperparameter sensitivity analyses are provided in the supplementary material.
+Additional hyperparameter sensitivity analyses are provided in the supplementary material.
