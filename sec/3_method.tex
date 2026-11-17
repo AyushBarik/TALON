@@ -11,9 +11,7 @@
 \begin{figure*}[t]
   \centering
   \makebox[\linewidth][c]{\input{fig/overview}}
-  \caption{An illustration of ~\name' workflow
-  \fyy{Don't forget to update the notations in this figure. If time permits, prettify it further at the end.}
-  }
+  \caption{An illustration of ~\name' workflow}
   \label{fig:overview}
 \end{figure*}
 
@@ -253,32 +251,47 @@ Let $J^\star$ be the global maximum of Eq.~\eqref{eq:allocation} over continuous
 where $\sigma_{\max}$ is the largest eigenvalue of the frame and $\beta$-scaled subtitle similarity matrices and $D$ is the diameter of the feasible token-value set under budget $B$.
 \end{proposition}
 
+\noindent The VLM consumes whole tokens, so we round the continuous allocation down, $\hat b_i=\lfloor b_i\rfloor$. Rounding keeps the allocation within the budget and removes less than one token from each item. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order.
 
-\paragraph{Performance Guarantee.}
-The VLM consumes whole tokens, so we round the continuous allocation down: $\hat b_i=\lfloor b_i\rfloor$. This preserves feasibility because $\sum_i\hat b_i\leq B$. The loss can also be bounded. Write $\hat z_i=v_i(\hat b_i)$ and let $g_i=[\nabla J(\hat{\mathbf z})]_i=\bar r_i-2\eta[S\hat{\mathbf z}]_i$. By concavity of $J$ and $v_i$, the gap between the continuous solution and its rounded version satisfies
-\begin{equation}
- J(\mathbf v(\mathbf b))-J(\hat{\mathbf z})
- \leq \epsilon_{\rm round}
- :=\sum_{i:\,b_i>0}
- \frac{\max(0,g_i)\,\tau_i}{(\hat b_i+\tau_i)^2}.
- \label{eq:rounding}
-\end{equation}
-Combining this bound with \cref{prop:convergence} bounds the rounded solution's gap to the optimal integer allocation by $\epsilon_{\rm round}+O(1/L)$. In our reported measurements, the rounding bound is below $1\%$ of the objective on average. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order. \fan{I actually do not like this part and it does not smell CVPR either. I would intergrate it into Proposition. In fact, I assume lots of proof is written by AI, so I don't feel confident and like it. Toning it down to me is much better.}
+
+% \paragraph{Performance Guarantee.}
+% The VLM consumes whole tokens, so we round the continuous allocation down: $\hat b_i=\lfloor b_i\rfloor$. This preserves feasibility because $\sum_i\hat b_i\leq B$. The loss can also be bounded. Write $\hat z_i=v_i(\hat b_i)$ and let $g_i=[\nabla J(\hat{\mathbf z})]_i=\bar r_i-2\eta[S\hat{\mathbf z}]_i$. By concavity of $J$ and $v_i$, the gap between the continuous solution and its rounded version satisfies
+% \begin{equation}
+%  J(\mathbf v(\mathbf b))-J(\hat{\mathbf z})
+%  \leq \epsilon_{\rm round}
+%  :=\sum_{i:\,b_i>0}
+%  \frac{\max(0,g_i)\,\tau_i}{(\hat b_i+\tau_i)^2}.
+%  \label{eq:rounding}
+% \end{equation}
+% Combining this bound with \cref{prop:convergence} bounds the rounded solution's gap to the optimal integer allocation by $\epsilon_{\rm round}+O(1/L)$. In our reported measurements, the rounding bound is below $1\%$ of the objective on average. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order. \fan{I actually do not like this part and it does not smell CVPR either. I would intergrate it into Proposition. In fact, I assume lots of proof is written by AI, so I don't feel confident and like it. Toning it down to me is much better.}
 
 \begin{algorithm}[t]
 \caption{Iterative Water-Filling}
 \label{alg:iwf}
 \small
 \begin{algorithmic}[1]
-\Require relevances $r_i(q)$, similarities $s_{ij}$, budget $B$, iterations $L$
-\Ensure token counts $b_i$ with $\sum_i b_i\le B$
-\State $\bar v_i\gets 0$ for every item $i$
+\Require relevances $\bar r_i$, similarities $s_{ij}$, value parameters $\tau_i$, token limits $b_i^{\max}$, budget $B$, iterations $L$, tolerance $\epsilon$
+\Ensure token counts $\hat b_i$ with $\sum_i\hat b_i\le B$
+\Statex Lines with index $i$ apply to every item $i\in\mathcal F\cup\mathcal S$.
+\State Initialize token values $\bar z_i\gets 0$
 \For{$\ell=1,\dots,L$}
-  \State $\tilde r_i\gets r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j$ \Comment{discount, Eq.~\eqref{eq:weights}}
-  \State $b_i^\star\gets$ water-filling with $\tilde r_i$ under $B$ \Comment{allocate, Eq.~\eqref{eq:waterfill}}
-  \State $\bar v_i\gets(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star)$ \Comment{average, Eq.~\eqref{eq:average}}
+  \State $\widetilde r_i\gets\bar r_i-2\eta\sum_{j}s_{ij}\,\bar z_j$ \Comment{discounted relevance, Eq.~\eqref{eq:weights}}
+  \State $\lambda_{\rm lo}\gets 0,\;\;\lambda_{\rm hi}\gets\max_i\widetilde r_i/\tau_i$ \Comment{search range of $\lambda$}
+  \State $b_i^\star\gets 0$ \Comment{best allocation within budget so far}
+  \While{$\lambda_{\rm hi}-\lambda_{\rm lo}>\epsilon$} \Comment{water-filling by bisection}
+    \State $\lambda\gets(\lambda_{\rm lo}+\lambda_{\rm hi})/2$
+    \State $b_i\gets\big[\sqrt{\max(0,\widetilde r_i)\,\tau_i/\lambda}-\tau_i\big]_0^{b_i^{\max}}$ \Comment{Eq.~\eqref{eq:waterfill}}
+    \If{$\sum_i b_i>B$}
+      \State $\lambda_{\rm lo}\gets\lambda$ \Comment{over budget: raise $\lambda$}
+    \Else
+      \State $\lambda_{\rm hi}\gets\lambda,\;\;b_i^\star\gets b_i$ \Comment{within budget: lower $\lambda$}
+    \EndIf
+  \EndWhile
+  \State $\gamma_\ell\gets 2/(\ell+1)$ \Comment{step size}
+  \State $\bar z_i\gets(1-\gamma_\ell)\,\bar z_i+\gamma_\ell\,v_i(b_i^\star)$ \Comment{averaging, Eq.~\eqref{eq:average}}
 \EndFor
-\State \Return $b_i\gets v^{-1}(\bar v_i)$
+\State $b_i\gets v_i^{-1}(\bar z_i)=\tau_i\bar z_i/(1-\bar z_i)$ \Comment{continuous token counts}
+\State \Return $\hat b_i\gets\lfloor b_i\rfloor$ \Comment{round down to whole tokens}
 \end{algorithmic}
 \end{algorithm}
 
@@ -495,20 +508,40 @@ In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about
 % These queries are inherently correlated, and later turns often reference items prefilled by prior turns, as shown in \cref{fig:reuse}. This overlap offers ample opportunities for reuse, and thus large savings in prefill compute. But how do we enable such reuse? For Top-K, a simple patch suffices: if a relevant item has been prefilled by a prior turn, it is not prefilled again. For \name, however, the solution is less obvious. Since items are prefilled at different token counts, they rarely match a prior turn exactly. Carrying allocations across turns thus raises two questions. \circnum{1}~How can we avoid the prefill compute of content that overlaps across turns? At the same time, we identify a unique opportunity, as each query is prefilled against the past context anyway. \circnum{2}~How can we use the resulting attention scores to refine our allocations? \name answers the first with incremental allocation and the second with attention refinement.
 
 \paragraph{Incremental Allocation.}
-At turn $t$, the Token Allocator solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
+Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $c_i^{(t-1)}$ be the number of its highest-ranked tokens already in the KV cache, with $c_i^{(0)}=0$. The number of new tokens to prefill and the updated cache state are
 \begin{equation}
 \begin{aligned}
-  p_i^{(t)}&=\max\!\big(0,\,b_i^{(t)}-c_i^{(t-1)}\big),\\
-  c_i^{(t)}&=\max\!\big(c_i^{(t-1)},\,b_i^{(t)}\big),
+ p_i^{(t)}&=\max\!\left(0,b_i^{(t)}-c_i^{(t-1)}\right),\\
+ c_i^{(t)}&=\max\!\left(c_i^{(t-1)},b_i^{(t)}\right).
 \end{aligned}
-  \label{eq:incremental}
+\label{eq:incremental}
 \end{equation}
-where $p_i^{(t)}$ is the number of tokens of item $i$ that turn $t$ prefills. Since the tokens of an item are ranked once, independently of the query (\cref{sec:objective}), these are the tokens ranked from $c_i^{(t-1)}+1$ to $b_i^{(t)}$. \name appends them to the end of the context, which leaves the KV cache valid, and each appended token keeps the positional encoding of its place within its item~\cite{bai2025qwen3vl}. The context thus holds the same tokens as a prefill in time order, in a different order, and retains comparable accuracy (\cref{tab:multiturn}). After turn $t$, it holds $c_i^{(t)}\ge b_i^{(t)}$ tokens of item $i$, so the budget $B$ limits the allocation of each turn rather than the context. Since each token is prefilled at most once, the context is nevertheless bounded by the full token count of the video, however many turns $T$ the conversation lasts:
+Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. 
+
+Since each token is prefilled at most once, summing \cref{eq:incremental} over turns gives
 \begin{equation}
-  \sum_{t=1}^{T}\sum_{i} p_i^{(t)}=\sum_{i} c_i^{(T)}\le\sum_{i} b_i^{\max} .
-  \label{eq:bound}
+ \sum_{t=1}^{T}\sum_i p_i^{(t)}
+ =\sum_i c_i^{(T)}
+ =\sum_i\max_{t\leq T}b_i^{(t)}
+ \leq\sum_i b_i^{\max}.
+ \label{eq:bound}
 \end{equation}
-In contrast, allocating every turn anew prefills up to $B$ tokens per turn, which grows linearly with $T$.
+This bound applies to the number of newly prefilled evidence tokens, not to total attention FLOPs or KV-cache memory, which also depend on accumulated conversation context. In contrast, rebuilding the token representation at every turn can re-prefill up to $B$ evidence tokens per turn.
+
+% At turn $t$, the Token Allocator solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
+% \begin{equation}
+% \begin{aligned}
+%   p_i^{(t)}&=\max\!\big(0,\,b_i^{(t)}-c_i^{(t-1)}\big),\\
+%   c_i^{(t)}&=\max\!\big(c_i^{(t-1)},\,b_i^{(t)}\big),
+% \end{aligned}
+%   \label{eq:incremental}
+% \end{equation}
+% where $p_i^{(t)}$ is the number of tokens of item $i$ that turn $t$ prefills. Since the tokens of an item are ranked once, independently of the query (\cref{sec:objective}), these are the tokens ranked from $c_i^{(t-1)}+1$ to $b_i^{(t)}$. \name appends them to the end of the context, which leaves the KV cache valid, and each appended token keeps the positional encoding of its place within its item~\cite{bai2025qwen3vl}. The context thus holds the same tokens as a prefill in time order, in a different order, and retains comparable accuracy (\cref{tab:multiturn}). After turn $t$, it holds $c_i^{(t)}\ge b_i^{(t)}$ tokens of item $i$, so the budget $B$ limits the allocation of each turn rather than the context. Since each token is prefilled at most once, the context is nevertheless bounded by the full token count of the video, however many turns $T$ the conversation lasts:
+% \begin{equation}
+%   \sum_{t=1}^{T}\sum_{i} p_i^{(t)}=\sum_{i} c_i^{(T)}\le\sum_{i} b_i^{\max} .
+%   \label{eq:bound}
+% \end{equation}
+% In contrast, allocating every turn anew prefills up to $B$ tokens per turn, which grows linearly with $T$.
 
 % Table 1 (main results, Sec. 4) is placed here so that it floats to the page where Sec. 4 discusses it.
 \begin{table*}[t]
@@ -561,12 +594,20 @@ In contrast, allocating every turn anew prefills up to $B$ tokens per turn, whic
 \end{table*}
 
 \paragraph{Attention Refinement.}
-Retrieval scores an item against the query alone, whereas the VLM has already read every prefilled item. Since each turn prefills the query $q_t$ on top of the earlier context anyway, \name measures the attention from the tokens of $q_t$ to the prefilled tokens of each item at no additional cost~\cite{rekv2025}. Let $a_i$ be the share of this attention that item $i$ receives per prefilled token. Attention refinement combines it with the retrieval relevance:
+Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. When processing the current query $q_t$, \name measures the attention from its query tokens to each cached item at no additional model inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. We combine this signal with retrieval relevance:
 \begin{equation}
-  r_i^{(t)}\propto r_i(q_t)^{1-\omega}\,a_i^{\,\omega}
-  \label{eq:fusion}
+\hat r_i^{(t)}
+=r_i(q_t)^{1-\omega}\big(a_i^{(t)}\big)^{\omega},
+\qquad \omega\in[0,1].
+\label{eq:fusion}
 \end{equation}
-for the prefilled items, and keeps $r_i^{(t)}=r_i(q_t)$ for the others, where $\omega\in[0,1]$ sets the trust in attention. The refined relevances of the prefilled items are rescaled to keep their total, so attention only re-ranks the items that the VLM has read and takes no relevance from the items it has not. The Token Allocator then uses $r_i^{(t)}$ in place of $r_i(q_t)$.
+We rescale the fused scores to preserve the total relevance of cached items, while leaving uncached items unchanged. This allows attention to refine previously observed evidence without suppressing unseen candidates. The Token Allocator then uses the refined relevance scores in \cref{eq:allocation}, with incremental allocation prefilling only the missing tokens.
+% Retrieval scores an item against the query alone, whereas the VLM has already read every prefilled item. Since each turn prefills the query $q_t$ on top of the earlier context anyway, \name measures the attention from the tokens of $q_t$ to the prefilled tokens of each item at no additional cost~\cite{rekv2025}. Let $a_i$ be the share of this attention that item $i$ receives per prefilled token. Attention refinement combines it with the retrieval relevance:
+% \begin{equation}
+%   r_i^{(t)}\propto r_i(q_t)^{1-\omega}\,a_i^{\,\omega}
+%   \label{eq:fusion}
+% \end{equation}
+% for the prefilled items, and keeps $r_i^{(t)}=r_i(q_t)$ for the others, where $\omega\in[0,1]$ sets the trust in attention. The refined relevances of the prefilled items are rescaled to keep their total, so attention only re-ranks the items that the VLM has read and takes no relevance from the items it has not. The Token Allocator then uses $r_i^{(t)}$ in place of $r_i(q_t)$.
 
 \begin{comment}
 % Previous Sec. 3.4 text, kept for reference (not printed).

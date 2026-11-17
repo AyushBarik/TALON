@@ -55,10 +55,10 @@ to maximize the aggregate token value under a limited token budget.
 % frontpage figure
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\linewidth]{fig/budget_curve.pdf}
-  \vspace{-10pt}
-  \caption{\name improves the accuracy-cost trade-off on the MLVU benchmark. Cost values are derived from OpenRouter API prices for Qwen3-VL-8B.}
-  \vspace{-10pt}
+  \includegraphics[width=0.9\linewidth]{fig/budget_curve.pdf}
+  \vspace{-5pt}
+  \caption{\name achieves the best accuracy-cost trade-off on the MLVU benchmark. Cost values are derived from OpenRouter API prices for Qwen3-VL-8B.}
+  \vspace{-5pt}
   \label{fig:budget}
 \end{figure}
 
@@ -169,14 +169,14 @@ refinement to guide subsequent allocations without an additional scoring call.
 
 % evaluation highlights
 We evaluate \name on MLVU, LongVideoBench, and Video-MME with
-Qwen3-VL-8B and InternVL3.5-4B.
+Qwen3-VL-8B and InternVL3.5-4B (\cref{sec:exp}).
 With comparable compute budgets, \name improves accuracy by 0.1--7.2\%
-over state-of-the-art baselines (\cref{tab:main}).
+over state-of-the-art baselines.
 On MLVU, \name also achieves the best accuracy-cost trade-off among
-the evaluated methods across token budgets (\cref{fig:budget}).
+the evaluated methods across token budgets.
 We also evaluate \name on the multi-turn benchmark MT-Video-Bench,
 where \name achieves 0.9--2.1\% higher accuracy than the baselines
-with 1.7--17.4$\times$ fewer TFLOPs (\cref{fig:multiturn}).
+with 1.7--17.4$\times$ fewer TFLOPs.
 
 % \para{Contributions:}
 % \begin{itemize}
