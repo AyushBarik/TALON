@@ -104,6 +104,7 @@ Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and
     \rowcolor{oursbg}\textbf{\name}                 & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
     \hspace{0.5em}w/o text allocation      & 226 & 73.7 & 81.9 & 74.9 & 64.4 \\
     \hspace{0.5em}w/o diversity term            & 226 & 76.6 & 82.4 & 76.4 & 70.8 \\
+    \hspace{0.5em}w/o water-filling        & \na & 76.1 & \na & \na & \na \\
     \bottomrule
   \end{tabular}}%
   % Equal gaps that make the table exactly \columnwidth (12 column sides).
@@ -137,6 +138,6 @@ Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and
 \end{table}
 
 \paragraph{Performance breakdown.}
-We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On Video-MME, removing subtitle allocation decreases overall accuracy by 3.6 points, with a particularly large 7.3-point drop on long videos. Even without subtitle allocation, \name outperforms all similarly budgeted, non-agentic frame selection baselines by 0.6--3.6 points. Removing the diversity term reduces accuracy by 0.7 points, confirming the benefit of accounting for redundant evidence during allocation.
+We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On Video-MME, removing subtitle allocation decreases overall accuracy by 3.6 points, with a particularly large 7.3-point drop on long videos. Even without subtitle allocation, \name outperforms all similarly budgeted, non-agentic frame selection baselines by 0.6--3.6 points. Removing the diversity term reduces accuracy by 0.7 points, confirming the benefit of accounting for redundant evidence during allocation. Replacing water-filling with relevance-proportional allocation (w/o water-filling) reduces accuracy by 1.2 points.
 
 For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs, demonstrating that attention to cached evidence improves subsequent allocations. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
