@@ -1,0 +1,98 @@
+\section{Introduction}
+\label{sec:intro}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/budget_curve.pdf}
+  \caption{\TODO{}}
+  \label{fig:budget}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/case_study.pdf}
+  \caption{\TODO{}}
+  \label{fig:case}
+\end{figure}
+
+\fyy{It turns out token compression is a popular method for video understanding (e.g., \href{https://arxiv.org/pdf/2510.07915}{retrieve-then-compress} and \href{https://arxiv.org/abs/2410.17434}{adaptive compression}). See my Teams message.}
+
+\fyy{Therefore, a safer and better title and narrative should be
+something like ``Efficient Video RAG through Token Allocation''.
+Our keywords are token efficiency and token allocation (in a globally optimal manner, rather than greedy, independent compression).}
+
+\fyy{My current thinking for the intro outline is as follows
+(each point is a paragraph):
+\begin{enumerate}
+\item \textit{Problem \& importance.}
+Briefly introduce VLM-based video understanding, then quickly
+move to our problem setting of \textit{long} video understanding.
+Establish its importance through concrete application domains.
+\item \textit{RAG is commonly used for long video understanding.}
+Processing all tokens from long videos can easily
+exceed VLM context windows and incur high compute costs.
+Therefore, existing systems widely resort to
+RAG, notably embedding-based and graph-based approaches,
+to supply relevant
+visual or textual evidence for each query.
+\item \textit{Limitations of existing approaches.}
+Graph-based RAG achieves high benchmark accuracy,
+but video ingestion is expensive and often wasted
+since users tend to ask questions sporadically.
+Embedding-based RAG is more lightweight, but our motivating
+experiments in Section 2 reveal its limitations.
+Adding tokens to a relevant frame yields diminishing returns.
+Although video token compression mitigates this issue,
+independently compressing retrieved frames
+is also suboptimal,
+as a different allocation of the global token budget
+could reveal useful evidence in other frames.
+\item \textit{Our insight and method.}
+These limitations motivate us to jointly allocate
+tokens across frames according to their contribution
+to answering the query.
+We present \name, a token-efficient video RAG framework
+that preserves QA accuracy.
+\name formulates video RAG as a token allocation problem
+under a limited budget.
+\item \textit{Challenges faced by \name and our solutions.}
+Challenge 1 / solution 1 centers on
+offline profiling of token value
+and the water-filling algorithm.
+Challenge 2 / solution 2 is multi-turn conversations.
+\item \textit{Evaluation highlights.}
+\item \textit{Contributions and three bullet points.}
+\end{enumerate}
+}
+
+% --- earlier outline notes, kept for reference ---
+% paragraph 1: introduce video understanding
+%
+% paragraph 2: highlight the problem of long context video understanding, introduce RAG methods for video understanding
+%
+% paragraph 3: prior work is frame level, admits every frame at equal cost, however, relevant frames vary in relevance point to Fig X (x axis: frames, y axis relevance score). motivate token level design.
+%
+% paragraph 4: highlight unique challenges,  characteristics we want from a strong design. 
+%
+% paragraph 5: We introduce a plug-and-play \name framework. quick pass through the framework, should demonstrate points in paragraph 4 are addressed.
+
+Vision-Language Models (VLMs) have become the foundation of multimodal video understanding, enabling strong reasoning across tasks ranging from action recognition to fine-grained visual question answering~\cite{bai2025qwen3vl,wang2025internvl35}. However, scaling these models to long videos such as for sports broadcasts, life assistants, or security surveillance remains fundamentally constrained by context-window limits and prefill costs~\cite{chen2024fastv,yang2024visionzip}. For instance, asking a query over a 1-hour sports broadcast on GPT-6 Astra can cost more than \$175 in prefill.
+
+To circumvent these costs, existing systems rely on Retrieval-Augmented Generation (RAG) to selectively process only the most relevant evidence~\cite{luo2024videorag,ren2025videorag,shen2025vgent}. While retrieval via frame--query semantic scoring serves as a strong baseline, its capabilities remain limited on reasoning queries, where crucial evidence often does not semantically match the query (e.g., ``Why did he skip class?''). Therefore, graph-based RAG methods connect evidence via shared entities, offering connections between semantically distinct but query-relevant evidence~\cite{ren2025videorag,shen2025vgent}.
+
+Nonetheless, the majority of these works naively retrieve the top-$K$ highest-scoring evidence units. But, relevance varies greatly across evidence units and queries, motivating more adaptive solutions rather than a fixed top-$K$. As frame allocation directly determines prefill compute and accuracy, strong allocation mechanisms can achieve the same accuracy with fewer frames, leading to lower costs. Prior works explore this direction along several lines. Training-free approaches select keyframes by query relevance and diversity [AKS, FOCUS, T*, QCA, MarKey, DAFS]. Training-based approaches instead learn the selector through supervised learning [SeViLA, Frame-Voyager, Flexible Frame Selection] or reinforcement learning [ReFoCUS]. Agentic approaches search the video over several rounds [VideoAgent, A.I.R.]. Concurrently, video token compression merges or prunes visual tokens [FrameFusion, DyCoke, HoliTom].
+
+
+However, while many of these works answer \textit{which} frames to allocate, we instead also attempt to answer \textit{how much} to spend on each frame, redefining frame allocation as a token allocation problem. Intuitively, this allows for more granular decision making, allowing us to reach a better accuracy--cost trade-off across the space of possible allocations.
+
+This comes with several difficult challenges. 1.) How should we score tokens? The value of a token depends not only on the relevance of its frame to the query, but also on how many tokens that frame and similar frames already receive. 2.) Given the scores, how should we decide our token allocation? Across combinatorially many possibilities, we must locate the optimal allocation with negligible overhead. 3.) How can we reach arbitrary token counts? Any sort of pruning must be minimally lossy. Even then, we are still ignoring a key practical concern: real-world multi-turn conversations often refer to similar pieces of evidence~\cite{mtvideobench2025}. Naive top-$K$ retrieval can exploit this overlap, as it skips the prefill of relevant frames that are already in the KV cache. With our granular allocation, however, it becomes highly unlikely that a later turn references a frame with the exact same allocation. Therefore, 4.) how do we remain efficient even in multi-turn settings?
+
+We introduce \name, a plug-and-play framework that resolves these challenges by viewing token allocation through a principled constrained optimization lens (\cref{fig:overview}). First, \name defines an objective that weights the value of each frame at its token count by its relevance to the query. The token value is a saturating curve that is profiled offline and updated online, while the relevance combines the semantic similarity of frames and transcripts to the query with a discount for frames that duplicate content already shown. Then, \name maximizes this objective under the token budget by iterative water-filling. Water-filling is widely used in networked systems to allocate transmit power across channels~\cite{boyd2004,yu2004iwf}: it sets a single price for the resource, and each channel receives power until its marginal gain falls below this price. \name adapts this procedure to allocate tokens across frames, and we prove that the gap to the optimal allocation shrinks as $O(1/\ell)$ after $\ell$ iterations, while the solver takes only a few milliseconds per query. Third, \name reaches any token count with rank-based pruning, drawing from attention-based token pruners~\cite{chen2024fastv,yang2024visionzip}: it ranks the tokens of each frame once and keeps the top-ranked tokens up to the allocated count. This design extends naturally to multi-turn conversations. Since the rank of a token does not depend on the query, a larger allocation only extends the tokens of a frame that are already in the KV cache. \name therefore allocates incrementally: at each turn, it prefills only the tokens that the cache lacks, which keeps the evidence prefill of a conversation bounded regardless of its length. Moreover, since every turn prefills the new query on top of the cache anyway, \name uses the attention of the VLM from the query to the cached frames to update their relevance.
+
+Our contributions are as follows:
+\begin{itemize}
+  \item We introduce \name, a plug-and-play framework that moves video RAG from frame-level to token-level allocation.
+  \item We formulate token allocation as a constrained optimization problem and solve it by iterative water-filling, which provably converges to the optimal allocation at a rate of $O(1/\ell)$.
+  \item We extend token allocation to multi-turn conversations through attention-guided relevance and incremental allocation, which keeps the prefill bounded however long the conversation lasts.
+\end{itemize}
+At matched compute, \name improves accuracy over top-$K$ retrieval by up to 4.2 points on MLVU, LongVideoBench, and Video-MME, and with Qwen3-VL-8B it matches or exceeds the accuracy of QuoTA~\cite{luo2025quota} at 2.8--3.4$\times$ less prefill compute. In multi-turn conversations, incremental allocation reduces prefill compute by 2.5$\times$ relative to re-allocating at every turn, at comparable accuracy.
