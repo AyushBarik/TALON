@@ -1,29 +1,64 @@
 \section{Evaluation}
 \label{sec:exp}
 
-To show the effectiveness of ~\name, we deploy on Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, with Qwen3-VL-8B serving as the default backbone unless stated otherwise. ~\name is combined with a plain RAG system that stores paired video frames and subtitles sampled at 0.5 FPS, before semantically scoring frames with SigLIP~2~\cite{siglip2} and subtitles with BGE~\cite{bge}. We also add a graph based RAG method that uses both frames and text due to its popularity in video understanding building atop VideoRAG ~\cite{luo2024videorag}. As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
 
-\paragraph{Benchmarks.} We evaluate on the three most popular video understanding benchmarks, however as they only cover single-turn multiple-choice Q\&A, we also include a multi-turn, open-ended benchmark:
+We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing their retrieval mechanisms. We evaluate its effectiveness on two retrieval pipelines:
+(i) \textit{Embedding-based RAG}, which indexes video frames sampled at 0.5 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
+(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{luo2024videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
+
+ % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
+
+\paragraph{Benchmarks.} 
+
+We evaluate on three widely used single-turn, multiple-choice video understanding benchmarks and one multi-turn, open-ended benchmark:
 \begin{itemize}
-\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours spanning topic reasoning, anomaly recognition, needle QA, ego reasoning, plot QA, action order, and action count.
-\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour covering 17 perception (e.g. single-scene events, objects, attributes) and relation (e.g. cross-scene order, tracking, attribute changes) tasks.
-\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos split into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets, spanning 12 tasks across perception, reasoning, OCR, counting, and synopsis.
-\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes covering object reference, memory recall, content summary, answer refusal, topic shifting, and proactive interaction. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
+\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours, spanning topic reasoning, anomaly recognition, needle QA, ego reasoning, plot QA, action order, and action count.
+
+\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour, covering 17 perception (e.g., single-scene events, objects, attributes) and relation (e.g., cross-scene order, tracking, attribute changes) tasks.
+
+\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos, divided into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets, spanning 12 tasks across perception, reasoning, OCR, and counting.
+
+\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes, covering object reference, memory recall, content summary, and proactive interaction. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
 \end{itemize}
 
-\paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
+
+\paragraph{Baselines.}
+We compare \name against uniform sampling and five recent frame selection and token allocation methods, all operating under the same token budget. 
 \begin{itemize}
-  \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
-  \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips. Similar to Top-K it skips prefilling already seen frames across turns.
-  \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers in a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution. We modify it to skip prefilling of already seen frames of the same exact resolution.
-  \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it. As it downsamples from the entire token set, it cannot skip prefilling of any frames across turns.
-  \item AdaAlloc~\cite{an2026adaalloc} (contemporary): Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier. We modify it to skip prefilling of frames that exactly match the resolution tier.
+\item \textbf{Top-K}: Retrieves the $K$ frames with the highest query--frame semantic similarity scores.
+
+\item \textbf{FOCUS}~\cite{zhu2026focus}: Selects $K$ frames through multi-armed bandit exploration over temporal clips.
+
+\item \textbf{Q-Frame}~\cite{zhang2025qframe}: Samples frames according to query relevance and allocates tokens across high-, medium-, and low-resolution tiers with a 2:1:1 budget ratio.
+
+\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples each frame.
+
+\item \textbf{AdaAlloc}~\cite{an2026adaalloc}: Uses an agent to plan how to distribute the budget between low- and high-resolution frame tiers.
 \end{itemize}
+For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefetched content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because its query-dependent token selections are not guaranteed to match across turns.
+
+
+\paragraph{Metrics.}
+We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the Appendix.
+% \paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
+% \begin{itemize}
+%   \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
+%   \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips. Similar to Top-K it skips prefilling already seen frames across turns.
+%   \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers in a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution. We modify it to skip prefilling of already seen frames of the same exact resolution.
+%   \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it. As it downsamples from the entire token set, it cannot skip prefilling of any frames across turns.
+%   \item AdaAlloc~\cite{an2026adaalloc} (contemporary): Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier. We modify it to skip prefilling of frames that exactly match the resolution tier.
+% \end{itemize}
 
 \subsection{Main Results}
 \label{sec:exp-main}
 
-\paragraph{\name achieves the Pareto frontier across single-turn video understanding} As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over all compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. \name also improves the accuracy of VideoRAG by X points. These gains hold across multiple token budgets (\cref{fig:multiturn}a).
+\paragraph{\name achieves the Pareto frontier across single-turn video understanding.} 
+As shown in \cref{tab:main}, \name achieves the highest overall accuracy across all three benchmarks and both VLM backbones. With Qwen3-VL-8B, it improves over Top-K by 2.2, 2.6, and 4.2 percentage points on MLVU, LVB, and Video-MME, respectively, at comparable compute. The gains are particularly pronounced on long videos: on the long subset of Video-MME, \name improves accuracy from 63.6\% to 71.7\% with nearly identical TFLOPs. QuoTA achieves competitive accuracy but incurs 2.8--3.4$\times$ higher compute due to its VLM-based frame scoring. These trends generalize to InternVL3.5-4B, where \name improves over Top-K by 0.5--3.5 points. Furthermore, \name consistently achieves favorable accuracy--compute trade-offs across multiple token budgets (\cref{fig:multiturn}a).
+
+
+When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage points on MLVU and Video-MME, respectively, by allocating tokens across more used frames at comparable compute. These results demonstrate that \name complements existing RAG designs.
+
+% As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over all compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. \name also improves the accuracy of VideoRAG by X points. These gains hold across multiple token budgets (\cref{fig:multiturn}a).
 
 \begin{figure}[t]
   \centering
