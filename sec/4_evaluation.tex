@@ -2,7 +2,7 @@
 \label{sec:exp}
 
 
-We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing their retrieval mechanisms. We evaluate its effectiveness on two retrieval pipelines:
+We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replace them. We evaluate its effectiveness on two retrieval pipelines:
 (i) \textit{Embedding-based RAG}, which indexes video frames sampled at 0.5 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
 (ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
 
@@ -31,11 +31,11 @@ We compare \name against uniform sampling and five recent frame selection and to
 
 \item \textbf{Q-Frame}~\cite{zhang2025qframe}: Samples frames according to query relevance and allocates tokens across high-, medium-, and low-resolution tiers with a 2:1:1 budget ratio.
 
-\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples each frame.
+\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples tokens of each frame to a particular resolutions.
 
 \item \textbf{AdaAlloc}~\cite{an2026adaalloc}: Uses an agent to plan how to distribute the budget between low- and high-resolution frame tiers.
 \end{itemize}
-For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefetched content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because its query-dependent token selections are not guaranteed to match across turns.
+For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefetched content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because it arbitrarily downsamples tokens to variable amounts making reuse not possible.
 
 
 \paragraph{Metrics.}
