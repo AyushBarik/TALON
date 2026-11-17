@@ -1,18 +1,20 @@
 \begin{abstract}
-Long video understanding with vision-language models (VLMs)
-requires balancing evidence coverage and detail in
-retrieval-augmented generation (RAG).
-Existing RAG approaches adapt evidence selection and detail but do not
-explicitly optimize ``token value''---a token's estimated contribution
-to answer accuracy.
-We present \name, an efficient video RAG framework that allocates a
-shared token budget across evidence items (including frames and subtitles) to maximize aggregate token value.
-First, we model token value using query relevance,
-diminishing accuracy gains, and evidence redundancy.
-Second, we develop a token scheduler that uses iterative water-filling
-to allocate tokens efficiently.
-Finally, we support multi-turn conversations through incremental allocation
-and attention refinement, reusing evidence and updating relevance as
-queries change.
-Across three long-video benchmarks and two VLM backbones, \name improves accuracy over state-of-the-art baselines with comparable compute budgets. \name also achieves the best accuracy-cost trade-off.
-\end{abstract}
+Efficient long-video understanding requires identifying relevant evidence while minimizing the tokens processed by vision-language models (VLMs). Existing video retrieval-augmented generation (RAG) methods rely on frame selection and token compression, but often overlook the marginal value of tokens across evidence items. We introduce \name, a plug-and-play framework that formulates video RAG as a global token allocation problem over frames and subtitles. Our key insight is that token value exhibits diminishing returns within each item and decreases as similar evidence receives more tokens. We model these effects using a saturating token-value function and diversity-aware relevance, and develop an efficient iterative water-filling algorithm that converges to the global optimum of the continuous relaxation at a rate of $O(1/\ell)$. For multi-turn conversations, \name enables incremental KV-cache reuse and attention-guided relevance refinement to reduce redundant prefill.  Our evaluations show that \name improves accuracy over existing advances by up to 4.2 percentage points at comparable compute, while matching or exceeding QuoTA with 2.8--3.4$\times$ less compute. On multi-turn video understanding, \name achieves 0.9--2.1 points higher accuracy with 1.7--17.4$\times$ fewer TFLOPs.
+% Long video understanding with vision-language models (VLMs)
+% requires balancing evidence coverage and detail in
+% retrieval-augmented generation (RAG).
+% Existing RAG approaches adapt evidence selection but do not
+% explicitly optimize ``token value''---a token's estimated contribution
+% to answer accuracy.
+% We present \textbf{\name}, an efficient video RAG framework that allocates a
+% shared token budget across evidence items (including frames and subtitles) to maximize aggregate token value.
+% First, we model token value using query relevance,
+% diminishing accuracy gains, and evidence redundancy.
+% Second, we develop a token allocator that uses iterative water-filling
+% to allocate tokens efficiently.
+% Finally, we support multi-turn conversations through incremental allocation
+% and attention refinement, reusing evidence and updating relevance as
+% queries change.
+% Across various long-video benchmarks and two VLM backbones, \name achieves the best accuracy-cost trade-off.
+\end{abstract} 
+% \ayush{feels hacky, too many components.. just focus on key insight + result?}

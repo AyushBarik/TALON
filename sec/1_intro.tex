@@ -1,8 +1,9 @@
 \section{Introduction} \label{sec:intro}
 
+Vision-language models (VLMs) have achieved remarkable progress in video understanding, enabling tasks ranging from action recognition to complex visual question answering~\cite{bai2025qwen3vl,wang2025internvl35}. However, extending these capabilities to long videos, such as sports broadcasts, personal recordings, and surveillance footage, remains challenging. Processing every frame can easily exceed the VLM's context window and incur prohibitive inference costs~\cite{chen2024fastv,yang2024visionzip}. Efficient long-video understanding requires identifying and processing the evidence most useful for answering each query.
 % VLMs for video understanding
-Vision-language models (VLMs) have become the foundation of multimodal video understanding, enabling strong reasoning in tasks from action recognition to fine-grained visual question answering~\cite{bai2025qwen3vl,wang2025internvl35}.
-However, scaling these models to long videos (e.g., for sports analysis, life assistants, and security surveillance) remains constrained by context-window limits and prefill costs~\cite{chen2024fastv,yang2024visionzip}.
+% Vision-language models (VLMs) have become the foundation of multimodal video understanding, enabling strong reasoning in tasks from action recognition to fine-grained visual question answering~\cite{bai2025qwen3vl,wang2025internvl35}.
+% However, scaling these models to long videos (e.g., for sports analysis, life assistants, and security surveillance) remains constrained by context-window limits and prefill costs~\cite{chen2024fastv,yang2024visionzip}.
 % For instance, answering a query over a one-hour sports broadcast with GPT-6 Astra can cost more than \$175 in prefill.
 
 % % RAG baselines (no need to expand anymore)
@@ -20,55 +21,59 @@ However, scaling these models to long videos (e.g., for sports analysis, life as
 % Nevertheless, constructing these graphs typically requires expensive video
 % ingestion even for sporadic user queries.
 
+Retrieval-augmented generation (RAG) addresses this challenge by retrieving relevant frames rather than processing the entire video. Embedding-based RAG retrieves frames based on semantic similarity to the query, while graph-based RAG connects entities and events to retrieve related evidence~\cite{luo2024videorag,ren2025videorag,shen2025vgent,yan2025ava}. However, these optimizations select relevant evidence items yet often overlook an inherent distinction: different queries require different amounts of evidence and visual detail. For example, identifying a small object may require fine-grained information from a particular frame, whereas reconstructing an event sequence may benefit from broader temporal coverage. 
 % RAG and static baselines
-Existing systems address these constraints through retrieval-augmented
-generation (RAG), supplying the VLM with only query-relevant evidence.
-Embedding-based RAG ranks video frames by semantic similarity
-to the query~\cite{luo2024videorag}, while graph-based RAG
-connects entities and events in a graph to guide
-retrieval~\cite{ren2025videorag,shen2025vgent,yan2025ava}.
-Both paradigms often send the top-$K$ evidence items
-(e.g., frames) at their full token counts to the VLM;
-however, queries differ in the breadth and detail of evidence they require.
-As a result, this static allocation can omit needed items
-or waste tokens on unnecessary detail.
+% Existing systems address these constraints through retrieval-augmented
+% generation (RAG), supplying the VLM with only query-relevant evidence.
+% Embedding-based RAG ranks video frames by semantic similarity
+% to the query~\cite{luo2024videorag}, while graph-based RAG
+% connects entities and events in a graph to guide
+% retrieval~\cite{ren2025videorag,shen2025vgent,yan2025ava}.
+% Both paradigms often send the top-$K$ evidence items
+% (e.g., frames) at their full token counts to the VLM;
+% however, queries differ in the breadth and detail of evidence they require.
+% As a result, this static allocation can omit needed items
+% or waste tokens on unnecessary detail.
 
 % adaptive baselines: evidence selection, detail retention, or both
-These limitations motivate adaptive approaches along two coupled dimensions:
-\emph{which evidence to include} and \emph{how much detail to retain}.
-The first involves selecting frames through
-relevance and diversity~\cite{tang2025aks,zhu2026focus,ye2025tstar,peng2026qca,shi2026markey,wang2026dafs}, learned policies~\cite{yu2023sevila,yu2024framevoyager,buch2025flexible,lee2025refocus}, or successive rounds of agentic search~\cite{wang2024videoagent,zou2025air}.
-The second involves merging or pruning visual tokens~\cite{fu2025framefusion,tao2025dycoke,shao2025holitom}, or assigning
-per-frame token budgets based on query relevance~\cite{luo2025quota}.
-Other approaches adjust both, combining frame selection with resolution tiers~\cite{zhang2025qframe} or planning how to divide tokens between global coverage and local detail~\cite{an2026adaalloc}.
+Recent approaches improve this trade-off through adaptive frame selection and token compression. Frame selection methods identify relevant or diverse frames using retrieval heuristics~\cite{tang2025aks,zhu2026focus,ye2025tstar,peng2026qca,shi2026markey,wang2026dafs}, learned policies~\cite{yu2023sevila,yu2024framevoyager,buch2025flexible,lee2025refocus}, or agentic search~\cite{wang2024videoagent,zou2025air}. Token compression methods reduce visual redundancy through token merging or pruning~\cite{fu2025framefusion,tao2025dycoke,shao2025holitom}. More recent methods adapt token counts using relevance-proportional allocation~\cite{luo2025quota}, discrete resolution tiers~\cite{zhang2025qframe}, or agentic budget planning~\cite{an2026adaalloc}. Despite these advances, allocation is largely guided by independent relevance scores or predefined rules.
+
+% These limitations motivate adaptive approaches along two coupled dimensions:
+% \emph{which evidence to include} and \emph{how much detail to retain}.
+% The first involves selecting frames through
+% relevance and diversity~\cite{tang2025aks,zhu2026focus,ye2025tstar,peng2026qca,shi2026markey,wang2026dafs}, learned policies~\cite{yu2023sevila,yu2024framevoyager,buch2025flexible,lee2025refocus}, or successive rounds of agentic search~\cite{wang2024videoagent,zou2025air}.
+% The second involves merging or pruning visual tokens~\cite{fu2025framefusion,tao2025dycoke,shao2025holitom}, or assigning
+% per-frame token budgets based on query relevance~\cite{luo2025quota}.
+% Other approaches adjust both, combining frame selection with resolution tiers~\cite{zhang2025qframe} or planning how to divide tokens between global coverage and local detail~\cite{an2026adaalloc}.
 
 % our goal
-However, none of these approaches allocates tokens
-by explicitly considering \textit{token value},
-i.e., a token's estimated contribution to answer accuracy
-when assigned to an evidence item.
-This notion allows us to address the above challenges through a new
-constrained optimization framework, where we allocate
-tokens over evidence items (including frames and subtitles)
-to maximize the aggregate token value under a limited token budget.
+Our key insight is that \emph{token efficiency requires globally allocating tokens according to their marginal value}. We make two observations. First, additional tokens exhibit diminishing returns: once a frame preserves sufficient detail, allocating more tokens yields progressively smaller accuracy gains. Second, token value depends on other allocated evidence: a frame contributes less new information when similar frames already receive tokens. Naturally, one fundamental problem is to distribute a shared token budget across frames and subtitles to maximize their aggregate utility.
+% However, none of these approaches allocates tokens
+% by explicitly considering \textit{token value},
+% i.e., a token's estimated contribution to answer accuracy
+% when assigned to an evidence item.
+% This notion allows us to address the above challenges through a new
+% constrained optimization framework, where we allocate
+% tokens over evidence items (including frames and subtitles)
+% to maximize the aggregate token value under a limited token budget.
 
 % frontpage figure
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.9\linewidth]{fig/budget_curve.pdf}
   \vspace{-5pt}
-  \caption{\name achieves the best accuracy-cost trade-off on the MLVU benchmark. Cost values are derived from OpenRouter API prices for Qwen3-VL-8B.}
+  \caption{\name achieves the best accuracy-cost trade-off. Dollar cost is derived from OpenRouter API prices for Qwen3-VL-8B.}
   \vspace{-5pt}
   \label{fig:budget}
 \end{figure}
 
 % our insights
-We estimate token value based on two key observations.
-First, query-relevant evidence deserves more tokens, but our profiling
-shows diminishing accuracy gains as an item's token allocation
-increases.
-Second, the marginal value of tokens allocated to an item
-decreases when other items already provide overlapping evidence.
+% We estimate token value based on two key observations.
+% First, query-relevant evidence deserves more tokens, but our profiling
+% shows diminishing accuracy gains as an item's token allocation
+% increases.
+% Second, the marginal value of tokens allocated to an item
+% decreases when other items already provide overlapping evidence.
 %Therefore, our token value model must capture both diminishing returns within
 %items and redundancy across items.
 %, while facilitating efficient optimization.
@@ -86,32 +91,34 @@ decreases when other items already provide overlapping evidence.
 % It ranks each frame's tokens once and keeps the top-ranked tokens up to the allocated count.
 
 % our solution
-Building on these observations, we present \textbf{\name}, a token-efficient
-video RAG framework.
-Given a query, \name (1) scores candidate evidence items,
-(2) allocates tokens through a \textit{Token Scheduler} based on token values,
-and (3) prunes items to their allocated tokens
-before passing them to the VLM
-(\cref{fig:overview}).
-As previewed in \cref{fig:budget}, \name achieves the best accuracy-cost (and accuracy-compute) trade-off.
-Realizing this performance, however, faces three challenges:
-modeling token value,
-solving the optimization efficiently,
-and reusing evidence across conversation turns.
+Building on these observations, we introduce \name, a plug-and-play framework for token-efficient video RAG (\cref{fig:overview}). Given frames and subtitles retrieved by an existing RAG system, \name captures their utility, allocates a shared token budget, and prunes each item accordingly before VLM inference. Realizing this design faces three challenges: modeling token value, optimizing allocations efficiently, and reusing evidence across conversational turns.
+% Building on these observations, we present \textbf{\name}, a token-efficient
+% video RAG framework.
+% Given a query, \name (1) scores candidate evidence items,
+% (2) allocates tokens through a \textit{Token Allocator} based on token values,
+% and (3) prunes items to their allocated tokens
+% before passing them to the VLM
+% (\cref{fig:overview}).
+% As previewed in \cref{fig:budget}, \name achieves the best accuracy-cost (and accuracy-compute) trade-off.
+% Realizing this performance, however, faces three challenges:
+% modeling token value,
+% solving the optimization efficiently,
+% and reusing evidence across conversation turns.
 %(a challenge that naturally arises from our
 %fine-grained token allocation).
 
 % challenge & solution 1
 \para{Modeling token value.}
-We fit candidate functions to accuracy measurements across token counts
-and find that a concave, saturating rational function fits best
-(\cref{fig:value}).
-Therefore, we use it to model token value and refine its parameters online
-from answer feedback.
-Our objective weights token value by query relevance and discounts
-overlapping evidence (\cref{sec:objective}).
-\name then uses attention-based pruning to retain each item's allocated
-tokens~\cite{chen2024fastv,yang2024visionzip,goyal2020powerbert,kim2022ltp}.
+An item's contribution depends not only on its relevance to the query, but more on how many tokens it receives and how much of its content is already covered by other items. We characterize downstream accuracy across token counts and find that a concave, saturating rational function well captures diminishing returns (\cref{fig:value}). We combine this modeling with query relevance and redundancy awareness, and use attention-based pruning to realize the resulting token counts (\cref{sec:objective}).
+% We fit candidate functions to accuracy measurements across token counts
+% and find that a concave, saturating rational function fits best
+% (\cref{fig:value}).
+% Therefore, we use it to model token value and refine its parameters online
+% from answer feedback.
+% Our objective weights token value by query relevance and discounts
+% overlapping evidence (\cref{sec:objective}).
+% \name then uses attention-based pruning to retain each item's allocated
+% tokens~\cite{chen2024fastv,yang2024visionzip,goyal2020powerbert,kim2022ltp}.
 
 % Second, \name maximizes this objective under the token budget through iterative water-filling.
 % Water-filling is widely used in networked systems to allocate transmit power across channels~\cite{boyd2004,yu2004iwf}: it sets a single resource price, and each channel receives power until its marginal gain falls below that price.
@@ -120,14 +127,15 @@ tokens~\cite{chen2024fastv,yang2024visionzip,goyal2020powerbert,kim2022ltp}.
 
 % challenge & solution 2
 \para{Solving token allocation.}
-We solve the token optimization problem through iterative water-filling
-(\cref{sec:allocation}).
-Each iteration discounts relevance under the current allocation, then
-sets a common token price based on marginal gains~\cite{boyd2004,yu2004iwf}.
-The Token Scheduler then averages successive token values with decreasing
-step sizes.
-We further prove an $O(1/\ell)$ objective gap to the optimum after $\ell$
-iterations.
+Accounting for redundancy makes token allocations interdependent, exploding the combination space. We develop iterative water-filling, which repeatedly updates diversity-aware relevance and solves a closed-form water-filling subproblem. Our solver converges to the global optimum of the continuous relaxation with an $O(1/\ell)$ objective gap after $\ell$ iterations (\cref{sec:allocation}).
+% We solve the token optimization problem through iterative water-filling
+% % (\cref{sec:allocation}).
+% % Each iteration discounts relevance under the current allocation, then
+% % sets a common token price based on marginal gains~\cite{boyd2004,yu2004iwf}.
+% The Token Allocator then averages successive token values with decreasing
+% step sizes.
+% We further prove an $O(1/\ell)$ objective gap to the optimum after $\ell$
+% iterations.
 % FYY: it's ok to omit the following detail in the intro
 %, treating token counts as real-valued.
 
@@ -142,16 +150,16 @@ iterations.
 % Moreover, each turn already prefills the new query on top of the cache, so \name uses the VLM's attention from the query to cached frames to update their relevance.
 
 % challenge & solution 3
-\para{Reusing evidence across turns.}
-Multi-turn queries revisit evidence~\cite{mtvideobench2025}, creating
-opportunities for key-value (KV) cache reuse.
-However, our changing token allocations complicate reuse.
-To address this, we rank tokens independently of the query,
-and prefill only missing tokens (\cref{sec:multiturn}).
-%Each evidence token thus undergoes prefill at most once.
-Since prefilling each new query also yields attention scores to cached
-items, we combine these scores with retrieval relevance through attention
-refinement to guide subsequent allocations without an additional scoring call.
+\para{Reusing evidence across turns.} Multi-turn conversations often revisit the same evidence, but different queries may require different token counts, complicating KV-cache reuse. \name addresses this through query-independent token ranking, allowing subsequent turns to prefill only tokens missing from the cache. Moreover, we leverage the VLM's attention to cached evidence to refine its relevance for subsequent allocations without additional VLM calls (\cref{sec:multiturn}).
+% Multi-turn queries revisit evidence~\cite{mtvideobench2025}, creating
+% opportunities for key-value (KV) cache reuse.
+% However, our changing token allocations complicate reuse.
+% To address this, we rank tokens independently of the query,
+% and prefill only missing tokens (\cref{sec:multiturn}).
+% %Each evidence token thus undergoes prefill at most once.
+% Since prefilling each new query also yields attention scores to cached
+% items, we combine these scores with retrieval relevance through attention
+% refinement to guide subsequent allocations for free.
 
 % At matched compute, \name improves accuracy over top-$K$ retrieval by up to 4.2\% on MLVU, LongVideoBench, and Video-MME.
 % With Qwen3-VL-8B, it matches or exceeds the accuracy of QuoTA~\cite{luo2025quota} with 2.8--3.4$\times$ less prefill compute.
@@ -170,12 +178,9 @@ refinement to guide subsequent allocations without an additional scoring call.
 % evaluation highlights
 We evaluate \name on MLVU, LongVideoBench, and Video-MME with
 Qwen3-VL-8B and InternVL3.5-4B (\cref{sec:exp}).
-With comparable compute budgets, \name improves accuracy by 0.1--7.2\%
+With comparable compute budgets (Fig.~\ref{fig:budget}), \name improves accuracy by 0.1--7.2\%
 over state-of-the-art baselines.
-On MLVU, \name also achieves the best accuracy-cost trade-off among
-the evaluated methods across token budgets.
-We also evaluate \name on the multi-turn benchmark MT-Video-Bench,
-where \name achieves 0.9--2.1\% higher accuracy than the baselines
+On the multi-turn benchmark MT-Video-Bench, \name achieves 0.9--2.1\% higher accuracy than baselines
 with 1.7--17.4$\times$ fewer TFLOPs.
 
 % \para{Contributions:}
@@ -186,11 +191,11 @@ with 1.7--17.4$\times$ fewer TFLOPs.
 % \end{itemize}
 
 % contribution summary
-\para{Contributions:}
+ Overall, this paper makes the following contributions:
 \begin{itemize}
   \item We introduce \name, a token-efficient video RAG framework that 
-  formulates token allocation as maximizing the total token value under a limited budget.
-  \item We develop a Token Scheduler that uses iterative water-filling to efficiently solve the token optimization problem.
+  formulates video understanding as a token allocation problem under a limited budget.
+  \item We develop a Token Allocator that uses iterative water-filling to efficiently solve the token optimization problem.
   \item We extend \name to multi-turn conversations through incremental allocation and attention refinement, enabling evidence reuse as allocations change.
 \end{itemize}
 
