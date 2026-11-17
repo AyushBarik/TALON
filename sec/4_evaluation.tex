@@ -3,10 +3,10 @@
 
 
 We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing their retrieval mechanisms. We evaluate its effectiveness on two retrieval pipelines:
-(i) \textit{Embedding-based RAG}, which indexes video frames sampled at 0.5 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
+(i) \textit{Embedding-based RAG}, which indexes video frames sampled at 1 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
 (ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
 
- % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the Appendix.
+ % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the supplementary material.
 
 \paragraph{Benchmarks.} 
 
@@ -39,7 +39,7 @@ For multi-turn evaluation, we enable KV-cache reuse whenever a method selects ev
 
 
 \paragraph{Metrics.}
-We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the Appendix.
+We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the supplementary material.
 % \paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
 % \begin{itemize}
 %   \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
@@ -69,7 +69,7 @@ When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage
 \end{figure}
 
 \paragraph{\name achieves the Pareto frontier across multi-turn video understanding.} 
-As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.9--2.1 accuracy points while requiring 1.7--17.4$\times$ fewer TFLOPs. Unlike prior methods that reuse only previously selected frames or exact resolution matches, \name incrementally prefills only tokens not already present in the KV cache. This finer-grained reuse substantially reduces redundant computation across conversational turns while respecting answer accuracy.
+As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.9--2.1 percentage points while requiring 1.7--17.4$\times$ fewer TFLOPs. Unlike prior methods that reuse only previously selected frames or exact resolution matches, \name incrementally prefills only tokens not already present in the KV cache. This finer-grained reuse substantially reduces redundant computation across conversational turns while respecting answer accuracy.
 
 
 \paragraph{\name introduces negligible runtime overhead.}
@@ -141,4 +141,4 @@ We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On V
 
 For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs, demonstrating that attention to cached evidence improves subsequent allocations. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
 
-Additional hyperparameter sensitivity analyses are provided in the Appendix.
+Additional hyperparameter sensitivity analyses are provided in the supplementary material.
