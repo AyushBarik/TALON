@@ -12,7 +12,7 @@
 
 % \fyy{In this section, we present \name, an efficient video RAG framework that allocates tokens under a limited budget. \Cref{fig:overview} outlines its workflow. Given a query, \name first scores the relevance of evidence items such as candidate frames and transcript events. We use these scores in a token scheduler to decide which items to retain and how many tokens to allocate to each item, accounting for the diminishing value of additional tokens. Following this allocation, we prune each item to its allocated token count and arrange the retained evidence in time order for the VLM to answer the query. For multi-turn conversations, we extend the token scheduler to reuse cached evidence, so each turn prefills only missing tokens.}
 
-\name is a video RAG framework that formulates token allocation as a constrained optimization problem. \Cref{fig:overview} illustrates its core workflow. Given a query, \name first scores the relevance of each frame and subtitle. The Token Scheduler then maximizes an allocation objective under the token budget, which determines the items to retain and the number of tokens each one receives. \name prunes each item to its allocated token count and passes the retained items to the VLM in time order. In multi-turn conversations, incremental allocation prefills only the allocation difference compared to previous turns, while attention refinement updates the relevance of cached items.
+\name is a video RAG framework that formulates token allocation as a constrained optimization problem. \Cref{fig:overview} illustrates its core workflow. Given a query, \name first scores the relevance of each frame and subtitle. The Token Allocator then maximizes an allocation objective under the token budget, which determines the items to retain and the number of tokens each one receives. \name prunes each item to its allocated token count and passes the retained items to the VLM in time order. In multi-turn conversations, incremental allocation prefills only the allocation difference compared to previous turns, while attention refinement updates the relevance of cached items.
 
 % ---------------------------------------------------------------------------------------------------------------------
 \subsection{Problem Formulation}
@@ -180,7 +180,7 @@ Now we bring back the full relevance $r_i(q,\mathbf b)$. As previously stated, w
   \tilde r_i=r_i(q)-2\eta\sum_{j}s_{ij}\,\bar v_j ,
   \label{eq:weights}
 \end{equation}
-where $j$ ranges over the items of the same modality as $i$, including $i$, and a subtitle is further scaled by $\beta$. The discount appears twice: once because the relevance of item $i$ is discounted by its similar items, and once because raising $\bar v_i$ discounts theirs in turn. Water-filling with $\tilde r_i$ in place of $r_i$ returns token counts $b_i^\star$, with none for items with $\tilde r_i\le 0$. These counts are optimal only while the discounted relevances stay fixed, so adopting them outright would shift tokens back and forth between groups of similar items. The Token Scheduler instead averages them into the current token values with a shrinking step:
+where $j$ ranges over the items of the same modality as $i$, including $i$, and a subtitle is further scaled by $\beta$. The discount appears twice: once because the relevance of item $i$ is discounted by its similar items, and once because raising $\bar v_i$ discounts theirs in turn. Water-filling with $\tilde r_i$ in place of $r_i$ returns token counts $b_i^\star$, with none for items with $\tilde r_i\le 0$. These counts are optimal only while the discounted relevances stay fixed, so adopting them outright would shift tokens back and forth between groups of similar items. The Token Allocator instead averages them into the current token values with a shrinking step:
 \begin{equation}
   \bar v_i\leftarrow(1-\gamma_\ell)\,\bar v_i+\gamma_\ell\,v(b_i^\star),\qquad \gamma_\ell=\frac{2}{\ell+1},
   \label{eq:average}
@@ -383,7 +383,7 @@ A detailed proof is provided in the supplementary material.
 Within a conversation, a user may ask several queries $q_1,\dots,q_T$ about a video. These queries are inherently correlated, and later turns often reference items prefilled by prior turns, as shown in \cref{fig:reuse}. This overlap offers ample opportunities for reuse, and thus large savings in prefill compute. But how do we enable such reuse? For Top-K, a simple patch suffices: if a relevant item has been prefilled by a prior turn, it is not prefilled again. For \name, however, the solution is less obvious. Since items are prefilled at different token counts, they rarely match a prior turn exactly. Carrying allocations across turns thus raises two questions. \circnum{1}~How can we avoid the prefill compute of content that overlaps across turns? At the same time, we identify a unique opportunity, as each query is prefilled against the past context anyway. \circnum{2}~How can we use the resulting attention scores to refine our allocations? \name answers the first with incremental allocation and the second with attention refinement.
 
 \paragraph{Incremental Allocation.}
-At turn $t$, the Token Scheduler solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
+At turn $t$, the Token Allocator solves Eq.~\eqref{eq:allocation} for the query $q_t$ and returns the token counts $b_i^{(t)}$. Let $c_i^{(t-1)}$ be the token count of item $i$ that earlier turns have prefilled, with $c_i^{(0)}=0$. Incremental allocation prefills only the allocation difference compared to previous turns:
 \begin{equation}
 \begin{aligned}
   p_i^{(t)}&=\max\!\big(0,\,b_i^{(t)}-c_i^{(t-1)}\big),\\
@@ -454,7 +454,7 @@ Retrieval scores an item against the query alone, whereas the VLM has already re
   r_i^{(t)}\propto r_i(q_t)^{1-\omega}\,a_i^{\,\omega}
   \label{eq:fusion}
 \end{equation}
-for the prefilled items, and keeps $r_i^{(t)}=r_i(q_t)$ for the others, where $\omega\in[0,1]$ sets the trust in attention. The refined relevances of the prefilled items are rescaled to keep their total, so attention only re-ranks the items that the VLM has read and takes no relevance from the items it has not. The Token Scheduler then uses $r_i^{(t)}$ in place of $r_i(q_t)$.
+for the prefilled items, and keeps $r_i^{(t)}=r_i(q_t)$ for the others, where $\omega\in[0,1]$ sets the trust in attention. The refined relevances of the prefilled items are rescaled to keep their total, so attention only re-ranks the items that the VLM has read and takes no relevance from the items it has not. The Token Allocator then uses $r_i^{(t)}$ in place of $r_i(q_t)$.
 
 \begin{comment}
 % Previous Sec. 3.4 text, kept for reference (not printed).
