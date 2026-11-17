@@ -613,7 +613,7 @@ r_i(q_t), & \text{otherwise},
 \end{cases}
 \label{eq:fusion}
 \end{equation}
-where $\mathcal C_{t-1}$ is the set of cached items, $\omega\in[0,1]$ controls the contribution of attention, and $\alpha_t$ normalizes the fused scores to preserve the total retrieval relevance of cached items. Thus, attention re-ranks previously observed evidence without changing the relevance scores of unseen candidates. Importantly, refinement updates only item relevance, leaving the calibrated token-value functions $v_i(b_i)$ unchanged. The Token Allocator then uses $\hat r_i^{(t)}$ in \cref{eq:allocation}, with incremental allocation prefilling only missing tokens.
+where $\mathcal C_{t-1}$ is the set of cached items, $\omega\in[0,1]$ controls the contribution of attention, and $\alpha_t$ normalizes the fused scores to preserve the total retrieval relevance of cached items. Thus, attention re-ranks previously observed evidence without changing the relevance scores of unseen candidates. Importantly, refinement updates only item relevance, leaving the calibrated token-value functions $v_i(b_i)$ unchanged. The Token Allocator then uses $\hat r_i^{(t)}$ in \cref{eq:allocation}, incrementally prefilling only allocation differences.
 % We combine this signal with retrieval relevance:
 % \begin{equation}
 % \hat r_i^{(t)}
