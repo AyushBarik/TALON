@@ -65,15 +65,15 @@ where $x_i$ indicates whether frame $i$ is selected. The optimum simply selects 
 
 
 \paragraph{Token Value Function.}
-Retrieval relevance estimates an item's relevance when it is fully represented, but not how much of that usefulness survives token pruning. In Eq.~\eqref{eq:allocation}, we model this using the token value functions $v_{\text{frame}}(b_i)$ and $v_{\text{text}}(b_i)$, which weigh an item's relevance by the fraction of its value preserved at token count $b_i$. To realize an arbitrary token count $b_i$, \name ranks the visual tokens of each frame once, independently of the query, by the attention they receive in the last layer of the VLM's vision encoder, summed over all heads, and keeps the top $b_i$ tokens at their original positions, following the attention-based ranking of popular token pruners~\cite{chen2024fastv,yang2024visionzip}.
+Retrieval relevance estimates an item's relevance when it is fully represented, but not how much of that usefulness survives token pruning. In Eq.~\eqref{eq:allocation}, we model this using the token value functions $v_{\text{frame}}(b_i)$ and $v_{\text{text}}(b_i)$, which weigh an item's relevance by the fraction of its value preserved at token count $b_i$. To realize an arbitrary token count $b_i$, \name ranks the visual tokens of each frame once, offline and independently of the query, by the attention they receive in the last layer of the VLM's vision encoder, summed over all heads, and keeps the top $b_i$ tokens at their original positions, following the attention-based ranking of popular token pruners~\cite{chen2024fastv,yang2024visionzip}.
 
-To define the token value functions, we measure the mean Q\&A accuracy at various token counts $b_i$, which captures the utility of a token count within VLMs and allows us to scale whole-frame relevance scores accordingly. We measure across held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, by pruning to $b_i$ across all frames of each short to medium length video before feeding them into a VLM along with the query. After normalizing the resulting accuracy measurements, we fit various functions to the resulting graph (\cref{fig:value}). We notice that a simple rational function best fits the observed data, for both visual and textual evidence:
+To define the token value functions, we measure how Q\&A accuracy changes with the token count. On held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, we prune every frame of a short to medium-length video to $b_i$ tokens, feed the frames and the query to a VLM, and record the mean accuracy at each $b_i$. We then normalize the accuracies and fit several candidate functions (\cref{fig:value}). A simple rational function fits the measurements best, for both visual and textual evidence:
 \begin{equation}
   v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},\quad
   v_{\text{text}}(b_i)=\frac{b_i}{b_i+\tau_{\text{text}}},
   \label{eq:curve}
 \end{equation}
-where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The reported fits achieve $R^2>0.85$ in our profiling experiments, demonstrating that simple functions appear sufficient over more complex methods (e.g., neural networks) for this task. However, static functions may not be robust against shifting query distributions; therefore, when query-feedback data is available, the parameters can be refitted during off-peak serving periods.
+where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The fits achieve $R^2>0.85$, which shows that a simple function suffices for this task. Because a static function may not be robust to shifting query distributions, the parameters can be refitted during off-peak serving periods when query feedback is available.
 
 
 \paragraph{Diversity-aware Relevance.}
@@ -166,7 +166,7 @@ where a larger $\eta$ yields fewer and more distinct frames, and $\eta=0$ recove
 
 
 
-Allocating discrete token counts directly involves many integer decisions that are coupled through the diversity term, making off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) infeasible with exponential time complexity in the worst case. In fact, on a sample hour-long video at 1 FPS, such solvers iterate for more than a dozen seconds, exceeding the VLM's own inference time.
+Allocating discrete token counts directly involves many integer decisions that are coupled through the diversity term. Off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) take exponential time in the worst case: on a sample hour-long video at 1 FPS, they run for more than a dozen seconds, exceeding the VLM's own inference time.
 
 Hence, we optimize a continuous relaxation instead and round its solution to whole tokens afterward. The key is to change variables from token counts to \emph{token values} $z_i=v_i(b_i)$. Because our rational token value functions are concave and the similarity matrix is positive semidefinite, this relaxation turns Eq.~\eqref{eq:allocation} into a continuous convex program in the token values. To start, we solve a simpler subproblem in which the relevance is fixed, which naturally suggests a \emph{water-filling} algorithm, and then remove this restriction and extend it to \emph{iterative water-filling} for the full objective.
 
@@ -567,7 +567,7 @@ Since each token is prefilled at most once, summing \cref{eq:incremental} over t
   \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
   \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
   \maintab
-  \caption{Accuracy in matched compute settings across state-of-the-art video understanding benchmarks across diverse baselines and backbones.}
+  \caption{Accuracy at matched compute on three video understanding benchmarks, for all baselines and both backbones.}
   \label{tab:main}
 \end{table*}
 
