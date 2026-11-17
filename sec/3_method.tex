@@ -467,7 +467,7 @@ A detailed proof is provided in the supplementary material.
 
 
 
-In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about the same video~\cite{hsieh2018focus}. Later queries often refer to evidence processed in earlier turns (\cref{fig:reuse}). Top-K can reuse a previously prefilled frame when the selection matches exactly, but token allocation is harder: the same item may receive different token counts at different turns. \name addresses this with \emph{incremental allocation}, which inserts only missing tokens, and \emph{attention refinement}, which refines the relevance of cached evidence with attention for free.
+In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about the same video~\cite{hsieh2018focus}. Later queries often refer to evidence processed in earlier turns (\cref{fig:reuse}). Top-K can reuse a previously prefilled frame when the selection matches exactly, but token allocation is harder: the same item may receive different token counts at different turns. \name addresses this with \emph{incremental allocation}, which prefills only the difference between the current allocation and all previous ones, and \emph{attention refinement}, which refines the relevance of cached evidence with attention for free.
 % These queries are inherently correlated, and later turns often reference items prefilled by prior turns, as shown in \cref{fig:reuse}. This overlap offers ample opportunities for reuse, and thus large savings in prefill compute. But how do we enable such reuse? For Top-K, a simple patch suffices: if a relevant item has been prefilled by a prior turn, it is not prefilled again. For \name, however, the solution is less obvious. Since items are prefilled at different token counts, they rarely match a prior turn exactly. Carrying allocations across turns thus raises two questions. \circnum{1}~How can we avoid the prefill compute of content that overlaps across turns? At the same time, we identify a unique opportunity, as each query is prefilled against the past context anyway. \circnum{2}~How can we use the resulting attention scores to refine our allocations? \name answers the first with incremental allocation and the second with attention refinement.
 
 \paragraph{Incremental Allocation.}
@@ -479,7 +479,7 @@ Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $
 \end{aligned}
 \label{eq:incremental}
 \end{equation}
-As in standard multi-turn serving, the KV cache retains the context of all earlier turns. Evidence prefilled at an earlier turn therefore remains available to later queries at no additional prefill cost, and the budget $B$ applies to the evidence allocated at each turn. Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. As shown in \cref{fig:prefill}, incremental allocation thereby recovers a large share of the available reuse opportunities.
+As the KV cache is typically retained across turns in standard serving systems, evidence prefilled at an earlier turn remains available for later queries to leverage, and the budget $B$ applies to the evidence allocated at each turn. Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. As shown in \cref{fig:prefill}, incremental allocation thereby recovers a large share of the available reuse opportunities.
 
 \begin{figure}[t]
   \centering
@@ -572,7 +572,7 @@ Since each token is prefilled at most once, summing \cref{eq:incremental} over t
 \end{table*}
 
 \paragraph{Attention Refinement.}
-Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. Since the query must be prefilled in any case, \name prefills $q_t$ first, over the cached context, and measures the attention from its query tokens to each cached item at no additional inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. Since attention is unavailable for uncached items, we refine only the relevance of previously seen evidence:
+Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. Since the query must be prefilled in any case, \name prefills $q_t$ before allocating, which gives access to the attention from its query tokens to each cached item at no additional inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. Since attention is unavailable for uncached items, we refine only the relevance of previously seen evidence:
 \begin{equation}
 \hat r_i^{(t)}=
 \begin{cases}
