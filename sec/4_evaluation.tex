@@ -4,27 +4,27 @@
 
 We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing them. We evaluate its effectiveness on two retrieval pipelines:
 (i) \textit{Embedding-based RAG}, which indexes video frames sampled at 1 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
-(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure. In both cases, \name allocates a shared token budget across the retrieved evidence without modifying the underlying retrieval pipeline.
+(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure.
 
  % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the supplementary material.
 
 \paragraph{Benchmarks.} 
 
 We evaluate on three widely used single-turn, multiple-choice video understanding benchmarks and one multi-turn, open-ended benchmark:
-\begin{itemize}
-\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours, spanning topic reasoning, anomaly recognition, needle QA, ego reasoning, plot QA, action order, and action count.
+\begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
+\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours, spanning seven tasks from topic reasoning to action counting.
 
-\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour, covering 17 perception (e.g., single-scene events, objects, attributes) and relation (e.g., cross-scene order, tracking, attribute changes) tasks.
+\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour, covering 17 perception and relation tasks.
 
-\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos, divided into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets, spanning 12 tasks across perception, reasoning, OCR, and counting.
+\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos, divided into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets.
 
-\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes, covering object reference, memory recall, content summary, and proactive interaction. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
+\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
 \end{itemize}
 
 
 \paragraph{Baselines.}
 We compare \name against uniform sampling and five recent frame selection and token allocation methods, all operating under the same token budget. 
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
 \item \textbf{Top-K}: Retrieves the $K$ frames with the highest query--frame semantic similarity scores.
 
 \item \textbf{FOCUS}~\cite{zhu2026focus}: Selects $K$ frames through multi-armed bandit exploration over temporal clips.
@@ -41,7 +41,7 @@ For multi-turn evaluation, we enable KV-cache reuse whenever a method selects ev
 \paragraph{Metrics.}
 We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the supplementary material.
 % \paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
-% \begin{itemize}
+% \begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
 %   \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
 %   \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips. Similar to Top-K it skips prefilling already seen frames across turns.
 %   \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers in a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution. We modify it to skip prefilling of already seen frames of the same exact resolution.
@@ -140,5 +140,3 @@ Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and
 We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On Video-MME, removing subtitle allocation decreases overall accuracy by 3.6 points, with a particularly large 7.3-point drop on long videos. Even without subtitle allocation, \name outperforms all similarly budgeted, non-agentic frame selection baselines by 0.6--3.6 points. Removing the diversity term reduces accuracy by 0.7 points, confirming the benefit of accounting for redundant evidence during allocation.
 
 For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs, demonstrating that attention to cached evidence improves subsequent allocations. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
-
-Additional hyperparameter sensitivity analyses are provided in the supplementary material.
