@@ -1,0 +1,81 @@
+{
+ "omega": [
+  {
+   "value": 0.0,
+   "acc": 57.777777777777786,
+   "tflops": 314.66264252440834,
+   "conversations": 200,
+   "complete": true
+  },
+  {
+   "value": 0.25,
+   "acc": 58.8,
+   "tflops": 292.97971059387777,
+   "conversations": 200,
+   "complete": true
+  },
+  {
+   "value": 0.5,
+   "acc": 58.44444444444444,
+   "tflops": 274.5571828362317,
+   "conversations": 200,
+   "complete": true
+  },
+  {
+   "value": 0.75,
+   "acc": 58.22222222222222,
+   "tflops": 269.4504893102438,
+   "conversations": 200,
+   "complete": true
+  },
+  {
+   "value": 1.0,
+   "acc": 58.577777777777776,
+   "tflops": 283.5959612960512,
+   "conversations": 200,
+   "complete": true
+  }
+ ],
+ "beta": [
+  {
+   "value": 0.0,
+   "acc": 68.0,
+   "tflops": 233.93016336311638,
+   "run": "4cc9ce87-af7f-4f0e-8302-27190a29e607",
+   "questions": 150,
+   "complete": true
+  },
+  {
+   "value": 0.25,
+   "acc": 78.0,
+   "tflops": 232.6288692581171,
+   "run": "d05ddbde-2389-4fa3-9d10-b79298020728",
+   "questions": 150,
+   "complete": true
+  },
+  {
+   "value": 0.5,
+   "acc": 80.0,
+   "tflops": 232.3385305904162,
+   "run": "a020fff2-0939-4858-88ea-d04cd7a9075f",
+   "questions": 150,
+   "complete": true
+  },
+  {
+   "value": 1.0,
+   "acc": 80.0,
+   "tflops": 232.00109683070636,
+   "run": "04d825d1-411f-4da9-ad50-353f98cd872c",
+   "questions": 150,
+   "complete": true
+  },
+  {
+   "value": 2.0,
+   "acc": 79.33333333333333,
+   "tflops": 231.66644815550805,
+   "run": "42100333-b480-4ad3-9cb1-e2e87940ef68",
+   "questions": 150,
+   "complete": true
+  }
+ ]
+}
