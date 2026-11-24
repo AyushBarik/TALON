@@ -1,22 +1,17 @@
-% This file is used in two ways. supp.tex builds it as the separate supplementary material of the submission.
-% main.tex, which defines \appendixmode, attaches it after the references as the appendix of the single-PDF preprint.
 \providecommand{\mainpaper}{main paper}
 \ifdefined\appendixmode
-  % Appendix: lettered sections after the references; figures, tables and equations continue on their own.
   \appendix
   \section*{Appendix}
   This appendix provides the derivations and proofs omitted from the \mainpaper{} (\cref{sec:supp-proofs}), implementation details (\cref{sec:supp-impl}), and additional results (\cref{sec:supp-results}).
 \else
   \maketitlesupplementary
-  % Sections are lettered; figures, tables, and equations continue the numbering of the submitted main paper
-  % (which ends at Figure 8, Table 3, and Eq. (11)).
   \setcounter{figure}{8}\setcounter{table}{3}\setcounter{equation}{11}
   \setcounter{section}{0}\renewcommand{\thesection}{\Alph{section}}
 
   In this supplementary material, we provide the derivations and proofs omitted from the \mainpaper{} (\cref{sec:supp-proofs}), implementation details (\cref{sec:supp-impl}), and additional results (\cref{sec:supp-results}).
 \fi
-\raggedbottom  % columns end where the text ends; the kit's \flushbottom stretched short paragraphs apart
-\renewcommand{\qedsymbol}{}\renewcommand{\qed}{}  % no end-of-proof square and no empty line after a proof; proofs end with a sentence
+\raggedbottom  %
+\renewcommand{\qedsymbol}{}\renewcommand{\qed}{}  %
 
 \section{Derivations and Proofs}
 \label{sec:supp-proofs}
@@ -314,7 +309,6 @@ The best answer is:
 \label{fig:supp-prompt}
 \end{figure}
 
-% Declared before B.3 so that Fig. 10 takes the top of the next page, before Section C.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/category_radar.pdf}
@@ -341,7 +335,6 @@ We compare all methods under the same conditions, so that differences in accurac
 \section{Additional Results}
 \label{sec:supp-results}
 
-% Declared at the start of C so that Fig. 11 takes the top of the page that holds C.3.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{fig/sens_panels.pdf}

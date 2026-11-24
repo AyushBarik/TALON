@@ -6,7 +6,6 @@ We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and In
 (i) \textit{Embedding-based RAG}, which indexes video frames sampled at 1 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
 (ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure.
 
- % As such methods oftentimes retrieve top k graph nodes represented by text or frames ~\name can easily allocate over these nodes. We report prefill compute (TFLOPs) and accuracy as our main metrics, where TFLOPs can be controlled through a token budget. TFLOPs are summed over every model call that a method makes for a question, including frame scorers and planning calls, which places single-call and multi-call methods on one scale. Experiments were run on NVIDIA A100 GPUs. Due to space limitations further implementation details, hyperparameter values, and a sensitivity analysis are provided in the supplementary material.
 
 \paragraph{Benchmarks.} 
 
@@ -40,14 +39,6 @@ For multi-turn evaluation, we enable KV-cache reuse whenever a method selects ev
 
 \paragraph{Metrics.}
 We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Offline indexing, including frame encoding and token ranking, runs once per video and is shared by all queries, so we exclude it for all methods. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the \suppmaterial.
-% \paragraph{Baselines.} We compare \name against uniform sampling and several state-of-the-art baselines that decide which frames from our RAG system reach the VLM and how many tokens each frame receives.
-% \begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
-%   \item Top-K: Selects the top K frames with the highest semantic similarity scores. Across multi-turn Q\&A we implement it to skip prefilling already seen frames from previous turns.
-%   \item FOCUS~\cite{zhu2026focus}: Selects K frames by multi-armed bandit exploration over temporal clips. Similar to Top-K it skips prefilling already seen frames across turns.
-%   \item Q-Frame~\cite{zhang2025qframe}: Samples frames with a probability proportional to query relevance and bins them in three tiers in a 2:1:1 ratio of the token budget: the top-ranked frames at high resolution, the next at medium resolution, and the rest at low resolution. We modify it to skip prefilling of already seen frames of the same exact resolution.
-%   \item QuoTA~\cite{luo2025quota}: Rewrites the query as a list of relevant entities, before using a VLM to score each frame based on the probability of containing the entity. Each frame then receives a share of the token budget in proportion to its score, then its tokens are downsampled towards it. As it downsamples from the entire token set, it cannot skip prefilling of any frames across turns.
-%   \item AdaAlloc~\cite{an2026adaalloc} (contemporary): Lets an agent plan how to split a token budget between a low-resolution tier and a high-resolution tier. We modify it to skip prefilling of frames that exactly match the resolution tier.
-% \end{itemize}
 
 \subsection{Main Results}
 \label{sec:exp-main}
@@ -58,7 +49,6 @@ As shown in \cref{tab:main}, \name achieves the highest overall accuracy across 
 
 When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage points on MLVU and Video-MME, respectively, by allocating tokens across more frames at comparable compute, while accuracy decreases by 0.7 points on LVB. These results demonstrate that \name complements existing RAG designs.
 
-% As shown in \cref{tab:main}, \name attains the best accuracy on all three benchmarks, improving over all compute-matched baselines by 0.9--7.2 points with Qwen3-VL-8B and by 0.1--6.5 points with InternVL3.5-4B. QuoTA is the only baseline that approaches this accuracy, yet its VLM-based frame scorer requires 2.8--3.4$\times$ more TFLOPs. \name also improves the accuracy of VideoRAG by X points. These gains hold across multiple token budgets (\cref{fig:multiturn}a).
 
 \begin{figure}[t]
   \centering
@@ -76,12 +66,6 @@ As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.3--1.5 p
 Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and token pruning together run on the order of tens of milliseconds per query, which is negligible compared with VLM inference. 
 
 
-% \begin{figure}[t]
-%   \centering
-%   \includegraphics[width=\linewidth]{fig/videomme_radar.pdf}
-%   \caption{\TODO{}}
-%   \label{fig:radar}
-% \end{figure}
 
 
 \begin{table}[t]
@@ -107,20 +91,18 @@ Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and
     \hspace{0.5em}w/o water-filling        & 229 & 76.1 & 82.3 & 76.1 & 69.9 \\
     \bottomrule
   \end{tabular}}%
-  % Equal gaps that make the table exactly \columnwidth (12 column sides).
   \sbox0{\setlength{\tabcolsep}{0pt}\abltab}%
   \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/11\relax}%
-  \xdef\ablsep{\the\tabcolsep}% Table 3 reuses this gap, so both tables start at the same indent
+  \xdef\ablsep{\the\tabcolsep}%
   \abltab
   \caption{Ablation studies across single-turn Q\&A.}
   \label{tab:ablation}
 
-  \vspace{8pt}  % Tables 2 and 3 share one float so that both stay in this column
+  \vspace{8pt}  %
 
   \centering
   \footnotesize
   \renewcommand{\arraystretch}{1.2}
-  % Same side gap as Table 2 (\ablsep); the two number columns share the remaining width.
   \setlength{\tabcolsep}{\ablsep}%
   \settowidth{\dimen0}{\hspace{0.5em}w/o incremental allocation}%
   \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
