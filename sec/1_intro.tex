@@ -92,6 +92,14 @@ Our key insight is that \emph{token efficiency requires globally allocating toke
 % It ranks each frame's tokens once and keeps the top-ranked tokens up to the allocated count.
 
 % our solution
+% case-study figure: declared here so that it takes the top of page 2
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/case_study.pdf}
+  \caption{Varying the tokens per frame allows \name to retain evidence from more frames within a shared budget.}
+  \label{fig:case}
+\end{figure}
+
 Building on these observations, we introduce \name, a plug-and-play framework for token-efficient video RAG (\cref{fig:overview}). Given frames and subtitles retrieved by an existing RAG system, \name captures their utility, allocates a shared token budget, and prunes each item accordingly before VLM inference. Realizing this design faces two challenges: modeling token value and optimizing allocations efficiently. Moreover, users rarely ask a single question about a video, and a conversation that spans multiple turns raises a third challenge: reusing evidence as allocations change across turns.
 % Building on these observations, we present \textbf{\name}, a token-efficient
 % video RAG framework.
