@@ -127,7 +127,7 @@
 \foreach \k in {1,...,5} {\node[inner sep=0pt] at ({0.91+(\k-1)*1.42},4.175) {\includegraphics[width=1.2cm]{fig/frames/frame\k.jpg}};}
 \fill[txt!35, rounded corners=1pt] (0.2,3.48) rectangle (7.3,3.68);
 \foreach \x/\l in {0.5/1.0, 1.9/0.8, 3.1/1.2, 4.7/0.9, 6.0/0.9} {\draw[txt!85!black, line width=0.5pt] (\x,3.58) -- ++(\l,0);}
-\node[qa, anchor=west] (q) at (0.2,2.6) {\textbf{Q:} Color of\\the last car?};
+\node[qa, anchor=west] (q) at (0.2,2.6) {\textbf{Q:} Color of\\the first car?};
 \node[soft, cylinder, shape border rotate=90, aspect=0.28, fill=modelA, draw=modelD, line width=0.5pt, align=center,
   minimum width=1.5cm, minimum height=1.0cm, inner sep=1pt, font=\sffamily\scriptsize, text=modelT, anchor=west] (db) at ($(q.east)+(0.45,0)$) {Frame\\database};
 \draw[arr] (q.east) -- (q.east -| db.west);
@@ -196,7 +196,7 @@
 \nnet{14.45,0.76}{0.7}{0.4}
 \node[font=\sffamily\small, text=modelT] at (14.45,0.76) {VLM};
 \snowflake{($(vlm.south east)+(-0.19,0.19)$)}{0.11}
-\node[qa, inner sep=4pt, anchor=east] (ans) at (17.2,0.76) {\textbf{A:} Blue};
+\node[qa, inner sep=4pt, anchor=east] (ans) at (17.2,0.76) {\textbf{A:} White};
 \draw[arr] (2.18,0.76) -- (2.89,0.76);
 \draw[arr] (4.61,0.76) -- (rk.west |- 0,0.76);
 \draw[arr] (rk.east |- 0,0.76) -- (11.14,0.76);
