@@ -13,7 +13,7 @@
 
 
 
-\name is a plug-and-play framework that makes video RAG token-efficient. As shown in \Cref{fig:overview}, given a query, \name scores the relevance of each frame and subtitle, optimizes their allocation under a token budget, and retains the highest-ranked tokens from each selected item. Its Token Allocator exploits diminishing returns in token value and discounts redundant evidence. For multi-turn conversations, \name further reuses tokens already in the KV cache and refines their relevance using the VLM's attention.
+\name is a plug-and-play framework that makes video RAG token-efficient. As shown in \cref{fig:overview}, given a query, \name scores the relevance of each frame and subtitle, optimizes their allocation under a token budget, and retains the highest-ranked tokens from each selected item. Its Token Allocator exploits diminishing returns in token value and discounts redundant evidence. For multi-turn conversations, \name further reuses tokens already in the KV cache and refines their relevance using the VLM's attention.
 
 
 % ---------------------------------------------------------------------------------------------------------------------
