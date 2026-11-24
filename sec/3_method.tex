@@ -73,7 +73,7 @@ To define the token value functions, we measure how Q\&A accuracy changes with t
   v_{\text{text}}(b_i)=\frac{b_i}{b_i+\tau_{\text{text}}},
   \label{eq:curve}
 \end{equation}
-where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The fits achieve $R^2>0.85$, which shows that a simple function suffices for this task. Because a static function may not be robust to shifting query distributions, the parameters can be refitted during off-peak serving periods when query feedback is available.
+where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The fits achieve $R^2>0.85$, which shows that a simple function suffices for this task over more complex methods (e.g., neural networks). Because a static function may not be robust to shifting query distributions, the parameters can be refitted during off-peak serving periods when query feedback (e.g., accuracy) is available.
 
 
 \paragraph{Diversity-aware Relevance.}
@@ -85,7 +85,7 @@ The retrieval relevance $r_i(q)$ captures relevance but assumes that items are i
 \end{aligned}
 \label{eq:cond}
 \end{equation}
-where $\eta\geq0$ controls the redundancy penalty. The sums include $j=i$, so the similarity matrix remains positive semidefinite.
+where $\eta\geq0$ controls the redundancy penalty.
 
 Substituting \cref{eq:curve,eq:cond} into \cref{eq:allocation} finally yields the full allocation objective which rewards query-relevant evidence, accounts for diminishing token value, and discourages redundant allocations.
 
