@@ -8,8 +8,10 @@ fig/case/records.jsonl holds the two logged per-question records (frames, tokens
 fig/case/frames/<index>.jpg are the frames shown (640x360).
 
 RAG shows 8 of the frames it sent, hand-picked so that none shows the air gun (RAG_FRAMES). Lembas shows 12: its two highest-allocated frames plus
-frames evenly spaced over the rest, in time order. Frames are crisp; a Lembas frame that received fewer tokens is
-pixelated in visibly distinct levels (BLOCKS), coarser for fewer tokens.
+frames evenly spaced over the rest, in time order. RAG frames are shown whole. A Lembas frame is shown as the 8x4 token
+grid of Figure 3 with its lowest-ranked tokens dropped (whitened): it keeps the share tokens / (tokens of one RAG frame)
+of its cells, capped at all of them. fig/case/keep_order.json gives the rank of the cells (fig/case_keep_order.py, the
+attention recipe of fig/attn_map.py).
 
 Regenerate:  uv run --no-project --with matplotlib --with numpy --with pillow python fig/case_study.py
 """
@@ -32,20 +34,34 @@ GOLD = "C"
 ROWS = [("naive", "RAG", 4), ("talon_nodiv", "Lembas", 6)]  # (record, header, frames per row)
 RAG_FRAMES = [1, 14, 47, 77, 86, 91, 109, 111]  # all among the frames RAG sent; none shows the air gun
 N_TOP = 2  # Lembas's highest-allocated frames always shown
-# (minimum tokens, block size in px of a 640x360 frame): sharp, slight, moderate, strong, very strong
-BLOCKS = [(160, 1), (128, 12), (64, 16), (32, 24), (0, 40)]
+GRID_COLS, GRID_ROWS = 8, 4  # token grid, as in Figure 3
+DROP_OPACITY = 0.88  # white veil over a dropped token, as in Figure 3
+GRID_PX = 4  # white grid line, in px of a 640x360 frame
+EDGE_PX, EDGE = 3, 140  # gray outline of a token grid, as in Figure 3 (px per side, gray level)
 FRAME_W, FRAME_H = 640, 360
 INK, GRAY, RULE = "#111111", "#6B6B6B", "#4D4D4D"
 BAND = "#EFEFEF"
 RED, GREEN = "#C0392B", "#1E8449"
 
 
-def frame(index, tokens, pixelate):
-    im = Image.open(os.path.join(CASE, "frames", f"{index:03d}.jpg")).convert("RGB")
-    block = next(b for t, b in BLOCKS if tokens >= t) if pixelate else 1
-    if block > 1:
-        im = im.resize((FRAME_W // block, FRAME_H // block), Image.BILINEAR).resize((FRAME_W, FRAME_H), Image.NEAREST)
-    return np.asarray(im)
+def frame(index, share=None, order=None):
+    """One frame; with `share`, the token grid that keeps that share of its cells, best-ranked first."""
+    im = np.asarray(Image.open(os.path.join(CASE, "frames", f"{index:03d}.jpg")).convert("RGB"), dtype=float)
+    if share is None:
+        return im.astype(np.uint8)
+    cells = GRID_COLS * GRID_ROWS
+    kept = max(1, round(cells * min(1.0, share)))
+    cw, ch = FRAME_W // GRID_COLS, FRAME_H // GRID_ROWS
+    for c in order[kept:]:  # dropped tokens
+        r, k = divmod(c, GRID_COLS)
+        im[r * ch:(r + 1) * ch, k * cw:(k + 1) * cw] = (1 - DROP_OPACITY) * im[r * ch:(r + 1) * ch, k * cw:(k + 1) * cw] + DROP_OPACITY * 255
+    h = GRID_PX // 2
+    for k in range(1, GRID_COLS):
+        im[:, k * cw - h:k * cw + h] = 255
+    for r in range(1, GRID_ROWS):
+        im[r * ch - h:r * ch + h, :] = 255
+    im[:EDGE_PX], im[-EDGE_PX:], im[:, :EDGE_PX], im[:, -EDGE_PX:] = EDGE, EDGE, EDGE, EDGE
+    return im.round().astype(np.uint8)
 
 
 def shown(rec, n, top):
@@ -56,15 +72,19 @@ def shown(rec, n, top):
     return sorted(order + even)
 
 
-def mosaic(rec, per_row, ours):
+def mosaic(rec, per_row, ours, full, orders):
+    """`full`: the token count at which a frame is shown whole (the tokens of one RAG frame)."""
     pos = shown(rec, 2 * per_row, N_TOP) if ours else [rec["frames"].index(f) for f in RAG_FRAMES]
-    tiles = [frame(rec["frames"][i], rec["tokens_per_frame"][i], ours) for i in pos]
+    tiles = [frame(rec["frames"][i], rec["tokens_per_frame"][i] / full, orders[str(rec["frames"][i])]) if ours
+             else frame(rec["frames"][i]) for i in pos]
     return np.vstack([np.hstack(tiles[r * per_row:(r + 1) * per_row]) for r in range(2)])
 
 
 def main():
     use_style(family="serif")
     recs = {r["method"]: r for r in map(json.loads, open(os.path.join(CASE, "records.jsonl")))}
+    orders = json.load(open(os.path.join(CASE, "keep_order.json")))
+    full = float(np.median(recs["naive"]["tokens_per_frame"]))
     m, inner = 0.03, COLUMN - 0.06
     grid_h = [inner * 2 * FRAME_H / FRAME_W / k for _, _, k in ROWS]
     q_h, head_h, ans_h, gap = 0.36, 0.16, 0.16, 0.06
@@ -96,7 +116,7 @@ def main():
         fig.text(0.5, fy(y - head_h / 2), header, ha="center", va="center", fontsize=7.5, weight="bold", color=INK)
         y -= head_h
         ax = fig.add_axes([fx(m), fy(y - g), fx(inner), fy(g)])
-        ax.imshow(mosaic(rec, per_row, ours), interpolation="none", aspect="auto")
+        ax.imshow(mosaic(rec, per_row, ours, full, orders), interpolation="none", aspect="auto")
         ax.set_xticks([]), ax.set_yticks([])
         for s in ax.spines.values():
             s.set_linewidth(0.6), s.set_color(RULE)

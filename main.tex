@@ -4,8 +4,8 @@
 
 %%%%%%%%% PAPER TYPE  - PLEASE UPDATE FOR FINAL VERSION
 % \usepackage{cvpr}              % To produce the CAMERA-READY version
-\usepackage[review]{cvpr}      % To produce the REVIEW version
-% \usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
+% \usepackage[review]{cvpr}      % To produce the REVIEW version
+\usepackage[pagenumbers]{cvpr} % To force page numbers, e.g. for an arXiv version
 
 % Import additional packages in the preamble file, before hyperref
 \input{preamble}
@@ -28,10 +28,13 @@
 \title{Efficient Video Retrieval Augmented Generation via Token Allocation}
 
 %%%%%%%%% AUTHORS - PLEASE UPDATE (hidden in review mode)
-\author{Anonymous CVPR submission}
+\author{Ayush Barik \qquad Fan Lai$^{\dagger}$ \qquad Francis Y. Yan$^{\dagger}$\\
+University of Illinois Urbana-Champaign}
 
 \begin{document}
 \maketitle
+% Author note of the non-anonymous version; the review version prints no author names and no note.
+\iftoggle{cvprfinal}{\begingroup\renewcommand{\thefootnote}{$\dagger$}\footnotetext{Equal advising contribution.}\endgroup}{}
 \input{sec/0_abstract}    
 \input{sec/1_intro}
 \input{sec/2_related}
