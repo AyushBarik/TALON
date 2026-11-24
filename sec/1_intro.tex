@@ -21,6 +21,17 @@ Vision-language models (VLMs) have achieved remarkable progress in video underst
 % Nevertheless, constructing these graphs typically requires expensive video
 % ingestion even for sporadic user queries.
 
+% frontpage figure: declared after the first paragraph, which is always in the left column of page 1, so that the
+% figure takes the top of the right column of page 1 with and without the author block
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\linewidth]{fig/budget_curve.pdf}
+  \vspace{-5pt}
+  \caption{\name achieves the best accuracy-cost trade-off. Dollar cost is derived from OpenRouter API prices for Qwen3-VL-8B.}
+  \vspace{-5pt}
+  \label{fig:budget}
+\end{figure}
+
 Retrieval-augmented generation (RAG) addresses this challenge by retrieving relevant frames rather than processing the entire video. Embedding-based RAG retrieves frames based on semantic similarity to the query, while graph-based RAG connects entities and events to retrieve related evidence~\cite{luo2024videorag,ren2025videorag,shen2025vgent,yan2025ava}. However, these optimizations select relevant evidence items yet often overlook an inherent distinction: different queries require different amounts of evidence and visual detail. For example, identifying a small object may require fine-grained information from a particular frame, whereas reconstructing an event sequence may benefit from broader temporal coverage. 
 % RAG and static baselines
 % Existing systems address these constraints through retrieval-augmented
@@ -56,16 +67,6 @@ Our key insight is that \emph{token efficiency requires globally allocating toke
 % constrained optimization framework, where we allocate
 % tokens over evidence items (including frames and subtitles)
 % to maximize the aggregate token value under a limited token budget.
-
-% frontpage figure
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.9\linewidth]{fig/budget_curve.pdf}
-  \vspace{-5pt}
-  \caption{\name achieves the best accuracy-cost trade-off. Dollar cost is derived from OpenRouter API prices for Qwen3-VL-8B.}
-  \vspace{-5pt}
-  \label{fig:budget}
-\end{figure}
 
 % our insights
 % We estimate token value based on two key observations.
