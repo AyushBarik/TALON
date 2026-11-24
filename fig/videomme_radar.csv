@@ -1,25 +1,85 @@
-model,method,group,accuracy
-Qwen3-VL-8B,RAG,Reasoning,70.37
-Qwen3-VL-8B,RAG,OCR Problems,79.86
-Qwen3-VL-8B,RAG,Information Synopsis,85.76
-Qwen3-VL-8B,RAG,Perception,80.66
-Qwen3-VL-8B,RAG,Counting Problem,52.61
-Qwen3-VL-8B,RAG,Recognition,74.06
-Qwen3-VL-8B,Top-K,Reasoning,69.14
-Qwen3-VL-8B,Top-K,OCR Problems,81.29
-Qwen3-VL-8B,Top-K,Information Synopsis,87.62
-Qwen3-VL-8B,Top-K,Perception,82.18
-Qwen3-VL-8B,Top-K,Counting Problem,51.12
-Qwen3-VL-8B,Top-K,Recognition,74.66
-Qwen3-VL-8B,Q-Frame,Reasoning,68.31
-Qwen3-VL-8B,Q-Frame,OCR Problems,76.98
-Qwen3-VL-8B,Q-Frame,Information Synopsis,84.21
-Qwen3-VL-8B,Q-Frame,Perception,79.76
-Qwen3-VL-8B,Q-Frame,Counting Problem,52.24
-Qwen3-VL-8B,Q-Frame,Recognition,71.06
-Qwen3-VL-8B,QuoTA,Reasoning,71.71
-Qwen3-VL-8B,QuoTA,OCR Problems,79.14
-Qwen3-VL-8B,QuoTA,Information Synopsis,87.62
-Qwen3-VL-8B,QuoTA,Perception,84.59
-Qwen3-VL-8B,QuoTA,Counting Problem,51.49
-Qwen3-VL-8B,QuoTA,Recognition,74.96
+model,method,group,accuracy,source
+Qwen3-VL-8B,Uniform sampling,Reasoning,68.72,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,OCR Problems,80.58,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,Information Synopsis,85.45,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,Perception,80.97,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,Counting Problem,55.22,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,Recognition,74.21,runs/unisample_full/unisample
+Qwen3-VL-8B,Top-K,Reasoning,69.14,bench_runs/uniform
+Qwen3-VL-8B,Top-K,OCR Problems,81.29,bench_runs/uniform
+Qwen3-VL-8B,Top-K,Information Synopsis,87.62,bench_runs/uniform
+Qwen3-VL-8B,Top-K,Perception,82.18,bench_runs/uniform
+Qwen3-VL-8B,Top-K,Counting Problem,51.12,bench_runs/uniform
+Qwen3-VL-8B,Top-K,Recognition,74.66,bench_runs/uniform
+Qwen3-VL-8B,Q-Frame,Reasoning,68.31,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,OCR Problems,76.98,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,Information Synopsis,84.21,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,Perception,79.76,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,Counting Problem,52.24,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,Recognition,71.06,bench_runs/qframe
+Qwen3-VL-8B,QuoTA,Reasoning,71.71,quota_full/quota
+Qwen3-VL-8B,QuoTA,OCR Problems,79.14,quota_full/quota
+Qwen3-VL-8B,QuoTA,Information Synopsis,87.62,quota_full/quota
+Qwen3-VL-8B,QuoTA,Perception,84.59,quota_full/quota
+Qwen3-VL-8B,QuoTA,Counting Problem,51.49,quota_full/quota
+Qwen3-VL-8B,QuoTA,Recognition,74.96,quota_full/quota
+Qwen3-VL-8B,FOCUS,Reasoning,66.15,focus_full/focus
+Qwen3-VL-8B,FOCUS,OCR Problems,77.70,focus_full/focus
+Qwen3-VL-8B,FOCUS,Information Synopsis,85.45,focus_full/focus
+Qwen3-VL-8B,FOCUS,Perception,81.87,focus_full/focus
+Qwen3-VL-8B,FOCUS,Counting Problem,47.39,focus_full/focus
+Qwen3-VL-8B,FOCUS,Recognition,70.16,focus_full/focus
+Qwen3-VL-8B,AdaAlloc,Reasoning,66.56,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,Perception,77.64,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,Counting Problem,51.12,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,Recognition,74.06,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,OCR Problems,76.98,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,Information Synopsis,84.83,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,Lembas (Ours),Reasoning,75.93,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+Qwen3-VL-8B,Lembas (Ours),Perception,85.20,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+Qwen3-VL-8B,Lembas (Ours),Counting Problem,52.61,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+Qwen3-VL-8B,Lembas (Ours),Recognition,77.51,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+Qwen3-VL-8B,Lembas (Ours),OCR Problems,84.17,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+Qwen3-VL-8B,Lembas (Ours),Information Synopsis,90.71,talon270_full/abl_talon_nodiv_resize_s0of2;talon270_full/abl_talon_nodiv_resize_s1of2
+InternVL3.5-4B,Uniform sampling,Reasoning,59.57,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,OCR Problems,73.38,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,Information Synopsis,83.90,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,Perception,76.74,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,Counting Problem,42.54,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,Recognition,67.62,unisample_ivl_full/unisample
+InternVL3.5-4B,Top-K,Reasoning,63.79,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,OCR Problems,75.54,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,Information Synopsis,85.45,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,Perception,77.64,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,Counting Problem,43.66,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,Recognition,71.51,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Q-Frame,Reasoning,61.93,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,OCR Problems,71.22,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,Information Synopsis,80.19,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,Perception,76.74,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,Counting Problem,45.90,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,Recognition,66.87,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,QuoTA,Reasoning,61.73,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,OCR Problems,62.59,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,Information Synopsis,80.19,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,Perception,74.92,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,Counting Problem,41.79,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,Recognition,66.87,quota_ivl_full/quota_ivl
+InternVL3.5-4B,FOCUS,Reasoning,62.65,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,OCR Problems,69.78,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,Information Synopsis,82.35,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,Perception,75.23,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,Counting Problem,45.90,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,Recognition,67.32,focus_ivl_full/focus
+InternVL3.5-4B,AdaAlloc,Reasoning,63.17,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,Perception,77.64,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,Counting Problem,44.40,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,Recognition,69.42,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,OCR Problems,71.94,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,Information Synopsis,86.69,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,Lembas (Ours),Reasoning,70.58,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),OCR Problems,80.58,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),Information Synopsis,88.54,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),Perception,76.74,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),Counting Problem,46.27,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),Recognition,72.56,ivl_pruner_pilot/abl_talon_nodiv_T0.3

@@ -1,0 +1,295 @@
+model,method,group,accuracy,n,source
+Qwen3-VL-8B,Uniform sampling,E2O,72.31,65,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,E3E,72.34,94,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,O2E,70.11,87,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,O3O,66.67,66,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,S2A,78.41,88,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,S2E,69.89,93,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,S2O,61.11,72,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,SAA,65.28,72,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,SOS,71.60,81,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,SSS,50.52,97,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,T2A,72.15,79,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,T2E,66.15,65,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,T2O,73.68,76,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,T3E,53.42,73,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,T3O,64.86,74,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,TAA,54.88,82,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,TOS,41.10,73,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,dur_15,80.95,189,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,dur_3600,55.50,564,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,dur_60,78.49,172,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,dur_600,65.29,412,runs/unisample_full/unisample
+Qwen3-VL-8B,Top-K,E2O,75.38,65,bench_runs/uniform
+Qwen3-VL-8B,Top-K,E3E,69.15,94,bench_runs/uniform
+Qwen3-VL-8B,Top-K,O2E,71.26,87,bench_runs/uniform
+Qwen3-VL-8B,Top-K,O3O,66.67,66,bench_runs/uniform
+Qwen3-VL-8B,Top-K,S2A,84.09,88,bench_runs/uniform
+Qwen3-VL-8B,Top-K,S2E,67.74,93,bench_runs/uniform
+Qwen3-VL-8B,Top-K,S2O,62.50,72,bench_runs/uniform
+Qwen3-VL-8B,Top-K,SAA,59.72,72,bench_runs/uniform
+Qwen3-VL-8B,Top-K,SOS,70.37,81,bench_runs/uniform
+Qwen3-VL-8B,Top-K,SSS,46.39,97,bench_runs/uniform
+Qwen3-VL-8B,Top-K,T2A,73.42,79,bench_runs/uniform
+Qwen3-VL-8B,Top-K,T2E,66.15,65,bench_runs/uniform
+Qwen3-VL-8B,Top-K,T2O,71.05,76,bench_runs/uniform
+Qwen3-VL-8B,Top-K,T3E,52.05,73,bench_runs/uniform
+Qwen3-VL-8B,Top-K,T3O,51.35,74,bench_runs/uniform
+Qwen3-VL-8B,Top-K,TAA,63.41,82,bench_runs/uniform
+Qwen3-VL-8B,Top-K,TOS,35.62,73,bench_runs/uniform
+Qwen3-VL-8B,Top-K,dur_15,75.66,189,bench_runs/uniform
+Qwen3-VL-8B,Top-K,dur_3600,55.14,564,bench_runs/uniform
+Qwen3-VL-8B,Top-K,dur_60,76.16,172,bench_runs/uniform
+Qwen3-VL-8B,Top-K,dur_600,65.78,412,bench_runs/uniform
+Qwen3-VL-8B,Q-Frame,E2O,76.92,65,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,E3E,68.09,94,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,O2E,75.86,87,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,O3O,60.61,66,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,S2A,85.23,88,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,S2E,74.19,93,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,S2O,73.61,72,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,SAA,62.50,72,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,SOS,72.84,81,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,SSS,37.11,97,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,T2A,75.95,79,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,T2E,66.15,65,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,T2O,73.68,76,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,T3E,47.95,73,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,T3O,54.05,74,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,TAA,65.85,82,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,TOS,45.21,73,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,dur_15,73.54,189,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,dur_3600,57.27,564,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,dur_60,76.74,172,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,dur_600,68.93,412,bench_runs/qframe
+Qwen3-VL-8B,QuoTA,E2O,72.31,65,bench_runs/quota
+Qwen3-VL-8B,QuoTA,E3E,73.40,94,bench_runs/quota
+Qwen3-VL-8B,QuoTA,O2E,71.26,87,bench_runs/quota
+Qwen3-VL-8B,QuoTA,O3O,63.64,66,bench_runs/quota
+Qwen3-VL-8B,QuoTA,S2A,80.68,88,bench_runs/quota
+Qwen3-VL-8B,QuoTA,S2E,68.82,93,bench_runs/quota
+Qwen3-VL-8B,QuoTA,S2O,65.28,72,bench_runs/quota
+Qwen3-VL-8B,QuoTA,SAA,63.89,72,bench_runs/quota
+Qwen3-VL-8B,QuoTA,SOS,74.07,81,bench_runs/quota
+Qwen3-VL-8B,QuoTA,SSS,59.79,97,bench_runs/quota
+Qwen3-VL-8B,QuoTA,T2A,75.95,79,bench_runs/quota
+Qwen3-VL-8B,QuoTA,T2E,67.69,65,bench_runs/quota
+Qwen3-VL-8B,QuoTA,T2O,73.68,76,bench_runs/quota
+Qwen3-VL-8B,QuoTA,T3E,54.79,73,bench_runs/quota
+Qwen3-VL-8B,QuoTA,T3O,62.16,74,bench_runs/quota
+Qwen3-VL-8B,QuoTA,TAA,59.76,82,bench_runs/quota
+Qwen3-VL-8B,QuoTA,TOS,39.73,73,bench_runs/quota
+Qwen3-VL-8B,QuoTA,dur_15,78.84,189,bench_runs/quota
+Qwen3-VL-8B,QuoTA,dur_3600,58.69,564,bench_runs/quota
+Qwen3-VL-8B,QuoTA,dur_60,79.07,172,bench_runs/quota
+Qwen3-VL-8B,QuoTA,dur_600,66.50,412,bench_runs/quota
+Qwen3-VL-8B,FOCUS,E2O,69.23,65,focus_full/focus
+Qwen3-VL-8B,FOCUS,E3E,74.47,94,focus_full/focus
+Qwen3-VL-8B,FOCUS,O2E,70.11,87,focus_full/focus
+Qwen3-VL-8B,FOCUS,O3O,59.09,66,focus_full/focus
+Qwen3-VL-8B,FOCUS,S2A,80.68,88,focus_full/focus
+Qwen3-VL-8B,FOCUS,S2E,70.97,93,focus_full/focus
+Qwen3-VL-8B,FOCUS,S2O,68.06,72,focus_full/focus
+Qwen3-VL-8B,FOCUS,SAA,59.72,72,focus_full/focus
+Qwen3-VL-8B,FOCUS,SOS,70.37,81,focus_full/focus
+Qwen3-VL-8B,FOCUS,SSS,40.21,97,focus_full/focus
+Qwen3-VL-8B,FOCUS,T2A,69.62,79,focus_full/focus
+Qwen3-VL-8B,FOCUS,T2E,67.69,65,focus_full/focus
+Qwen3-VL-8B,FOCUS,T2O,71.05,76,focus_full/focus
+Qwen3-VL-8B,FOCUS,T3E,47.95,73,focus_full/focus
+Qwen3-VL-8B,FOCUS,T3O,67.57,74,focus_full/focus
+Qwen3-VL-8B,FOCUS,TAA,60.98,82,focus_full/focus
+Qwen3-VL-8B,FOCUS,TOS,38.36,73,focus_full/focus
+Qwen3-VL-8B,FOCUS,dur_15,77.25,189,focus_full/focus
+Qwen3-VL-8B,FOCUS,dur_3600,57.45,564,focus_full/focus
+Qwen3-VL-8B,FOCUS,dur_60,74.42,172,focus_full/focus
+Qwen3-VL-8B,FOCUS,dur_600,62.62,412,focus_full/focus
+Qwen3-VL-8B,AdaAlloc,E2O,78.46,65,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,E3E,71.28,94,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,O2E,67.82,87,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,O3O,69.70,66,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,S2A,79.55,88,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,S2E,67.74,93,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,S2O,66.67,72,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,SAA,63.89,72,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,SOS,69.14,81,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,SSS,57.73,97,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,T2A,67.09,79,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,T2E,64.62,65,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,T2O,71.05,76,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,T3E,54.79,73,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,T3O,66.22,74,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,TAA,53.66,82,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,TOS,36.99,73,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,dur_15,77.78,189,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,dur_3600,56.38,564,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,dur_60,77.91,172,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,dur_600,66.02,412,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,Lembas (Ours),E2O,72.31,65,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),E3E,71.28,94,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),O2E,72.41,87,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),O3O,66.67,66,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),S2A,80.68,88,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),S2E,70.97,93,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),S2O,68.06,72,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),SAA,63.89,72,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),SOS,77.78,81,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),SSS,56.70,97,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),T2A,74.68,79,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),T2E,67.69,65,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),T2O,72.37,76,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),T3E,50.68,73,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),T3O,62.16,74,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),TAA,62.20,82,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),TOS,38.36,73,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),dur_15,76.72,189,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),dur_3600,58.51,564,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),dur_60,76.74,172,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),dur_600,68.93,412,talon270_full/abl_talon_nodiv_resize
+InternVL3.5-4B,Uniform sampling,E2O,72.31,65,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,E3E,72.34,94,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,O2E,71.26,87,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,O3O,63.64,66,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,S2A,77.27,88,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,S2E,69.89,93,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,S2O,62.50,72,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,SAA,47.22,72,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,SOS,72.84,81,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,SSS,42.27,97,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,T2A,70.89,79,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,T2E,63.08,65,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,T2O,65.79,76,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,T3E,52.05,73,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,T3O,56.76,74,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,TAA,56.10,82,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,TOS,34.25,73,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,dur_15,71.96,189,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,dur_3600,53.55,564,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,dur_60,75.58,172,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,dur_600,63.35,412,unisample_ivl_full/unisample
+InternVL3.5-4B,Top-K,E2O,60.00,65,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,E3E,73.40,94,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,O2E,70.11,87,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,O3O,56.06,66,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,S2A,76.14,88,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,S2E,74.19,93,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,S2O,63.89,72,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,SAA,45.83,72,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,SOS,74.07,81,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,SSS,40.21,97,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,T2A,62.03,79,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,T2E,60.00,65,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,T2O,67.11,76,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,T3E,50.68,73,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,T3O,55.41,74,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,TAA,54.88,82,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,TOS,34.25,73,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,dur_15,72.49,189,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,dur_3600,51.95,564,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,dur_60,72.09,172,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,dur_600,61.41,412,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Q-Frame,E2O,67.69,65,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,E3E,71.28,94,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,O2E,71.26,87,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,O3O,57.58,66,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,S2A,84.09,88,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,S2E,74.19,93,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,S2O,62.50,72,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,SAA,51.39,72,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,SOS,66.67,81,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,SSS,40.21,97,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,T2A,78.48,79,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,T2E,67.69,65,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,T2O,72.37,76,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,T3E,53.42,73,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,T3O,55.41,74,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,TAA,57.32,82,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,TOS,36.99,73,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,dur_15,72.49,189,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,dur_3600,55.85,564,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,dur_60,74.42,172,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,dur_600,64.08,412,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,QuoTA,E2O,67.69,65,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,E3E,70.21,94,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,O2E,71.26,87,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,O3O,60.61,66,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,S2A,81.82,88,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,S2E,74.19,93,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,S2O,63.89,72,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,SAA,54.17,72,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,SOS,72.84,81,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,SSS,45.36,97,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,T2A,64.56,79,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,T2E,61.54,65,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,T2O,60.53,76,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,T3E,57.53,73,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,T3O,60.81,74,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,TAA,53.66,82,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,TOS,36.99,73,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,dur_15,71.96,189,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,dur_3600,55.85,564,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,dur_60,71.51,172,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,dur_600,63.59,412,quota_ivl_full/quota_ivl
+InternVL3.5-4B,FOCUS,E2O,58.46,65,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,E3E,72.34,94,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,O2E,66.67,87,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,O3O,57.58,66,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,S2A,78.41,88,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,S2E,69.89,93,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,S2O,56.94,72,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,SAA,45.83,72,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,SOS,71.60,81,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,SSS,31.96,97,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,T2A,62.03,79,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,T2E,63.08,65,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,T2O,63.16,76,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,T3E,47.95,73,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,T3O,59.46,74,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,TAA,50.00,82,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,TOS,39.73,73,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,dur_15,69.84,189,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,dur_3600,52.13,564,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,dur_60,66.86,172,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,dur_600,59.47,412,focus_ivl_full/focus
+InternVL3.5-4B,AdaAlloc,E2O,66.15,65,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,E3E,74.47,94,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,O2E,73.56,87,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,O3O,66.67,66,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,S2A,81.82,88,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,S2E,74.19,93,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,S2O,65.28,72,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,SAA,50.00,72,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,SOS,71.60,81,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,SSS,46.39,97,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,T2A,67.09,79,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,T2E,63.08,65,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,T2O,67.11,76,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,T3E,56.16,73,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,T3O,62.16,74,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,TAA,56.10,82,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,TOS,32.88,73,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,dur_15,72.49,189,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,dur_3600,57.09,564,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,dur_60,74.42,172,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,dur_600,63.83,412,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,Lembas (Ours),E2O,73.85,65,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),E3E,71.28,94,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),O2E,68.97,87,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),O3O,59.09,66,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),S2A,78.41,88,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),S2E,73.12,93,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),S2O,62.50,72,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),SAA,50.00,72,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),SOS,71.60,81,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),SSS,38.14,97,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),T2A,69.62,79,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),T2E,61.54,65,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),T2O,60.53,76,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),T3E,52.05,73,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),T3O,56.76,74,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),TAA,53.66,82,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),TOS,35.62,73,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),dur_15,73.02,189,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),dur_3600,53.19,564,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),dur_60,71.51,172,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),dur_600,62.38,412,ivl_pruner_pilot/abl_talon_nodiv_T0.3

@@ -1,0 +1,99 @@
+model,method,group,accuracy,n,source
+Qwen3-VL-8B,Uniform sampling,anomaly_reco,76.00,200,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,count,52.91,206,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,ego,65.34,352,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,needle,78.87,355,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,order,67.95,259,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,plotQA,76.62,539,runs/unisample_full/unisample
+Qwen3-VL-8B,Uniform sampling,topic_reasoning,89.73,263,runs/unisample_full/unisample
+Qwen3-VL-8B,Top-K,anomaly_reco,70.00,200,bench_runs/uniform
+Qwen3-VL-8B,Top-K,count,60.68,206,bench_runs/uniform
+Qwen3-VL-8B,Top-K,ego,67.90,352,bench_runs/uniform
+Qwen3-VL-8B,Top-K,needle,80.00,355,bench_runs/uniform
+Qwen3-VL-8B,Top-K,order,71.04,259,bench_runs/uniform
+Qwen3-VL-8B,Top-K,plotQA,82.00,539,bench_runs/uniform
+Qwen3-VL-8B,Top-K,topic_reasoning,90.11,263,bench_runs/uniform
+Qwen3-VL-8B,Q-Frame,anomaly_reco,74.00,200,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,count,63.59,206,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,ego,65.34,352,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,needle,79.72,355,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,order,65.25,259,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,plotQA,79.04,539,bench_runs/qframe
+Qwen3-VL-8B,Q-Frame,topic_reasoning,90.11,263,bench_runs/qframe
+Qwen3-VL-8B,QuoTA,anomaly_reco,78.50,200,quota_full/quota
+Qwen3-VL-8B,QuoTA,count,62.14,206,quota_full/quota
+Qwen3-VL-8B,QuoTA,ego,69.32,352,quota_full/quota
+Qwen3-VL-8B,QuoTA,needle,81.97,355,quota_full/quota
+Qwen3-VL-8B,QuoTA,order,69.50,259,quota_full/quota
+Qwen3-VL-8B,QuoTA,plotQA,81.82,539,quota_full/quota
+Qwen3-VL-8B,QuoTA,topic_reasoning,90.49,263,quota_full/quota
+Qwen3-VL-8B,FOCUS,anomaly_reco,73.00,200,focus_full/focus
+Qwen3-VL-8B,FOCUS,count,49.03,206,focus_full/focus
+Qwen3-VL-8B,FOCUS,ego,65.62,352,focus_full/focus
+Qwen3-VL-8B,FOCUS,needle,75.21,355,focus_full/focus
+Qwen3-VL-8B,FOCUS,order,61.78,259,focus_full/focus
+Qwen3-VL-8B,FOCUS,plotQA,77.74,539,focus_full/focus
+Qwen3-VL-8B,FOCUS,topic_reasoning,89.35,263,focus_full/focus
+Qwen3-VL-8B,AdaAlloc,anomaly_reco,76.50,200,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,count,50.00,206,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,ego,66.48,352,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,needle,78.31,355,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,order,63.71,259,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,plotQA,78.85,539,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,AdaAlloc,topic_reasoning,88.97,263,adaalloc270_full/adaalloc_s0of2;adaalloc270_full/adaalloc_s1of2
+Qwen3-VL-8B,Lembas (Ours),anomaly_reco,79.00,200,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),count,63.59,206,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),ego,70.17,352,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),needle,80.85,355,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),order,72.97,259,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),plotQA,82.75,539,talon270_full/abl_talon_nodiv_resize
+Qwen3-VL-8B,Lembas (Ours),topic_reasoning,91.25,263,talon270_full/abl_talon_nodiv_resize
+InternVL3.5-4B,Uniform sampling,anomaly_reco,71.50,200,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,count,49.03,206,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,ego,60.80,352,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,needle,76.90,355,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,order,54.83,259,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,plotQA,77.37,539,unisample_ivl_full/unisample
+InternVL3.5-4B,Uniform sampling,topic_reasoning,87.07,263,unisample_ivl_full/unisample
+InternVL3.5-4B,Top-K,anomaly_reco,69.00,200,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,count,51.94,206,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,ego,64.49,352,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,needle,79.44,355,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,order,62.16,259,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,plotQA,80.71,539,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Top-K,topic_reasoning,86.31,263,ivl_pruner_pilot/uniform
+InternVL3.5-4B,Q-Frame,anomaly_reco,70.50,200,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,count,49.03,206,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,ego,64.20,352,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,needle,77.75,355,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,order,57.14,259,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,plotQA,79.59,539,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,Q-Frame,topic_reasoning,85.17,263,ivl_pruner_pilot/qframe_ivl
+InternVL3.5-4B,QuoTA,anomaly_reco,72.00,200,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,count,53.40,206,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,ego,59.94,352,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,needle,76.90,355,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,order,57.92,259,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,plotQA,79.59,539,quota_ivl_full/quota_ivl
+InternVL3.5-4B,QuoTA,topic_reasoning,88.97,263,quota_ivl_full/quota_ivl
+InternVL3.5-4B,FOCUS,anomaly_reco,73.50,200,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,count,44.17,206,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,ego,60.80,352,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,needle,76.06,355,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,order,55.60,259,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,plotQA,77.92,539,focus_ivl_full/focus
+InternVL3.5-4B,FOCUS,topic_reasoning,85.93,263,focus_ivl_full/focus
+InternVL3.5-4B,AdaAlloc,anomaly_reco,71.00,200,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,count,49.51,206,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,ego,64.20,352,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,needle,78.87,355,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,order,56.37,259,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,plotQA,78.11,539,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,AdaAlloc,topic_reasoning,86.69,263,adaalloc_ivl_full/adaalloc_s0of2;adaalloc_ivl_full/adaalloc_s1of2
+InternVL3.5-4B,Lembas (Ours),anomaly_reco,70.50,200,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),count,54.37,206,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),ego,63.35,352,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),needle,79.72,355,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),order,63.32,259,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),plotQA,80.89,539,ivl_pruner_pilot/abl_talon_nodiv_T0.3
+InternVL3.5-4B,Lembas (Ours),topic_reasoning,86.69,263,ivl_pruner_pilot/abl_talon_nodiv_T0.3
