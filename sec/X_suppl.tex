@@ -1,18 +1,27 @@
-\maketitlesupplementary
+% This file is used in two ways. supp.tex builds it as the separate supplementary material of the submission.
+% main.tex, which defines \appendixmode, attaches it after the references as the appendix of the single-PDF preprint.
+\providecommand{\mainpaper}{main paper}
+\ifdefined\appendixmode
+  % Appendix: lettered sections after the references; figures, tables and equations continue on their own.
+  \appendix
+  \section*{Appendix}
+  This appendix provides the derivations and proofs omitted from the \mainpaper{} (\cref{sec:supp-proofs}), implementation details (\cref{sec:supp-impl}), and additional results (\cref{sec:supp-results}).
+\else
+  \maketitlesupplementary
+  % Sections are lettered; figures, tables, and equations continue the numbering of the submitted main paper
+  % (which ends at Figure 8, Table 3, and Eq. (11)).
+  \setcounter{figure}{8}\setcounter{table}{3}\setcounter{equation}{11}
+  \setcounter{section}{0}\renewcommand{\thesection}{\Alph{section}}
 
-% Sections are lettered; figures, tables, and equations continue the numbering of the submitted main paper
-% (which ends at Figure 8, Table 3, and Eq. (11)).
-\setcounter{figure}{8}\setcounter{table}{3}\setcounter{equation}{11}
-\setcounter{section}{0}\renewcommand{\thesection}{\Alph{section}}
+  In this supplementary material, we provide the derivations and proofs omitted from the \mainpaper{} (\cref{sec:supp-proofs}), implementation details (\cref{sec:supp-impl}), and additional results (\cref{sec:supp-results}).
+\fi
 \raggedbottom  % columns end where the text ends; the kit's \flushbottom stretched short paragraphs apart
 \renewcommand{\qedsymbol}{}\renewcommand{\qed}{}  % no end-of-proof square and no empty line after a proof; proofs end with a sentence
-
-In this supplementary material, we provide the derivations and proofs omitted from the main paper (\cref{sec:supp-proofs}), implementation details (\cref{sec:supp-impl}), and additional results (\cref{sec:supp-results}).
 
 \section{Derivations and Proofs}
 \label{sec:supp-proofs}
 
-For completeness, we first restate the allocation problem of the main paper. Let $\mathcal F$ and $\mathcal S$ be the candidate frames and subtitles, let $b_i\in[0,b_i^{\max}]$ be the token count of item $i\in\mathcal F\cup\mathcal S$, and let $v_i(b_i)=b_i/(b_i+\tau_i)$ be its token value, where $\tau_i$ is $\tau_{\text{frame}}$ for a frame and $\tau_{\text{text}}$ for a subtitle. \name solves
+For completeness, we first restate the allocation problem of the \mainpaper. Let $\mathcal F$ and $\mathcal S$ be the candidate frames and subtitles, let $b_i\in[0,b_i^{\max}]$ be the token count of item $i\in\mathcal F\cup\mathcal S$, and let $v_i(b_i)=b_i/(b_i+\tau_i)$ be its token value, where $\tau_i$ is $\tau_{\text{frame}}$ for a frame and $\tau_{\text{text}}$ for a subtitle. \name solves
 \begin{equation}
 \begin{aligned}
   \max_{\mathbf b}\quad & \sum_{i\in\mathcal F} r_i(q,\mathbf b)\,v_i(b_i)+\beta\sum_{i\in\mathcal S} r_i(q,\mathbf b)\,v_i(b_i)\\
@@ -69,7 +78,7 @@ where $\mathbf A$ is the adjacency matrix of $G$. Two adjacent frames thus have 
 \subsection{Derivation of Water-Filling}
 \label{sec:supp-waterfill}
 
-We derive the water-filling allocation of the main paper as the unique solution of the subproblem in which the relevance of each item is fixed to $\bar r_i>0$:
+We derive the water-filling allocation of the \mainpaper{} as the unique solution of the subproblem in which the relevance of each item is fixed to $\bar r_i>0$:
 \begin{equation}
 \begin{aligned}
   \max_{\mathbf b}\quad & \sum_i \bar r_i\,\frac{b_i}{b_i+\tau_i}\\
@@ -100,7 +109,7 @@ and clipping the solution to the domain gives the unique maximizer
   b_i(\lambda)=\left[\sqrt{\bar r_i\tau_i/\lambda}-\tau_i\right]_0^{b_i^{\max}} ,
 \label{eq:supp-waterfill}
 \end{equation}
-which is the water-filling allocation of the main paper. Intuitively, each item acquires tokens until its marginal gain falls to the price $\lambda$. An item thus receives no tokens when its marginal gain at zero tokens, $\bar r_i/\tau_i$, does not exceed $\lambda$, and it receives its full token count $b_i^{\max}$ when its marginal gain there is still at least $\lambda$. In iterative water-filling, the discounted relevance of an item can be non-positive. Such an item cannot increase the objective and receives no tokens.
+which is the water-filling allocation of the \mainpaper. Intuitively, each item acquires tokens until its marginal gain falls to the price $\lambda$. An item thus receives no tokens when its marginal gain at zero tokens, $\bar r_i/\tau_i$, does not exceed $\lambda$, and it receives its full token count $b_i^{\max}$ when its marginal gain there is still at least $\lambda$. In iterative water-filling, the discounted relevance of an item can be non-positive. Such an item cannot increase the objective and receives no tokens.
 
 \paragraph{Outer minimization.}
 Substituting \cref{eq:supp-waterfill} into \cref{eq:supp-lagrangian} gives the dual function $g(\lambda)=\mathcal L(\mathbf b(\lambda),\lambda)$, which is convex in the single variable $\lambda$ with derivative
@@ -114,7 +123,7 @@ If $\sum_i b_i^{\max}\le B$, the budget is not binding and every item receives i
 \label{sec:supp-convergence}
 \label{sec:supp-convex}
 
-We now prove Proposition~1 of the main paper, which bounds the gap between iterative water-filling and the global maximum of \cref{eq:supp-allocation}. We first show that the continuous relaxation is a convex program and then prove the bound.
+We now prove Proposition~1 of the \mainpaper, which bounds the gap between iterative water-filling and the global maximum of \cref{eq:supp-allocation}. We first show that the continuous relaxation is a convex program and then prove the bound.
 
 \paragraph{Convexity of the continuous relaxation.}
 The continuous relaxation lets each token count $b_i$ take any real value in $[0,b_i^{\max}]$. After a change of variables, this relaxation maximizes a concave function over a convex set.
@@ -140,7 +149,7 @@ The objective, in turn, is concave in the token values. Substituting \cref{eq:su
 where $\bar r_i=r_i(q)$ for a frame and $\bar r_i=\beta\,r_i(q)$ for a subtitle, and the similarity matrix $\mathbf S$ is block-diagonal, with the frame similarity matrix and the $\beta$-scaled subtitle similarity matrix as its blocks. Each block contains the cosine similarities between the embeddings of one modality, including the diagonal entries $s_{ii}=1$. The frame block is therefore a Gram matrix of normalized embeddings and the subtitle block is a positive multiple of such a matrix, so $\mathbf S$ is positive semidefinite. Since $\eta\ge0$, $J$ is concave. Maximizing $J$ over $\mathcal Z$ is thus a convex program, in which every local maximum is a global maximum~\cite{boyd2004}.
 
 \smallskip
-\noindent\textbf{Proposition 1} (restated)\textbf{.} \textit{Let $J^\star$ be the global maximum of \cref{eq:supp-allocation} over continuous token allocations, and let $J^{(\ell)}$ be the objective value after $\ell$ iterations of Algorithm~1 of the main paper. Then}
+\noindent\textbf{Proposition 1} (restated)\textbf{.} \textit{Let $J^\star$ be the global maximum of \cref{eq:supp-allocation} over continuous token allocations, and let $J^{(\ell)}$ be the objective value after $\ell$ iterations of Algorithm~1 of the \mainpaper. Then}
 \begin{equation}
   J^\star-J^{(\ell)}\le\frac{4\,\eta\,\sigma_{\max}D^2}{\ell+2}=O\Big(\frac{1}{\ell}\Big) ,
 \label{eq:supp-rate}
@@ -148,7 +157,7 @@ where $\bar r_i=r_i(q)$ for a frame and $\bar r_i=\beta\,r_i(q)$ for a subtitle,
 \textit{where $\sigma_{\max}$ is the largest eigenvalue of the frame and $\beta$-scaled subtitle similarity matrices and $D$ is the diameter of the feasible token-value set under budget $B$.}
 
 \smallskip
-The proof follows the standard analysis of the Frank--Wolfe method~\cite{jaggi2013}, applied to the token values $\mathbf z$. It uses the gradient $\nabla J(\mathbf z)=\bar{\mathbf r}-2\eta\,\mathbf S\mathbf z$, which is the discounted relevance $\tilde{\mathbf r}$ of Eq.~(6) of the main paper, and the constant $C=2\eta\,\sigma_{\max}$, which bounds the curvature of $J$. The diameter $D$ is the largest distance between two points of $\mathcal Z$. The proof rests on two lemmas. The first bounds how far the current token values are from the optimum, and the second bounds how much one iteration improves the objective.
+The proof follows the standard analysis of the Frank--Wolfe method~\cite{jaggi2013}, applied to the token values $\mathbf z$. It uses the gradient $\nabla J(\mathbf z)=\bar{\mathbf r}-2\eta\,\mathbf S\mathbf z$, which is the discounted relevance $\tilde{\mathbf r}$ of Eq.~(6) of the \mainpaper, and the constant $C=2\eta\,\sigma_{\max}$, which bounds the curvature of $J$. The diameter $D$ is the largest distance between two points of $\mathcal Z$. The proof rests on two lemmas. The first bounds how far the current token values are from the optimum, and the second bounds how much one iteration improves the objective.
 
 \begin{lemma}[Distance to the optimum]
 \label{lem:gap}
@@ -182,7 +191,7 @@ Write $\mathbf d=\gamma(\mathbf s-\mathbf z)$. Since $J$ is quadratic, its secon
 \noindent That is, a step of size $\gamma$ toward $\mathbf s$ gains at least a fraction $\gamma$ of the improvement predicted for a full step, minus a curvature term that shrinks with $\gamma^2$.
 
 \begin{proof}[Proof of Proposition 1]
-We first derive a recursion for the remaining gap and then solve it by induction. Let $\mathbf z^{(\ell-1)}$ be the token values before iteration $\ell$, with $\mathbf z^{(0)}=\mathbf 0$, and let $h_\ell=J^\star-J(\mathbf z^{(\ell)})$ be the remaining gap. Iteration $\ell$ runs water-filling with the discounted relevance $\nabla J(\mathbf z^{(\ell-1)})$, which returns the maximizer $\mathbf s$ of the right-hand side of \cref{eq:supp-lem-gap} ($\mathbf z^\star$ in the main paper), and moves to $\mathbf z^{(\ell)}=\mathbf z^{(\ell-1)}+\gamma_\ell(\mathbf s-\mathbf z^{(\ell-1)})$ with $\gamma_\ell=2/(\ell+1)$. This point lies in $\mathcal Z$ because $\mathcal Z$ is convex.
+We first derive a recursion for the remaining gap and then solve it by induction. Let $\mathbf z^{(\ell-1)}$ be the token values before iteration $\ell$, with $\mathbf z^{(0)}=\mathbf 0$, and let $h_\ell=J^\star-J(\mathbf z^{(\ell)})$ be the remaining gap. Iteration $\ell$ runs water-filling with the discounted relevance $\nabla J(\mathbf z^{(\ell-1)})$, which returns the maximizer $\mathbf s$ of the right-hand side of \cref{eq:supp-lem-gap} ($\mathbf z^\star$ in the \mainpaper), and moves to $\mathbf z^{(\ell)}=\mathbf z^{(\ell-1)}+\gamma_\ell(\mathbf s-\mathbf z^{(\ell-1)})$ with $\gamma_\ell=2/(\ell+1)$. This point lies in $\mathcal Z$ because $\mathcal Z$ is convex.
 
 Applying \cref{lem:step} with $\mathbf z=\mathbf z^{(\ell-1)}$ and $\gamma=\gamma_\ell$ gives
 \begin{align*}
@@ -212,7 +221,7 @@ where (a) substitutes $\gamma_\ell=2/(\ell+1)$ into \cref{eq:supp-recursion}, (b
 \subsection{Suboptimality of Prior Allocation Rules}
 \label{sec:supp-prior}
 
-The main paper states that neither proportional allocation~\cite{luo2025quota} nor tiered allocation~\cite{zhang2025qframe} maximizes the fixed-relevance objective of \cref{eq:supp-fixed}. This section proves both statements.
+The \mainpaper{} states that neither proportional allocation~\cite{luo2025quota} nor tiered allocation~\cite{zhang2025qframe} maximizes the fixed-relevance objective of \cref{eq:supp-fixed}. This section proves both statements.
 
 \begin{lemma}[Proportional allocation]
 \label{lem:proportional}
@@ -242,7 +251,7 @@ In both cases, the water-filling allocation of \cref{eq:supp-waterfill} is the u
 \subsection{Settings of \name}
 \label{sec:supp-settings}
 
-\Cref{tab:supp-hparams} lists the settings of \name. SigLIP~2 embeds the query and the candidate frames, and BGE embeds the query and the candidate subtitles. Within each modality, we standardize the cosine similarities between the query and the candidate items to zero mean and unit variance and convert them into the retrieval relevance $r_i(q)$ with a softmax at temperature $T$. The token value parameters $\tau_{\text{frame}}$ and $\tau_{\text{text}}$ set how quickly the token value of an item saturates and are fitted offline by least squares to the validation measurements of \S3.2 of the main paper. The subtitle weight $\beta$ scales the relevance of subtitles relative to that of frames, and the redundancy penalty $\eta$ scales the discount that an item receives from similar items. Iterative water-filling runs for $L$ iterations and finds $\lambda$ in each iteration by bisection. In multi-turn conversations, the attention weight $\omega$ controls the contribution of attention to the relevance of cached items. The token budget $B$ sets the compute of each experiment, which we report in TFLOPs with each result.
+\Cref{tab:supp-hparams} lists the settings of \name. SigLIP~2 embeds the query and the candidate frames, and BGE embeds the query and the candidate subtitles. Within each modality, we standardize the cosine similarities between the query and the candidate items to zero mean and unit variance and convert them into the retrieval relevance $r_i(q)$ with a softmax at temperature $T$. The token value parameters $\tau_{\text{frame}}$ and $\tau_{\text{text}}$ set how quickly the token value of an item saturates and are fitted offline by least squares to the validation measurements of \S3.2 of the \mainpaper. The subtitle weight $\beta$ scales the relevance of subtitles relative to that of frames, and the redundancy penalty $\eta$ scales the discount that an item receives from similar items. Iterative water-filling runs for $L$ iterations and finds $\lambda$ in each iteration by bisection. In multi-turn conversations, the attention weight $\omega$ controls the contribution of attention to the relevance of cached items. The token budget $B$ sets the compute of each experiment, which we report in TFLOPs with each result.
 
 \begin{table}[!htb]
   \centering
@@ -321,7 +330,7 @@ We compare all methods under the same conditions, so that differences in accurac
 
 \begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
   \item \textbf{Uniform sampling}: evenly spaced frames, each with the same token count.
-  \item \textbf{Top-K}: as described in the main paper.
+  \item \textbf{Top-K}: as described in the \mainpaper.
   \item \textbf{FOCUS}~\cite{zhu2026focus}: released code, with SigLIP~2 similarities in place of its BLIP scores.
   \item \textbf{Q-Frame}~\cite{zhang2025qframe}: released code, with SigLIP~2 similarities in place of its Long-CLIP scores and its three resolution tiers scaled to fill the token budget.
   \item \textbf{QuoTA}~\cite{luo2025quota}: released code, with its default prompts and its Qwen2-VL-2B judge.
@@ -344,7 +353,7 @@ We compare all methods under the same conditions, so that differences in accurac
 \subsection{Per-Category Accuracy}
 \label{sec:supp-category}
 
-\Cref{fig:supp-radar} breaks down the accuracy in Tab.~1 of the main paper by question category, where the 12 task types of Video-MME are grouped into six categories as in Q-Frame~\cite{zhang2025qframe}. Across the three benchmarks, \name achieves the highest accuracy in more categories than any baseline. On Video-MME, \name leads in five of the six categories with both VLMs, and its largest gains are on reasoning questions (4.2 and 6.8 points over the best baseline with Qwen3-VL-8B and InternVL3.5-4B, respectively). On MLVU, \name leads in six of the seven categories with Qwen3-VL-8B (one tied with Q-Frame) and in four with InternVL3.5-4B. The gains of \name thus hold across question categories and do not come from a single one.
+\Cref{fig:supp-radar} breaks down the accuracy in Tab.~1 of the \mainpaper{} by question category, where the 12 task types of Video-MME are grouped into six categories as in Q-Frame~\cite{zhang2025qframe}. Across the three benchmarks, \name achieves the highest accuracy in more categories than any baseline. On Video-MME, \name leads in five of the six categories with both VLMs, and its largest gains are on reasoning questions (4.2 and 6.8 points over the best baseline with Qwen3-VL-8B and InternVL3.5-4B, respectively). On MLVU, \name leads in six of the seven categories with Qwen3-VL-8B (one tied with Q-Frame) and in four with InternVL3.5-4B. The gains of \name thus hold across question categories and do not come from a single one.
 
 \subsection{Solver Efficiency}
 \label{sec:supp-solver}
@@ -381,4 +390,4 @@ We compare iterative water-filling with three off-the-shelf solvers on synthetic
 \subsection{Sensitivity Analysis}
 \label{sec:supp-sens}
 
-We study how the accuracy and compute of \name change with three hyperparameters, namely the attention weight $\omega$, the subtitle weight $\beta$, and the relevance temperature $T$. \Cref{fig:supp-sens} varies each hyperparameter while keeping the others fixed. Each sweep runs on a subset of 500 questions. For the attention weight (\cref{fig:supp-sens}a), every $\omega>0$ improves over retrieval relevance alone ($\omega=0$) in both accuracy and compute, and the accuracies for $\omega>0$ differ by less than 1 point. For the subtitle weight (\cref{fig:supp-sens}b), the accuracies for $\beta>0$ stay within 2 points of each other. With $\beta=0$, no subtitle receives tokens and the prompt contains no subtitles at all, which reduces accuracy by 12 points. This setting differs from the ``w/o text allocation'' row of Tab.~2 of the main paper, in which the VLM still receives the subtitles aligned with the selected frames, as the baselines do. For the relevance temperature (\cref{fig:supp-sens}c), accuracy is highest at the default $T=0.63$, remains within 1 point at $T=1$, and drops by about 3 points when $T$ is much smaller or larger. \name is therefore robust to $\omega$ and $\beta$ over a wide range, and to $T$ near its default value.
+We study how the accuracy and compute of \name change with three hyperparameters, namely the attention weight $\omega$, the subtitle weight $\beta$, and the relevance temperature $T$. \Cref{fig:supp-sens} varies each hyperparameter while keeping the others fixed. Each sweep runs on a subset of 500 questions. For the attention weight (\cref{fig:supp-sens}a), every $\omega>0$ improves over retrieval relevance alone ($\omega=0$) in both accuracy and compute, and the accuracies for $\omega>0$ differ by less than 1 point. For the subtitle weight (\cref{fig:supp-sens}b), the accuracies for $\beta>0$ stay within 2 points of each other. With $\beta=0$, no subtitle receives tokens and the prompt contains no subtitles at all, which reduces accuracy by 12 points. This setting differs from the ``w/o text allocation'' row of Tab.~2 of the \mainpaper, in which the VLM still receives the subtitles aligned with the selected frames, as the baselines do. For the relevance temperature (\cref{fig:supp-sens}c), accuracy is highest at the default $T=0.63$, remains within 1 point at $T=1$, and drops by about 3 points when $T$ is much smaller or larger. \name is therefore robust to $\omega$ and $\beta$ over a wide range, and to $T$ near its default value.
