@@ -1,0 +1,47 @@
+
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage[pagenumbers]{cvpr} %
+
+\input{preamble}
+
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+
+
+\newcommand{\appendixmode}{}
+\newcommand{\mainpaper}{main text}
+\newcommand{\suppmaterial}{appendix}
+
+\def\confName{CVPR}
+\def\confYear{2027}
+
+\title{Efficient Video Retrieval Augmented Generation via Token Allocation}
+
+\author{Ayush Barik$^{1}$ \qquad Fan Lai$^{1\dagger}$ \qquad Francis Y. Yan$^{1\dagger}$\\
+$^{1}$University of Illinois Urbana-Champaign\\
+{\tt\small \{barik2, fanlai, fyy\}@illinois.edu}}
+
+\begin{document}
+\maketitle
+\iftoggle{cvprfinal}{\begin{NoHyper}\renewcommand{\thefootnote}{$\dagger$}\footnotetext{Equal advising contribution.}\end{NoHyper}}{}
+\input{sec/0_abstract}    
+\input{sec/1_intro}
+\input{sec/2_related}
+\input{sec/3_method}
+\input{sec/4_evaluation}
+\input{sec/5_conclusion}
+
+\section*{LLM Usage Statement}
+We were assisted by various LLMs, specifically from the ChatGPT, Claude, and Gemini model families in preparing this work. They were used to assist in paper writing, related work search, and coding which the authors reviewed and edited. LLMs were used to a lesser extent in the design and analysis of core ideas and experiments. Gemini 3.8 Flash was used to evaluate multi-turn benchmark results. LLMs were not used to create or annotate data. The authors take full responsibility for all content.
+
+{
+    \small
+    \bibliographystyle{ieeenat_fullname}
+    \bibliography{main}
+}
+
+\clearpage
+\input{sec/X_suppl}
+
+\end{document}

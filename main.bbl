@@ -1,0 +1,472 @@
+\begin{thebibliography}{66}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[An and Grauman(2026)]{an2026adaalloc}
+Joungbin An and Kristen Grauman.
+\newblock {AdaAlloc}: Adaptive visual token allocation for long-video question
+  answering.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2026.
+
+\bibitem[Bai et~al.(2025)Bai, Cai, Chen, Chen, Chen, Cheng, Deng, Ding, Gao,
+  Ge, et~al.]{bai2025qwen3vl}
+Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng,
+  Lianghao Deng, Wei Ding, Chang Gao, Chunjiang Ge, et~al.
+\newblock {Qwen3-VL} technical report.
+\newblock \emph{arXiv preprint arXiv:2511.21631}, 2025.
+
+\bibitem[Bolusani et~al.(2024)Bolusani, Besan{\c{c}}on, Bestuzheva, Chmiela,
+  Dion{\'\i}sio, Donkiewicz, et~al.]{scip}
+Suresh Bolusani, Mathieu Besan{\c{c}}on, Ksenia Bestuzheva, Antonia Chmiela,
+  Jo{\~a}o Dion{\'\i}sio, Tim Donkiewicz, et~al.
+\newblock The {SCIP} optimization suite 9.0.
+\newblock Technical report, Optimization Online, 2024.
+
+\bibitem[Boyd and Vandenberghe(2004)]{boyd2004}
+Stephen Boyd and Lieven Vandenberghe.
+\newblock \emph{Convex Optimization}.
+\newblock Cambridge University Press, 2004.
+
+\bibitem[Buch et~al.(2025)Buch, Nagrani, Arnab, and Schmid]{buch2025flexible}
+Shyamal Buch, Arsha Nagrani, Anurag Arnab, and Cordelia Schmid.
+\newblock Flexible frame selection for efficient video reasoning.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Chen et~al.(2024)Chen, Zhao, Liu, Bai, Lin, Zhou, and
+  Chang]{chen2024fastv}
+Liang Chen, Haozhe Zhao, Tianyu Liu, Shuai Bai, Junyang Lin, Chang Zhou, and
+  Baobao Chang.
+\newblock An image is worth 1/2 tokens after layer 2: Plug-and-play inference
+  acceleration for large vision-language models.
+\newblock In \emph{ECCV}, 2024.
+
+\bibitem[Chiang et~al.(2007)Chiang, Low, Calderbank, and
+  Doyle]{chiang2007layering}
+Mung Chiang, Steven~H. Low, A.~Robert Calderbank, and John~C. Doyle.
+\newblock Layering as optimization decomposition: A mathematical theory of
+  network architectures.
+\newblock \emph{Proceedings of the IEEE}, 95\penalty0 (1):\penalty0 255--312,
+  2007.
+
+\bibitem[Diamond and Boyd(2016)]{cvxpy}
+Steven Diamond and Stephen Boyd.
+\newblock {CVXPY}: A {Python}-embedded modeling language for convex
+  optimization.
+\newblock \emph{Journal of Machine Learning Research}, 17\penalty0
+  (83):\penalty0 1--5, 2016.
+
+\bibitem[Frank and Wolfe(1956)]{frank1956}
+Marguerite Frank and Philip Wolfe.
+\newblock An algorithm for quadratic programming.
+\newblock \emph{Naval Research Logistics Quarterly}, 3\penalty0
+  (1--2):\penalty0 95--110, 1956.
+
+\bibitem[Fu et~al.(2025{\natexlab{a}})Fu, Dai, Luo, Li, Ren, Zhang, Wang, Zhou,
+  Shen, Zhang, et~al.]{fu2024videomme}
+Chaoyou Fu, Yuhan Dai, Yongdong Luo, Lei Li, Shuhuai Ren, Renrui Zhang, Zihan
+  Wang, Chenyu Zhou, Yunhang Shen, Mengdan Zhang, et~al.
+\newblock {Video-MME}: The first-ever comprehensive evaluation benchmark of
+  multi-modal {LLMs} in video analysis.
+\newblock In \emph{CVPR}, 2025{\natexlab{a}}.
+
+\bibitem[Fu et~al.(2025{\natexlab{b}})Fu, Liu, Han, Dai, Yan, Yang, Ning, and
+  Wang]{fu2025framefusion}
+Tianyu Fu, Tengxuan Liu, Qinghao Han, Guohao Dai, Shengen Yan, Huazhong Yang,
+  Xuefei Ning, and Yu Wang.
+\newblock {FrameFusion}: Combining similarity and importance for video token
+  reduction on large vision language models.
+\newblock In \emph{ICCV}, 2025{\natexlab{b}}.
+
+\bibitem[Garey and Johnson(1979)]{garey1979}
+Michael~R. Garey and David~S. Johnson.
+\newblock \emph{Computers and Intractability: A Guide to the Theory of
+  {NP}-Completeness}.
+\newblock W. H. Freeman and Company, San Francisco, 1979.
+
+\bibitem[Ghodsi et~al.(2011)Ghodsi, Zaharia, Hindman, Konwinski, Shenker, and
+  Stoica]{ghodsi2011dominant}
+Ali Ghodsi, Matei Zaharia, Benjamin Hindman, Andy Konwinski, Scott Shenker, and
+  Ion Stoica.
+\newblock Dominant resource fairness: Fair allocation of multiple resource
+  types.
+\newblock In \emph{USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI)}, 2011.
+
+\bibitem[Goldsmith and Varaiya(1997)]{goldsmith1997capacity}
+Andrea~J. Goldsmith and Pravin~P. Varaiya.
+\newblock Capacity of fading channels with channel side information.
+\newblock \emph{IEEE Transactions on Information Theory}, 43\penalty0
+  (6):\penalty0 1986--1992, 1997.
+
+\bibitem[Goulart and Chen(2024)]{clarabel}
+Paul~J. Goulart and Yuwen Chen.
+\newblock Clarabel: An interior-point solver for conic programs with quadratic
+  objectives.
+\newblock \emph{arXiv preprint arXiv:2405.12762}, 2024.
+
+\bibitem[Grandl et~al.(2014)Grandl, Ananthanarayanan, Kandula, Rao, and
+  Akella]{grandl2014multi}
+Robert Grandl, Ganesh Ananthanarayanan, Srikanth Kandula, Sriram Rao, and
+  Aditya Akella.
+\newblock Multi-resource packing for cluster schedulers.
+\newblock In \emph{ACM SIGCOMM Conference}, pages 455--466, 2014.
+
+\bibitem[{Gurobi Optimization, LLC}(2026)]{gurobi}
+{Gurobi Optimization, LLC}.
+\newblock {Gurobi Optimizer Reference Manual}, 2026.
+
+\bibitem[Hindman et~al.(2011)Hindman, Konwinski, Zaharia, Ghodsi, Joseph, Katz,
+  Shenker, and Stoica]{hindman2011mesos}
+Benjamin Hindman, Andy Konwinski, Matei Zaharia, Ali Ghodsi, Anthony~D. Joseph,
+  Randy Katz, Scott Shenker, and Ion Stoica.
+\newblock Mesos: A platform for fine-grained resource sharing in the data
+  center.
+\newblock In \emph{USENIX Symposium on Networked Systems Design and
+  Implementation (NSDI)}, 2011.
+
+\bibitem[Hsieh et~al.(2018)Hsieh, Ananthanarayanan, Bodik, Venkataraman, Bahl,
+  Philipose, Gibbons, and Mutlu]{hsieh2018focus}
+Kevin Hsieh, Ganesh Ananthanarayanan, Peter Bodik, Shivaram Venkataraman,
+  Paramvir Bahl, Matthai Philipose, Phillip~B. Gibbons, and Onur Mutlu.
+\newblock Focus: Querying large video datasets with low latency and low cost.
+\newblock In \emph{USENIX Symposium on Operating Systems Design and
+  Implementation (OSDI)}, pages 269--286, 2018.
+
+\bibitem[{IBM ILOG CPLEX}(2009)]{cplex}
+{IBM ILOG CPLEX}.
+\newblock {V12.1}: User's manual for {CPLEX}.
+\newblock International Business Machines Corporation, 2009.
+
+\bibitem[Isard et~al.(2009)Isard, Prabhakaran, Currey, Wieder, Talwar, and
+  Goldberg]{isard2009quincy}
+Michael Isard, Vijayan Prabhakaran, Jon Currey, Udi Wieder, Kunal Talwar, and
+  Andrew Goldberg.
+\newblock Quincy: Fair scheduling for distributed computing clusters.
+\newblock In \emph{ACM SIGOPS Symposium on Operating Systems Principles
+  (SOSP)}, pages 261--276, 2009.
+
+\bibitem[Jaggi(2013)]{jaggi2013}
+Martin Jaggi.
+\newblock Revisiting {Frank-Wolfe}: Projection-free sparse convex optimization.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, pages
+  427--435, 2013.
+
+\bibitem[Jeong et~al.(2025)Jeong, Kim, Baek, and Hwang]{jeong2025videorag}
+Soyeong Jeong, Kangsan Kim, Jinheon Baek, and Sung~Ju Hwang.
+\newblock {VideoRAG}: Retrieval-augmented generation over video corpus.
+\newblock In \emph{Findings of ACL}, 2025.
+
+\bibitem[Johnson et~al.(2021)Johnson, Douze, and J{\'e}gou]{faiss}
+Jeff Johnson, Matthijs Douze, and Herv{\'e} J{\'e}gou.
+\newblock Billion-scale similarity search with {GPUs}.
+\newblock \emph{IEEE Transactions on Big Data}, 7\penalty0 (3):\penalty0
+  535--547, 2021.
+
+\bibitem[Karp(1972)]{karp1972}
+Richard~M. Karp.
+\newblock Reducibility among combinatorial problems.
+\newblock In \emph{Complexity of Computer Computations}, pages 85--103.
+  Springer US, 1972.
+
+\bibitem[Kelly et~al.(1998)Kelly, Maulloo, and Tan]{kelly1998rate}
+Frank~P. Kelly, A.~K. Maulloo, and D.~K.~H. Tan.
+\newblock Rate control for communication networks: Shadow prices, proportional
+  fairness and stability.
+\newblock \emph{Journal of the Operational Research Society}, 49\penalty0
+  (3):\penalty0 237--252, 1998.
+
+\bibitem[Lee et~al.(2026)Lee, Kim, Kim, and Ro]{lee2025refocus}
+Hosu Lee, Junho Kim, Hyunjun Kim, and Yong~Man Ro.
+\newblock {ReFoCUS}: Reinforcement-guided frame optimization for contextual
+  understanding.
+\newblock In \emph{CVPR Findings}, 2026.
+
+\bibitem[Lewis et~al.(2020)Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal,
+  K{\"u}ttler, Lewis, Yih, Rockt{\"a}schel, Riedel, and
+  Kiela]{lewis2020retrieval}
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir
+  Karpukhin, Naman Goyal, Heinrich K{\"u}ttler, Mike Lewis, Wen-tau Yih, Tim
+  Rockt{\"a}schel, Sebastian Riedel, and Douwe Kiela.
+\newblock Retrieval-augmented generation for knowledge-intensive {NLP} tasks.
+\newblock In \emph{NeurIPS}, 2020.
+
+\bibitem[Li et~al.(2026)Li, Li, Li, and Lu]{li2026dig}
+Jialuo Li, Bin Li, Jiahao Li, and Yan Lu.
+\newblock Divide, then ground: Adapting frame selection to query types for
+  long-form video understanding.
+\newblock In \emph{CVPR}, 2026.
+
+\bibitem[Liu et~al.(2025)Liu, Zhao, Xu, and Ghanem]{liu2025bolt}
+Shuming Liu, Chen Zhao, Tianqi Xu, and Bernard Ghanem.
+\newblock {BOLT}: Boost large vision-language model without training for
+  long-form video understanding.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Low and Lapsley(1999)]{low1999optimization}
+Steven~H. Low and David~E. Lapsley.
+\newblock Optimization flow control---{I}: Basic algorithm and convergence.
+\newblock \emph{IEEE/ACM Transactions on Networking}, 7\penalty0 (6):\penalty0
+  861--874, 1999.
+
+\bibitem[Luo et~al.(2025)Luo, Zheng, Li, Yin, Lin, Fu, Huang, Ji, Chao, Luo,
+  and Ji]{luo2024videorag}
+Yongdong Luo, Xiawu Zheng, Guilin Li, Shukang Yin, Haojia Lin, Chaoyou Fu,
+  Jinfa Huang, Jiayi Ji, Fei Chao, Jiebo Luo, and Rongrong Ji.
+\newblock {Video-RAG}: Visually-aligned retrieval-augmented long video
+  comprehension.
+\newblock In \emph{NeurIPS}, 2025.
+
+\bibitem[Luo et~al.(2026)Luo, Chen, Huang, Yin, Lin, Huang, Fu, Ji, Zheng, and
+  Luo]{luo2025quota}
+Yongdong Luo, Wang Chen, Weizhong Huang, Shukang Yin, Haojia Lin, Jinfa Huang,
+  Chaoyou Fu, Jiayi Ji, Xiawu Zheng, and Jiebo Luo.
+\newblock {QuoTA}: Query-oriented token assignment via {CoT} query decouple for
+  long video comprehension.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}, pages 24160--24168, 2026.
+
+\bibitem[Ma et~al.(2025)Ma, Gou, Shi, Sun, Li, Rezatofighi, and
+  Cai]{ma2024drvideo}
+Ziyu Ma, Chenhui Gou, Hengcan Shi, Bin Sun, Shutao Li, Hamid Rezatofighi, and
+  Jianfei Cai.
+\newblock {DrVideo}: Document retrieval based long video understanding.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Palomar and Chiang(2006)]{palomar2006tutorial}
+Daniel~P. Palomar and Mung Chiang.
+\newblock A tutorial on decomposition methods for network utility maximization.
+\newblock \emph{IEEE Journal on Selected Areas in Communications}, 24\penalty0
+  (8):\penalty0 1439--1451, 2006.
+
+\bibitem[Pan et~al.(2026)Pan, Xie, Zhang, Wang, Wen, Zhang, Hu, Pan, Huang,
+  Gan, Lin, Ping, Li, Wang, Peng, and Liu]{mtvideobench2025}
+Yaning Pan, Qianqian Xie, Guohui Zhang, Zekun~Moore Wang, Yongqian Wen,
+  Yuanxing Zhang, Haoxuan Hu, Zhiyu Pan, Yibing Huang, Zhidong Gan, Yonghong
+  Lin, An Ping, Shihao Li, Yanghai Wang, Tianhao Peng, and Jiaheng Liu.
+\newblock {MT-Video-Bench}: A holistic video understanding benchmark for
+  evaluating multimodal {LLMs} in multi-turn dialogues.
+\newblock In \emph{Findings of ACL}, 2026.
+
+\bibitem[Peng et~al.(2026)Peng, Song, Li, Li, Zhou, Ji, and Tian]{peng2026qca}
+Jun Peng, Baiyang Song, Jie Li, Hui Li, Yiyi Zhou, Rongrong Ji, and Yonghong
+  Tian.
+\newblock {QCA}: Query- and content-aware keyframe selection for long video
+  understanding.
+\newblock In \emph{ECCV}, 2026.
+
+\bibitem[Ren et~al.(2026)Ren, Xu, Xia, Wang, Yin, and Huang]{ren2025videorag}
+Xubin Ren, Lingrui Xu, Long Xia, Shuaiqiang Wang, Dawei Yin, and Chao Huang.
+\newblock {VideoRAG}: Retrieval-augmented generation with extreme long-context
+  videos.
+\newblock In \emph{ACM SIGKDD Conference on Knowledge Discovery and Data Mining
+  (KDD)}, pages 2390--2401, 2026.
+
+\bibitem[Scutari et~al.(2008)Scutari, Palomar, and
+  Barbarossa]{scutari2008asynchronous}
+Gesualdo Scutari, Daniel~P. Palomar, and Sergio Barbarossa.
+\newblock Asynchronous iterative water-filling for {Gaussian}
+  frequency-selective interference channels.
+\newblock \emph{IEEE Transactions on Information Theory}, 54\penalty0
+  (7):\penalty0 2868--2878, 2008.
+
+\bibitem[Shao et~al.(2025)Shao, Tao, Qin, You, Sui, and Wang]{shao2025holitom}
+Kele Shao, Keda Tao, Can Qin, Haoxuan You, Yang Sui, and Huan Wang.
+\newblock {HoliTom}: Holistic token merging for fast video large language
+  models.
+\newblock In \emph{NeurIPS}, 2025.
+
+\bibitem[Shen et~al.(2025)Shen, Zhang, Chen, and Elhoseiny]{shen2025vgent}
+Xiaoqian Shen, Wenxuan Zhang, Jun Chen, and Mohamed Elhoseiny.
+\newblock {Vgent}: Graph-based retrieval-reasoning-augmented generation for
+  long video understanding.
+\newblock In \emph{NeurIPS}, 2025.
+
+\bibitem[Shi et~al.(2026)Shi, Hu, Wang, Zhou, Ma, Li, and Shi]{shi2026markey}
+Hongchang Shi, Jinpeng Hu, Ao Wang, Wenzheng Zhou, Hui Ma, Feng Li, and Zenglin
+  Shi.
+\newblock {MarKey}: Marginal utility guided greedy keyframe selection for long
+  video understanding.
+\newblock \emph{arXiv preprint arXiv:2609.15408}, 2026.
+
+\bibitem[Sun et~al.(2025)Sun, Lu, Wang, Chen, Xu, Luo, Zhang, and
+  Li]{sun2025mdp3}
+Hui Sun, Shiyin Lu, Huanyu Wang, Qing-Guo Chen, Zhao Xu, Weihua Luo, Kaifu
+  Zhang, and Ming Li.
+\newblock {MDP3}: A training-free approach for list-wise frame selection in
+  {Video-LLMs}.
+\newblock In \emph{ICCV}, 2025.
+
+\bibitem[Tang et~al.(2025)Tang, Qiu, Xie, Tian, Jiao, and Ye]{tang2025aks}
+Xi Tang, Jihao Qiu, Lingxi Xie, Yunjie Tian, Jianbin Jiao, and Qixiang Ye.
+\newblock Adaptive keyframe sampling for long video understanding.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Tao et~al.(2025)Tao, Qin, You, Sui, and Wang]{tao2025dycoke}
+Keda Tao, Can Qin, Haoxuan You, Yang Sui, and Huan Wang.
+\newblock {DyCoke}: Dynamic compression of tokens for fast video large language
+  models.
+\newblock In \emph{CVPR}, pages 18992--19001, 2025.
+
+\bibitem[Tschannen et~al.(2025)Tschannen, Gritsenko, Wang, Naeem,
+  Alabdulmohsin, Parthasarathy, et~al.]{siglip2}
+Michael Tschannen, Alexey Gritsenko, Xiao Wang, Muhammad~Ferjad Naeem, Ibrahim
+  Alabdulmohsin, Nikhil Parthasarathy, et~al.
+\newblock {SigLIP 2}: Multilingual vision-language encoders with improved
+  semantic understanding, localization, and dense features.
+\newblock \emph{arXiv preprint arXiv:2502.14786}, 2025.
+
+\bibitem[Wang et~al.(2025{\natexlab{a}})]{wang2025internvl35}
+Weiyun Wang et~al.
+\newblock {InternVL3.5}: Advancing open-source multimodal models in
+  versatility, reasoning, and efficiency.
+\newblock \emph{arXiv preprint arXiv:2508.18265}, 2025{\natexlab{a}}.
+
+\bibitem[Wang et~al.(2024)Wang, Zhang, Zohar, and
+  Yeung-Levy]{wang2024videoagent}
+Xiaohan Wang, Yuhui Zhang, Orr Zohar, and Serena Yeung-Levy.
+\newblock {VideoAgent}: Long-form video understanding with large language model
+  as agent.
+\newblock In \emph{ECCV}, 2024.
+
+\bibitem[Wang et~al.(2026)Wang, Zheng, Mao, Li, Yang, Yu, Yan, Yao, and
+  Wang]{wang2026dafs}
+Yilin Wang, Xiangxi Zheng, Dongxing Mao, Linjie Li, Zhengyuan Yang, Ping Yu,
+  Rui Yan, Yuan Yao, and Alex~Jinpeng Wang.
+\newblock Efficient frame selection for long videos at test time with
+  attention-based {MLLM} selectors.
+\newblock In \emph{Findings of EMNLP}, 2026.
+
+\bibitem[Wang et~al.(2025{\natexlab{b}})Wang, Yu, Stengel-Eskin, Yoon, Cheng,
+  Bertasius, and Bansal]{wang2024videotree}
+Ziyang Wang, Shoubin Yu, Elias Stengel-Eskin, Jaehong Yoon, Feng Cheng, Gedas
+  Bertasius, and Mohit Bansal.
+\newblock {VideoTree}: Adaptive tree-based video representation for {LLM}
+  reasoning on long videos.
+\newblock In \emph{CVPR}, 2025{\natexlab{b}}.
+
+\bibitem[Wu et~al.(2024)Wu, Li, Chen, and Li]{wu2024longvideobench}
+Haoning Wu, Dongxu Li, Bei Chen, and Junnan Li.
+\newblock {LongVideoBench}: A benchmark for long-context interleaved
+  video-language understanding.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS),
+  Datasets and Benchmarks Track}, 2024.
+
+\bibitem[Xiao et~al.(2024{\natexlab{a}})Xiao, Tian, Chen, Han, and
+  Lewis]{streamingllm-iclr24}
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
+\newblock Efficient streaming language models with attention sinks.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024{\natexlab{a}}.
+
+\bibitem[Xiao et~al.(2024{\natexlab{b}})Xiao, Liu, Zhang, Muennighoff, Lian,
+  and Nie]{bge}
+Shitao Xiao, Zheng Liu, Peitian Zhang, Niklas Muennighoff, Defu Lian, and
+  Jian-Yun Nie.
+\newblock {C-Pack}: Packed resources for general {Chinese} embeddings.
+\newblock In \emph{SIGIR}, 2024{\natexlab{b}}.
+
+\bibitem[Xie et~al.(2026)Xie, Zheng, Zhang, Wang, Zhang, Luo, Lu, Wan, and
+  Li]{xie2026streamrag}
+Junlin Xie, Quanlong Zheng, Ruifei Zhang, Kuo Wang, Yanhao Zhang, Jinguo Luo,
+  Haonan Lu, Xiang Wan, and Guanbin Li.
+\newblock {StreamRAG}: Enhancing real-time video understanding with retrieval
+  augmentation.
+\newblock In \emph{CVPR}, 2026.
+
+\bibitem[Yan et~al.(2026)Yan, Jiang, Cao, Yang, Yang, Shu, Yang, and
+  Qiu]{yan2025ava}
+Yuxuan Yan, Shiqi Jiang, Ting Cao, Yifan Yang, Qianqian Yang, Yuanchao Shu,
+  Yuqing Yang, and Lili Qiu.
+\newblock {AVA}: Towards agentic video analytics with vision language models.
+\newblock In \emph{NSDI}, 2026.
+
+\bibitem[Yang et~al.(2025)Yang, Chen, Tian, Wang, Li, Yu, and
+  Jia]{yang2024visionzip}
+Senqiao Yang, Yukang Chen, Zhuotao Tian, Chengyao Wang, Jingyao Li, Bei Yu, and
+  Jiaya Jia.
+\newblock {VisionZip}: Longer is better but not necessary in vision language
+  models.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Ye et~al.(2025)Ye, Wang, Sun, Chandrasegaran, Durante, Eyzaguirre,
+  Bisk, Niebles, Adeli, Fei-Fei, Wu, and Li]{ye2025tstar}
+Jinhui Ye, Zihan Wang, Haosen Sun, Keshigeyan Chandrasegaran, Zane Durante,
+  Cristobal Eyzaguirre, Yonatan Bisk, Juan~Carlos Niebles, Ehsan Adeli, Li
+  Fei-Fei, Jiajun Wu, and Manling Li.
+\newblock Re-thinking temporal search for long-form video understanding.
+\newblock In \emph{CVPR}, 2025.
+
+\bibitem[Yu et~al.(2023)Yu, Cho, Yadav, and Bansal]{yu2023sevila}
+Shoubin Yu, Jaemin Cho, Prateek Yadav, and Mohit Bansal.
+\newblock Self-chained image-language model for video localization and question
+  answering.
+\newblock In \emph{NeurIPS}, 2023.
+
+\bibitem[Yu et~al.(2025)Yu, Jin, Wang, Chen, Jin, Zuo, Xu, Sun, Zhang, Wu,
+  Zhang, and Sun]{yu2024framevoyager}
+Sicheng Yu, Chengkai Jin, Huanyu Wang, Zhenghao Chen, Sheng Jin, Zhongrong Zuo,
+  Xiaolei Xu, Zhenbang Sun, Bingni Zhang, Jiawei Wu, Hao Zhang, and Qianru Sun.
+\newblock {Frame-Voyager}: Learning to query frames for video large language
+  models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2025.
+
+\bibitem[Yu et~al.(2004)Yu, Rhee, Boyd, and Cioffi]{yu2004iwf}
+Wei Yu, Wonjong Rhee, Stephen Boyd, and John~M. Cioffi.
+\newblock Iterative water-filling for {Gaussian} vector multiple-access
+  channels.
+\newblock \emph{IEEE Transactions on Information Theory}, 50\penalty0
+  (1):\penalty0 145--152, 2004.
+
+\bibitem[Zhang et~al.(2025{\natexlab{a}})Zhang, Zhang, Li, Zeng, Yang, Zhang,
+  Wang, Tan, Li, and Liu]{zhang2024longva}
+Peiyuan Zhang, Kaichen Zhang, Bo Li, Guangtao Zeng, Jingkang Yang, Yuanhan
+  Zhang, Ziyue Wang, Haoran Tan, Chunyuan Li, and Ziwei Liu.
+\newblock Long context transfer from language to vision.
+\newblock \emph{Transactions on Machine Learning Research}, 2025{\natexlab{a}}.
+
+\bibitem[Zhang et~al.(2025{\natexlab{b}})Zhang, Yang, Yin, Luo, and
+  Luan]{zhang2025qframe}
+Shaojie Zhang, Jiahui Yang, Jianqin Yin, Zhenbo Luo, and Jian Luan.
+\newblock {Q-Frame}: Query-aware frame selection and multi-resolution
+  adaptation for {Video-LLMs}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision (ICCV)}, 2025{\natexlab{b}}.
+
+\bibitem[Zhang et~al.(2023)Zhang, Sheng, Zhou, Chen, Zheng, Cai, Song, Tian,
+  Re, Barrett, Wang, and Chen]{h2o-neurips23}
+Zhenyu Zhang, Ying Sheng, Tianyi Zhou, Tianlong Chen, Lianmin Zheng, Ruisi Cai,
+  Zhao Song, Yuandong Tian, Christopher Re, Clark Barrett, Zhangyang Wang, and
+  Beidi Chen.
+\newblock {H2O}: Heavy-hitter oracle for efficient generative inference of
+  large language models.
+\newblock In \emph{NeurIPS}, 2023.
+
+\bibitem[Zhou et~al.(2025)Zhou, Shu, Zhao, Wu, Liang, Xiao, Qin, Yang, Xiong,
+  Zhang, Huang, and Liu]{zhou2024mlvu}
+Junjie Zhou, Yan Shu, Bo Zhao, Boya Wu, Zhengyang Liang, Shitao Xiao, Minghao
+  Qin, Xi Yang, Yongping Xiong, Bo Zhang, Tiejun Huang, and Zheng Liu.
+\newblock {MLVU}: Benchmarking multi-task long video understanding.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition (CVPR)}, 2025.
+
+\bibitem[Zhu et~al.(2026)Zhu, Xu, Luo, Liu, Sarkar, Yang, and
+  You]{zhu2026focus}
+Zirui Zhu, Hailun Xu, Yang Luo, Yong Liu, Kanchan Sarkar, Zhenheng Yang, and
+  Yang You.
+\newblock {FOCUS}: Efficient keyframe selection for long video understanding.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2026.
+
+\bibitem[Zou et~al.(2026)Zou, Jin, Deng, Zhao, Wang, and Chen]{zou2025air}
+Yuanhao Zou, Shengji Jin, Andong Deng, Youpeng Zhao, Jun Wang, and Chen Chen.
+\newblock {A.I.R.}: Enabling adaptive, iterative, and reasoning-based frame
+  selection for video question answering.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2026.
+
+\end{thebibliography}

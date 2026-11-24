@@ -1,0 +1,289 @@
+\section{Method}
+\label{sec:method}
+
+\begin{figure*}[t]
+  \centering
+  \makebox[\linewidth][c]{\input{fig/overview}}
+  \caption{An illustration of \name's workflow.}
+  \label{fig:overview}
+\end{figure*}
+
+
+
+
+
+
+\name is a plug-and-play framework that makes video RAG token-efficient. As shown in \cref{fig:overview}, given a query, \name scores the relevance of each frame and subtitle, optimizes their allocation under a token budget, and retains the highest-ranked tokens from each selected item. Its Token Allocator exploits diminishing returns in token value and discounts redundant evidence. For multi-turn conversations, \name further reuses tokens already in the KV cache and refines their relevance using the VLM's attention.
+
+
+\subsection{Problem Formulation}
+\label{sec:overview}
+
+
+
+Consider a video $V$ and query $q$. Conventional Top-$K$ video RAG retrieves $K$ frames with the highest relevance to $q$. Let $f_1,\ldots,f_N$ be candidate frames and let $r_i(q)\geq 0$ denote the retrieval relevance of frame $i$. Viewing it from an optimization lens, this is an integer linear program:
+\begin{equation}
+  \max_{\mathbf{x}\in\{0,1\}^N}
+  \sum_{i=1}^{N}r_i(q)x_i
+  \quad\text{s.t.}\quad \sum_{i=1}^{N}x_i\leq K,
+  \label{eq:topk}
+\end{equation}
+where $x_i$ indicates whether frame $i$ is selected. The optimum simply selects the $K$ highest-scoring frames. However, each selected frame is processed at a fixed token count. As a result, Top-$K$ cannot trade unnecessary detail in one frame for useful evidence from another.
+
+\name aims to break this rigidity and achieve better efficiency by lifting the problem from frame selection to multimodal token allocation. Let $\mathcal F$ and $\mathcal S$ denote the candidate frames and subtitle segments, and let $b_i\in[0,b_i^{\max}]$ be the tokens allocated to item $i\in\mathcal F\cup\mathcal S$, where $b_i^{\max}$ is its full token count. The function $v_i(b_i)\in[0,1]$, which is $v_{\text{frame}}$ for a frame and $v_{\text{text}}$ for a subtitle, models the value retained when item $i$ is represented by $b_i$ tokens, and $r_i(q,\mathbf b)$ measures its relevance given both the query and the evidence allocated elsewhere. Frames and subtitles share a total budget $B$, with $\beta>0$ balancing their contributions. Then \name aims to optimize:
+\begin{equation}
+\begin{aligned}
+  \max_{\mathbf{b}}\quad & \sum_{i \in \mathcal{F}} r_i(q, \mathbf{b})\, v_{\text{frame}}(b_i) + \beta \sum_{i \in \mathcal{S}} r_i(q, \mathbf{b})\, v_{\text{text}}(b_i) \\
+  \text{s.t.}\quad & \sum_{i \in \mathcal{F} \cup \mathcal{S}} b_i \le B
+\end{aligned}
+  \label{eq:allocation}
+\end{equation}
+ However, this formulation faces three challenges in practice: \circnum{1}~how do we model the token value functions $v_{\text{frame}}$ and $v_{\text{text}}$ and the relevance $r_i$ of each item? (\cref{sec:objective}) \circnum{2}~how do we optimize the stated objective efficiently? (\cref{sec:allocation}) and \circnum{3}~how do we refine and reuse allocated tokens across multi-turn conversations? (\cref{sec:multiturn}).
+
+\subsection{Constructing the Allocation Objective}
+\label{sec:objective}
+
+
+
+
+\paragraph{Token Value Function.}
+Retrieval relevance estimates an item's relevance when it is fully represented, but not how much of that usefulness survives token pruning. In Eq.~\eqref{eq:allocation}, we model this using the token value functions $v_{\text{frame}}(b_i)$ and $v_{\text{text}}(b_i)$, which weigh an item's relevance by the fraction of its value preserved at token count $b_i$. To realize an arbitrary token count $b_i$, \name ranks the visual tokens of each frame once, offline and independently of the query, by the attention they receive in the last layer of the VLM's vision encoder, summed over all heads, and keeps the top $b_i$ tokens at their original positions, following the attention-based ranking of popular token pruners~\cite{chen2024fastv,yang2024visionzip}.
+
+To define the token value functions, we measure how Q\&A accuracy changes with the token count. On held-out validation sets of multiple video QA benchmarks~\cite{zhou2024mlvu,wu2024longvideobench,fu2024videomme}, we prune every frame of a short to medium-length video to $b_i$ tokens, feed the frames and the query to a VLM, and record the mean accuracy at each $b_i$. We then normalize the accuracies and fit several candidate functions (\cref{fig:value}). A simple rational function fits the measurements best, for both visual and textual evidence:
+\begin{equation}
+  v_{\text{frame}}(b_i)=\frac{b_i}{b_i+\tau_{\text{frame}}},\quad
+  v_{\text{text}}(b_i)=\frac{b_i}{b_i+\tau_{\text{text}}},
+  \label{eq:curve}
+\end{equation}
+where $\tau_{\rm frame}>0$ and $\tau_{\rm text}>0$ are modality-specific parameters estimated offline by least squares. The fits achieve $R^2>0.85$, which shows that a simple function suffices for this task over more complex methods (e.g., neural networks). Because a static function may not be robust to shifting query distributions, the parameters can be refitted during off-peak serving periods when query feedback (e.g., accuracy) is available.
+
+
+\paragraph{Diversity-aware Relevance.}
+The retrieval relevance $r_i(q)$ captures relevance but assumes that items are independent. However, in videos, nearby frames may depict nearly identical content; therefore, frames similar to already selected frames should be discounted. To capture this dependency, we discount each item's retrieval relevance $r_i(q)$ according to the token value already allocated to similar items. Let $s_{ij}$ denote the cosine similarity between item embeddings within the same modality. We define the complete allocation-dependent relevance as follows:
+\begin{equation}
+\begin{aligned}
+  r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal F}s_{ij}\,v_{\text{frame}}(b_j), & i&\in\mathcal F,\\
+  r_i(q,\mathbf b)&=r_i(q)-\eta\sum_{j\in\mathcal S}s_{ij}\,v_{\text{text}}(b_j), & i&\in\mathcal S,
+\end{aligned}
+\label{eq:cond}
+\end{equation}
+where $\eta\geq0$ controls the redundancy penalty.
+
+Substituting \cref{eq:curve,eq:cond} into \cref{eq:allocation} finally yields the full allocation objective which rewards query-relevant evidence, accounts for diminishing token value, and discourages redundant allocations.
+
+
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.485\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/value_half.pdf}
+    \caption{Candidate token-value functions fitted to the measured accuracy of frames (black dots).
+    }
+    \label{fig:value}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.485\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/alloc_case.pdf}
+    \caption{Example of \name's token allocation for a nine-minute video.
+    }
+    \label{fig:alloc}
+  \end{minipage}
+\end{figure}
+
+\subsection{Efficient Token Allocation}
+\label{sec:allocation}
+
+
+
+Allocating discrete token counts directly involves many integer decisions that are coupled through the diversity term. Off-the-shelf integer solvers (e.g., Gurobi~\cite{gurobi}, CPLEX~\cite{cplex}) take exponential time in the worst case: on a sample hour-long video at 1 FPS, they run for more than a dozen seconds, exceeding the VLM's own inference time.
+
+Hence, we optimize a continuous relaxation instead and round its solution to whole tokens afterward. The key is to change variables from token counts to \emph{token values} $z_i=v_i(b_i)$. Because our rational token value functions are concave and the similarity matrix is positive semidefinite, this relaxation turns Eq.~\eqref{eq:allocation} into a continuous convex program in the token values. To start, we solve a simpler subproblem in which the relevance is fixed, which naturally suggests a \emph{water-filling} algorithm, and then remove this restriction and extend it to \emph{iterative water-filling} for the full objective.
+
+\paragraph{Water-Filling.}
+Consider first the subproblem in which the relevance of each item is fixed to $\bar r_i$, its retrieval relevance $r_i(q)$ (scaled by $\beta$ for subtitles), so that it no longer depends on the allocation. The objective then reduces to a sum of concave terms $\bar r_i\,v_i(b_i)$ under a single budget, where each additional token of an item yields a smaller gain than the previous one. Hence, at the optimum, all partially allocated items must share the same marginal gain per token, which we denote by $\lambda$; otherwise, moving a token from an item with a lower marginal gain to one with a higher marginal gain would improve the objective. For our token value functions, the marginal gain of item $i$ is $\bar r_i\tau_i/(b_i+\tau_i)^2$, where $\tau_i$ is the token value parameter of its modality. Setting it to $\lambda$ and solving for $b_i$ yields
+\begin{equation}
+b_i=\left[\sqrt{\bar r_i\tau_i/\lambda}-\tau_i\right]_0^{b_i^{\max}},
+\label{eq:waterfill}
+\end{equation}
+where $[\cdot]_0^{b_i^{\max}}$ clips the token count to $[0,b_i^{\max}]$. Intuitively, an item receives tokens only if its relevance exceeds $\lambda\tau_i$, and its token count then grows with the square root of its relevance rather than in proportion to it. A single scalar $\lambda$ thus decides both which items are selected and how many tokens each receives. Since the total allocation decreases monotonically with $\lambda$, a bisection finds the $\lambda$ that meets the budget $B$. This procedure is known as water-filling~\cite{boyd2004,yu2004iwf}.
+
+\paragraph{Iterative Water-Filling.}
+The full objective, however, discounts the relevance of each item by the token values of its similar items, so the relevance that water-filling requires depends on the very allocation it produces. We resolve this circular dependence using the Frank--Wolfe method~\cite{frank1956,jaggi2013}, which iteratively optimizes linear approximations of the objective. In terms of the token values, Eq.~\eqref{eq:allocation} reads $J(\mathbf z)=\bar{\mathbf r}^{\top}\mathbf z-\eta\,\mathbf z^{\top}\mathbf S\mathbf z$, where $\mathbf S$ is the block-diagonal matrix of within-modality similarities $s_{ij}$ (scaled by $\beta$ for subtitles). At iteration $\ell$, given the current token values $\bar{\mathbf z}$ (initialized to zero), we compute the diversity-discounted relevance as
+\begin{equation}
+\widetilde{\mathbf r}
+=\nabla J(\bar{\mathbf z})
+=\bar{\mathbf r}-2\eta\,\mathbf S\bar{\mathbf z}.
+\label{eq:weights}
+\end{equation}
+Maximizing the linearized objective $\widetilde{\mathbf r}^{\top}\mathbf z$ under the token budget is exactly the fixed-relevance subproblem above. A single water-filling pass with $\widetilde r_i$ in place of $\bar r_i$ therefore yields its optimal allocation $\mathbf b^\star$, in which items with $\widetilde r_i\leq 0$ receive no tokens. However, directly adopting this allocation may overcorrect for redundancy, since it optimizes only the linearized objective. This motivates us to update the token values toward $\mathbf z^\star=\mathbf v(\mathbf b^\star)$ using a diminishing step size:
+\begin{equation}
+\bar{\mathbf z}\leftarrow
+(1-\gamma_\ell)\bar{\mathbf z}
++\gamma_\ell\mathbf z^\star,
+\qquad
+\gamma_\ell=\frac{2}{\ell+1}.
+\label{eq:average}
+\end{equation}
+The first iteration recovers standard water-filling, while subsequent iterations refine the allocation to account for redundant evidence. After $L$ iterations, we recover token counts as $b_i=v_i^{-1}(\bar z_i)$. The complete procedure is summarized in \cref{alg:iwf}. We next show that our solution achieves global convergence at a sublinear rate:
+
+\begin{proposition}
+\label{prop:convergence}
+Let $J^\star$ be the global maximum of Eq.~\eqref{eq:allocation} over continuous token allocations, and let $J^{(\ell)}$ be the objective value after $\ell$ iterations of \cref{alg:iwf}. Then
+\begin{equation}
+  J^\star - J^{(\ell)} \le \frac{4\,\eta\,\sigma_{\max}D^2}{\ell + 2} = O\!\left(\frac{1}{\ell}\right),
+\end{equation}
+where $\sigma_{\max}$ is the largest eigenvalue of the frame and $\beta$-scaled subtitle similarity matrices and $D$ is the diameter of the feasible token-value set under budget $B$.
+\end{proposition}
+
+\noindent This bound follows from the standard Frank--Wolfe guarantee~\cite{jaggi2013}. The VLM consumes whole tokens, so we round the continuous allocation down, $\hat b_i=\lfloor b_i\rfloor$. Rounding keeps the allocation within the budget and removes less than one token from each item. Finally, \name retains the top $\hat b_i$ pre-ranked tokens for each item and presents the selected evidence in chronological order.
+
+\paragraph{Optimality over Prior Allocation Rules.}
+Prior methods allocate tokens by fixed rules rather than by optimizing an objective. QuoTA~\cite{luo2025quota} assigns each frame a token count proportional to its relevance, while Q-Frame~\cite{zhang2025qframe} assigns the same token count to all frames within a relevance tier. Neither rule is optimal, even when diversity is ignored. Because the token value functions are strictly concave, the water-filling allocation of Eq.~\eqref{eq:waterfill} is the unique maximizer of the fixed-relevance objective, and it differs from both rules. Specifically, its token counts grow with the square root of the relevance rather than in proportion to it, and items with $\bar r_i\le\lambda\tau_i$ receive no tokens at all. Proportional allocation, in contrast, keeps adding tokens to the most relevant frames after their value has saturated, while tiered allocation ignores the differences in relevance within a tier. Moreover, both rules score frames independently, whereas iterative water-filling also accounts for the redundancy among items and converges to the optimum of the full objective (\cref{prop:convergence}).
+
+
+
+
+\begin{algorithm}[t]
+\caption{Iterative Water-Filling}
+\label{alg:iwf}
+\small
+\begin{algorithmic}[1]
+\Require relevances $\bar r_i$, similarities $s_{ij}$, value parameters $\tau_i$, token limits $b_i^{\max}$, budget $B$, penalty $\eta$, iterations $L$, tolerance $\epsilon$
+\Ensure token counts $\hat b_i$ with $\sum_i\hat b_i\le B$
+\Statex Lines with index $i$ apply to every item $i\in\mathcal F\cup\mathcal S$.
+\State Initialize token values $\bar z_i\gets 0$
+\For{$\ell=1,\dots,L$}
+  \State $\widetilde r_i\gets\bar r_i-2\eta\sum_{j}s_{ij}\,\bar z_j$ \Comment{discounted relevance, Eq.~\eqref{eq:weights}}
+  \State $\lambda_{\rm lo}\gets 0,\;\;\lambda_{\rm hi}\gets\max_i\widetilde r_i/\tau_i$ \Comment{search range of $\lambda$}
+  \State $b_i^\star\gets 0$ \Comment{best allocation within budget so far}
+  \While{$\lambda_{\rm hi}-\lambda_{\rm lo}>\epsilon$} \Comment{water-filling by bisection}
+    \State $\lambda\gets(\lambda_{\rm lo}+\lambda_{\rm hi})/2$
+    \State $b_i\gets\big[\sqrt{\max(0,\widetilde r_i)\,\tau_i/\lambda}-\tau_i\big]_0^{b_i^{\max}}$ \Comment{Eq.~\eqref{eq:waterfill}}
+    \If{$\sum_i b_i>B$}
+      \State $\lambda_{\rm lo}\gets\lambda$ \Comment{over budget: raise $\lambda$}
+    \Else
+      \State $\lambda_{\rm hi}\gets\lambda,\;\;b_i^\star\gets b_i$ \Comment{within budget: lower $\lambda$}
+    \EndIf
+  \EndWhile
+  \State $\gamma_\ell\gets 2/(\ell+1)$ \Comment{step size}
+  \State $\bar z_i\gets(1-\gamma_\ell)\,\bar z_i+\gamma_\ell\,v_i(b_i^\star)$ \Comment{averaging, Eq.~\eqref{eq:average}}
+\EndFor
+\State $b_i\gets v_i^{-1}(\bar z_i)=\tau_i\bar z_i/(1-\bar z_i)$ \Comment{continuous token counts}
+\State \Return $\hat b_i\gets\lfloor b_i\rfloor$ \Comment{round down to whole tokens}
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+\subsection{Extending to Multi-Turn Conversations}
+\label{sec:multiturn}
+
+
+
+In practical conversations, a user may ask several queries $q_1,\dots,q_T$ about the same video~\cite{hsieh2018focus}. Later queries often refer to evidence processed in earlier turns (\cref{fig:reuse}). Top-K can reuse a previously prefilled frame when the selection matches exactly, but token allocation is harder: the same item may receive different token counts at different turns. \name addresses this with \emph{incremental allocation}, which prefills only the difference between the current allocation and all previous ones, and \emph{attention refinement}, which refines the relevance of cached evidence with attention for free.
+
+\paragraph{Incremental Allocation.}
+Let $b_i^{(t)}$ be the token count requested for item $i$ at turn $t$, and let $c_i^{(t-1)}$ be the number of its highest-ranked tokens already in the KV cache, with $c_i^{(0)}=0$. The number of new tokens to prefill and the updated cache state are
+\begin{equation}
+\begin{aligned}
+ p_i^{(t)}&=\max\!\left(0,b_i^{(t)}-c_i^{(t-1)}\right),\\
+ c_i^{(t)}&=\max\!\left(c_i^{(t-1)},b_i^{(t)}\right).
+\end{aligned}
+\label{eq:incremental}
+\end{equation}
+As the KV cache is typically retained across turns in standard serving systems, evidence prefilled at an earlier turn remains available for later queries to leverage, and the budget $B$ applies to the evidence allocated at each turn. Because token rankings are fixed independently of the query, an item allocated more tokens at turn $t$ needs only the newly included ranks $c_i^{(t-1)}+1,\ldots,b_i^{(t)}$. \name appends these tokens to the existing context instead of inserting them into earlier positions, which would invalidate subsequent KV-cache entries. The model retains the applicable within-item visual or temporal positional information. As shown in \cref{fig:prefill}, incremental allocation thereby recovers a large share of the available reuse opportunities.
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_seen.pdf}
+    \caption{Later turns often reference frames already prefilled in prior turns.}
+    \label{fig:reuse}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.47\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig/turn_prefill.pdf}
+    \caption{Incremental allocation allows \name to recover a large amount of the available reuse opportunities.}
+    \label{fig:prefill}
+  \end{minipage}
+\end{figure}
+
+Since each token is prefilled at most once, summing \cref{eq:incremental} over turns bounds cumulative evidence tokens:
+\begin{equation}
+ \sum_{t=1}^{T}\sum_i p_i^{(t)}
+ =\sum_i c_i^{(T)}
+ =\sum_i\max_{t\leq T}b_i^{(t)}
+ \leq\sum_i b_i^{\max}.
+ \label{eq:bound}
+\end{equation}
+
+
+\begin{table*}[t]
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \newcommand{\na}{--}
+  \newcommand{\hd}[2]{\begin{tabular}{@{}c@{}}#1\\[-1pt]#2\end{tabular}}  %
+  \newcommand{\group}[1]{\rowcolor{groupbg}\multicolumn{10}{l}{\textit{#1}} \\}  %
+  \newcommand{\maintab}{%
+  \begin{tabular}{l cc cc ccccc}
+    \toprule
+    \multirow{2}{*}{Method} & \multicolumn{2}{c}{MLVU (w/o subtitles)} & \multicolumn{2}{c}{LVB (w/o subtitles)} & \multicolumn{5}{c}{Video-MME (w/ subtitles)} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-10}
+    & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$ & Overall~$\uparrow$
+      & TFLOPs~$\downarrow$
+      & Overall~$\uparrow$ & Short~$\uparrow$ & Medium~$\uparrow$ & Long~$\uparrow$ \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \group{Qwen3-VL-8B~\cite{bai2025qwen3vl}}
+    Uniform sampling                                         & 215 & 73.4 & 229 & 65.1 & 224 & 72.9 & \textbf{83.6} & 73.0 & 62.0 \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                                  & 218 & 75.9 & 232 & 64.0 & 230 & 73.1 & 82.4 & 73.4 & 63.6 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 209 & 74.7 & 225 & 65.7 & 218 & 71.1 & 80.1 & 70.3 & 63.0 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 781 & 77.2 & 676 & \textbf{66.6} & 647 & 74.4 & 83.2 & 74.4 & 65.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 211 & 71.7 & 226 & 64.0 & 224 & 70.1 & 79.1 & 69.4 & 61.8 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 203 & 73.2 & 222 & 65.1 & 225 & 71.0 & 82.8 & 69.4 & 60.7 \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 230 & \textbf{78.1} & 234 & \textbf{66.6} & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
+    VideoRAG~\cite{ren2025videorag}\venue{KDD'26}             & 211 & 73.8 & 207 & \textbf{61.9} & 220 & 72.3 & \textbf{81.0} & 74.0 & 61.8 \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 208 & \textbf{74.2} & 200 & 61.2 & 217 & \textbf{74.5} & 80.5 & \textbf{74.9} & \textbf{68.0} \\
+    \specialrule{\lightrulewidth}{0pt}{0pt}
+    \group{InternVL3.5-4B~\cite{wang2025internvl35}}
+    Uniform sampling                                         & 143 & 69.9 & 143 & 62.0 & 141 & 65.6 & \textbf{79.8} & 63.8 & 53.2 \\
+    \rowcolor{groupbg}RAG                                                      &  &  &  &  &  &  &  &  &  \\
+    \quad w/ Top-K                               & 145 & 72.5 & 146 & 60.4 & 145 & 68.6 & 78.0 & 69.1 & 58.7 \\
+    \quad w/ Q-Frame~\cite{zhang2025qframe}\venue{ICCV'25}    & 146 & 71.1 & 146 & 63.1 & 142 & 66.0 & 76.7 & 64.6 & 56.9 \\
+    \quad w/ QuoTA~\cite{luo2025quota}\venue{AAAI'26}         & 708 & 71.3 & 583 & 62.5 & 551 & 64.9 & 74.7 & 64.6 & 55.4 \\
+    \quad w/ FOCUS~\cite{zhu2026focus}\venue{ICLR'26}         & 142 & 69.5 & 143 & 58.8 & 140 & 66.4 & 75.9 & 65.9 & 57.4 \\
+    \quad w/ AdaAlloc~\cite{an2026adaalloc}\venue{NeurIPS'26} & 140 & 69.6 & 143 & 61.3 & 139 & 65.7 & 76.3 & 66.4 & 54.2 \\
+    \rowcolor{oursbg}\quad w/ \textbf{\name (Ours)}                            & 152 & \textbf{73.0} & 152 & \textbf{63.2} & 150 & \textbf{72.1} & 79.0 & \textbf{70.8} & \textbf{66.4} \\
+    \specialrule{\heavyrulewidth}{0pt}{\belowbottomsep}
+  \end{tabular}}%
+  \sbox0{\setlength{\tabcolsep}{0pt}\maintab}%
+  \setlength{\tabcolsep}{\dimexpr(\textwidth-\wd0)/20\relax}%
+  \maintab
+  \caption{Accuracy at matched compute on three video understanding benchmarks, for all baselines and both backbones.}
+  \label{tab:main}
+\end{table*}
+
+\paragraph{Attention Refinement.}
+Multi-turn conversations offer another unique opportunity to refine relevance using the VLM's attention to previously cached evidence. Since the query must be prefilled in any case, \name prefills $q_t$ before allocating, which gives access to the attention from its query tokens to each cached item at no additional inference cost. Let $a_i^{(t)}$ denote the attention received by item $i$, normalized per cached token. Since attention is unavailable for uncached items, we refine only the relevance of previously seen evidence:
+\begin{equation}
+\hat r_i^{(t)}=
+\begin{cases}
+\alpha_t\,r_i(q_t)^{1-\omega}(a_i^{(t)})^\omega,
+& i\in\mathcal C_{t-1},\\
+r_i(q_t), & \text{otherwise},
+\end{cases}
+\label{eq:fusion}
+\end{equation}
+where $\mathcal C_{t-1}$ is the set of cached items, $\omega\in[0,1]$ controls the contribution of attention, and $\alpha_t$ normalizes the fused scores to preserve the total retrieval relevance of cached items. Thus, attention re-ranks previously observed evidence without changing the relevance scores of unseen candidates. Importantly, refinement updates only item relevance, leaving the calibrated token-value functions $v_i(b_i)$ unchanged. The Token Allocator then uses $\hat r_i^{(t)}$ in \cref{eq:allocation}, incrementally prefilling only allocation differences.
+
+

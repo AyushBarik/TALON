@@ -1,0 +1,125 @@
+\section{Evaluation}
+\label{sec:exp}
+
+
+We evaluate \name on two VLM backbones, Qwen3-VL-8B~\cite{bai2025qwen3vl} and InternVL3.5-4B~\cite{wang2025internvl35}, using Qwen3-VL-8B as the default. As a plug-and-play token allocation framework, \name complements existing video RAG systems rather than replacing them. We evaluate its effectiveness on two retrieval pipelines:
+(i) \textit{Embedding-based RAG}, which indexes video frames sampled at 1 FPS alongside temporally aligned subtitles, using SigLIP~2~\cite{siglip2} and BGE~\cite{bge} to score their respective relevance to the query; and
+(ii) \textit{Graph-based RAG}, built on VideoRAG~\cite{ren2025videorag}, which retrieves related visual and textual evidence through a graph structure.
+
+
+\paragraph{Benchmarks.} 
+
+We evaluate on three widely used single-turn, multiple-choice video understanding benchmarks and one multi-turn, open-ended benchmark:
+\begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
+\item \textbf{MLVU}~\cite{zhou2024mlvu}: 2,174 multiple-choice questions across 1,242 videos from 3 minutes to 2 hours, spanning seven tasks from topic reasoning to action counting.
+
+\item \textbf{LongVideoBench (LVB)}~\cite{wu2024longvideobench}: 1,337 multiple-choice questions across 752 videos from 8 seconds to 1 hour, covering 17 perception and relation tasks.
+
+\item \textbf{Video-MME}~\cite{fu2024videomme}: 2,700 multiple-choice questions across 900 videos, divided into short ($<$2 min), medium (4--15 min), and long (30--60 min) subsets.
+
+\item \textbf{MT-Video-Bench (MTVB)}~\cite{mtvideobench2025}: 1,000 open-ended dialogues (5--8 turns) across 135 videos from 20 seconds to 41 minutes. Open-ended responses are scored using an LLM judge (Gemini 3.8 Flash) against a provided answer checklist.
+\end{itemize}
+
+
+\paragraph{Baselines.}
+We compare \name against uniform sampling and five recent frame selection and token allocation methods, all operating under the same token budget. 
+\begin{itemize}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\topsep}{2pt}
+\item \textbf{Top-K}: Retrieves the $K$ frames with the highest query--frame semantic similarity scores.
+
+\item \textbf{FOCUS}~\cite{zhu2026focus}: Selects $K$ frames through multi-armed bandit exploration over temporal clips.
+
+\item \textbf{Q-Frame}~\cite{zhang2025qframe}: Samples frames according to query relevance and allocates tokens across high-, medium-, and low-resolution tiers with a 2:1:1 budget ratio.
+
+\item \textbf{QuoTA}~\cite{luo2025quota}: Rewrites queries into relevant entities and uses a VLM to score each frame by its likelihood of containing those entities. It then allocates tokens proportionally to the scores and downsamples tokens of each frame to a particular resolution.
+
+\item \textbf{AdaAlloc}~\cite{an2026adaalloc}: Uses an agent to plan how to distribute the budget between low- and high-resolution frame tiers.
+\end{itemize}
+For multi-turn evaluation, we enable KV-cache reuse whenever a method selects evidence that exactly matches previously prefilled content: Top-K and FOCUS reuse previously seen frames, while Q-Frame and AdaAlloc reuse frames only at matching resolutions. QuoTA does not support this reuse because it downsamples tokens to variable amounts, which makes reuse impossible.
+
+
+\paragraph{Metrics.}
+We report answering accuracy and inference compute (TFLOPs), with the latter controlled through the token budget. To ensure a fair comparison between single- and multi-call methods, we account for prefill compute across all model calls, including auxiliary frame scoring and planning calls. Offline indexing, including frame encoding and token ranking, runs once per video and is shared by all queries, so we exclude it for all methods. Experiments are conducted on A100 GPUs. Additional implementation details, hyperparameters, and sensitivity analyses are provided in the \suppmaterial.
+
+\subsection{Main Results}
+\label{sec:exp-main}
+
+\paragraph{\name achieves the Pareto frontier across single-turn video understanding.} 
+As shown in \cref{tab:main}, \name achieves the highest overall accuracy across all three benchmarks and both VLM backbones. With Qwen3-VL-8B, it improves over Top-K by 2.2, 2.6, and 4.2 percentage points on MLVU, LVB, and Video-MME, respectively, at comparable compute. The gains are particularly pronounced on long videos: on the long subset of Video-MME, \name improves accuracy from 63.6\% to 71.7\% with nearly identical TFLOPs. QuoTA achieves competitive accuracy but incurs 2.8--3.4$\times$ higher compute due to its VLM-based frame scoring. These trends generalize to InternVL3.5-4B, where \name improves over Top-K by 0.5--3.5 points. Furthermore, \name consistently achieves favorable accuracy--compute trade-offs across multiple token budgets (\cref{fig:multiturn}a).
+
+
+When integrated with VideoRAG, \name improves accuracy by 0.4 and 2.2 percentage points on MLVU and Video-MME, respectively, by allocating tokens across more frames at comparable compute, while accuracy decreases by 0.7 points on LVB. These results demonstrate that \name complements existing RAG designs.
+
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/tflops_pair.pdf}
+  \caption{\name achieves the compute-to-accuracy Pareto frontier across (a) single-turn and (b) multi-turn video understanding.
+  }
+  \label{fig:multiturn}
+\end{figure}
+
+\paragraph{\name achieves the Pareto frontier across multi-turn video understanding.} 
+As shown in \cref{fig:multiturn}b, \name outperforms all baselines by 0.3--1.5 percentage points while requiring 1.7--17.3$\times$ fewer TFLOPs. Unlike prior methods that reuse only previously selected frames or exact resolution matches, \name incrementally prefills only tokens not already present in the KV cache. This finer-grained reuse substantially reduces redundant computation across conversational turns while preserving answer accuracy.
+
+
+\paragraph{\name introduces negligible compute overhead.}
+Semantic similarity search with FAISS~\cite{faiss}, iterative water-filling, and token pruning together run on the order of tens of milliseconds per query, which is negligible compared with VLM inference. 
+
+
+
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \settowidth{\splitw}{Medium}%
+  \newcommand{\na}{--}
+  \newcommand{\abltab}{%
+  \begin{tabular}{l<{\hspace{5pt}} c VVVV}
+    \toprule
+    Method & TFLOPs $\downarrow$
+      & \multicolumn{4}{c}{%
+        \begin{tabular}{@{}VVVV@{}}
+          \multicolumn{4}{c}{Video-MME (w/ subtitles) $\uparrow$} \\
+          \cmidrule(lr){1-4}
+          Overall & Short & Medium & Long \\[2.6pt]
+        \end{tabular}} \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \rowcolor{oursbg}\textbf{\name}                 & 232 & \textbf{77.3} & \textbf{83.6} & \textbf{76.8} & \textbf{71.7} \\
+    \hspace{0.5em}w/o text allocation      & 226 & 73.7 & 81.9 & 74.9 & 64.4 \\
+    \hspace{0.5em}w/o diversity term            & 226 & 76.6 & 82.4 & 76.4 & 70.8 \\
+    \hspace{0.5em}w/o water-filling        & 229 & 76.1 & 82.3 & 76.1 & 69.9 \\
+    \bottomrule
+  \end{tabular}}%
+  \sbox0{\setlength{\tabcolsep}{0pt}\abltab}%
+  \setlength{\tabcolsep}{\dimexpr(\columnwidth-\wd0)/11\relax}%
+  \xdef\ablsep{\the\tabcolsep}%
+  \abltab
+  \caption{Ablation studies across single-turn Q\&A.}
+  \label{tab:ablation}
+
+  \vspace{8pt}  %
+
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \setlength{\tabcolsep}{\ablsep}%
+  \settowidth{\dimen0}{\hspace{0.5em}w/o incremental allocation}%
+  \dimen2=\dimexpr(\columnwidth-5\tabcolsep-5pt-\dimen0)/2\relax
+  \begin{tabular}{l<{\hspace{5pt}} >{\centering\arraybackslash}p{\dimen2} >{\centering\arraybackslash}p{\dimen2}}
+    \toprule
+    Method & TFLOPs $\downarrow$ & MTVB $\uparrow$ \\
+    \specialrule{\lightrulewidth}{\aboverulesep}{0pt}
+    \rowcolor{oursbg}\textbf{\name}             & 275 & 58.5 \\
+    \hspace{0.5em}w/o attention refinement       & 315 & 57.4 \\
+    \hspace{0.5em}w/o incremental allocation & 687 & \textbf{59.1} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Ablation studies across multi-turn Q\&A.}
+  \label{tab:multiturn}
+\end{table}
+
+\paragraph{Performance breakdown.}
+We ablate the key components of \name in \cref{tab:ablation,tab:multiturn}. On Video-MME, removing subtitle allocation decreases overall accuracy by 3.6 points, with a particularly large 7.3-point drop on long videos. Even without subtitle allocation, \name outperforms all similarly budgeted, non-agentic frame selection baselines by 0.6--3.6 points. Removing the diversity term reduces accuracy by 0.7 points, confirming the benefit of modeling redundancy, and replacing water-filling with a simpler proportional allocation, which offers no optimality guarantee, reduces it by 1.2 points.
+
+For multi-turn conversations, removing attention refinement decreases accuracy by 1.1 points while increasing prefill compute from 275 to 315 TFLOPs. Disabling incremental allocation increases compute from 275 to 687 TFLOPs (2.5$\times$), with only a 0.6-point accuracy increase. These results show that attention refinement improves evidence selection, while incremental allocation is the primary driver of multi-turn compute savings. 
